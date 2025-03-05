@@ -32,10 +32,10 @@ html_title = "JobShopLab Documentation"
 
 # Theme options
 html_theme_options = {
-    "repo_url": "https://inf-git.fh-rosenheim.de/proto-lab-2.0/jobshoplab",
+    "repo_url": "https://github.com/proto-lab-ro/jobshoplab",
     "repo_name": "JobShopLab",
     "icon": {
-        "repo": "fontawesome/brands/gitlab",
+        "repo": "fontawesome/brands/github",
         "edit": "material/file-edit-outline",
     },
     "features": [
@@ -127,14 +127,11 @@ nitpicky = True
 mermaid_version = "10.6.1"  # Specify exact version
 mermaid_init_js = ""  # Using custom initialization in layout.html
 mermaid_output_format = "svg"
-mermaid_params = [
-    "securityLevel=loose",
-    "startOnLoad=true"
-]
+mermaid_params = ["securityLevel=loose", "startOnLoad=true"]
 
 # -- Additional static files -----------------------------------------
 html_js_files = [
     "custom.js",
     "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js",
-    "theme-switcher.js"
+    "theme-switcher.js",
 ]
