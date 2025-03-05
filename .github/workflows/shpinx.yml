@@ -3,7 +3,7 @@ name: Build and Deploy Sphinx Docs
 on:
   push:
     branches:
-      - dev  # Change to your main branch if needed
+      - main  # Change to your main branch if needed
   pull_request:
 
 jobs:
