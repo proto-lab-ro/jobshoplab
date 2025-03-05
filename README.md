@@ -29,8 +29,6 @@ JobShopLab is a flexible and modular framework designed to advance research and 
 
 To validate the framework, we trained an RL agent and compared its scheduling performance against traditional Priority Dispatch Rules (PDRs). Using the PPO algorithm from Stable Baselines3, the agent learned to optimize makespan efficiently. Compared to heuristic methods like SPT and MWKR, the RL-based approach achieved superior scheduling performance, even under additional constraints like buffer and transport limitations.
 
-#todo: add benchmark metrics
-
 ## Features
 
 - **Modular Gym Environment**: A customizable and extensible framework for testing diverse scheduling strategies and problem specifications.
@@ -107,7 +105,7 @@ JobShopLab is designed to work seamlessly with RL algorithms. It supports:
 - **lb** known LowerBound <br>
 
 ### Academic
-Academic instances found in Literature. Definitions can be found in `data/jssp_instances/*.yaml`*
+Academic instances found in Literature. Definitions can be found in `data/jssp_instances/*.yaml`
 
 
 | Instance | fifo| mwkr | spt | rl| lb|
@@ -119,7 +117,7 @@ Academic instances found in Literature. Definitions can be found in `data/jssp_i
 ### Transport
 *Academic instances with arbitrary transport times between machines
 definitions can be found in 
-`data/instances/jssptransport/*.yaml`*
+`data/instances/jssptransport/*.yaml`
 | Instance | fifo| mwkr | spt | rl|
 |---------|---------|---------|---------|---------|
 | ft06    | 83      | 85      | 85      | 76      |
