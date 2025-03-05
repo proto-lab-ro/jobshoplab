@@ -1,0 +1,32 @@
+{
+    "python.analysis.typeCheckingMode": "standard",
+    "python.analysis.autoImportCompletions": false,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "flake8.args": [
+    "--max-line-length=120"
+    ],
+    "editor.formatOnType": true,
+    "editor.minimap.enabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "cSpell.words": [
+        "jobshoplab",
+        "Jssp",
+        "postbuffer",
+        "prebuffer",
+        "tele",
+        "TELEPORTER",
+        "teleporters",
+        "vali"
+    ],
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+}

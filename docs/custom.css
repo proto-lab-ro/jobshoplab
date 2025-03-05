@@ -1,0 +1,8 @@
+/* Custom styles */
+.md-header {
+    background-color: var(--md-primary-fg-color);
+}
+
+.md-tabs {
+    background-color: var(--md-primary-fg-color--dark);
+}

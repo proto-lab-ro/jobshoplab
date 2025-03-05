@@ -1,0 +1,149 @@
+graph TD
+    %% Main Components
+    
+    subgraph Core ["JobShopLab Core"]
+        JobShopLabEnv[JobShopLabEnv]
+        DependencyBuilder[DependencyBuilder]
+    end
+
+    subgraph Configuration ["Configuration System"]
+        Config[Config]
+        InstanceConfig[InstanceConfig]
+        load_config[load_config]
+    end
+
+    subgraph Compiler ["Compiler"]
+        CompilerMain[Compiler]
+        Manipulators[Manipulators]
+        Validators[Validators]
+        Mappers[Mappers]
+        Repository[Repository]
+    end
+
+    subgraph StateMachine ["State Machine"]
+        State[State]
+        StateMachineResult[StateMachineResult]
+        step[step]
+        apply_transition[apply_transition]
+        get_possible_transitions[get_possible_transitions]
+        handler[Handler]
+        manipulate[Manipulate]
+        validate[Validate]
+    end
+
+    subgraph Middleware ["Middleware"]
+        MiddlewareABC[Middleware ABC]
+        EventBasedBinaryActionMiddleware[EventBasedBinaryActionMiddleware]
+        SubTimeStepper[SubTimeStepper]
+    end
+
+    subgraph ActionFactory ["ActionFactory"]
+        ActionFactory[ActionFactory ABC]
+        BinaryJobActionFactory[BinaryJobActionFactory]
+        MultiDiscreteActionFactory[MultiDiscreteActionFactory]
+    end
+
+    subgraph Factories ["Factories"]
+        ObservationFactory[ObservationFactory]
+        RewardFactory[RewardFactory]
+    end
+
+    subgraph Types ["Types"]
+        StateTypes[State Types]
+        ActionTypes[Action Types]
+        ConfigTypes[Configuration Types]
+        subgraph ComponentStates ["Component States"]
+            MachineState[MachineState]
+            BufferState[BufferState]
+            TransportState[TransportState]
+            JobState[JobState]
+            OperationState[OperationState]
+        end
+        ComponentTransition[ComponentTransition]
+        Action[Action]
+    end
+
+    subgraph TimeMachines ["Time Machines"]
+        jump_to_event[jump_to_event]
+        force_jump_to_event[force_jump_to_event]
+        jump_by_one[jump_by_one]
+    end
+
+    subgraph Rendering ["Rendering"]
+        render_backend[render_backend]
+        render_in_dashboard[render_in_dashboard]
+        textual_cli[textual_cli]
+    end
+
+    subgraph Utils ["Utilities"]
+        logger[Logger]
+        exceptions[Custom Exceptions]
+        solutions[Solutions]
+        load_config_utils[Config Loading]
+    end
+
+    %% Data flow connections
+    JobShopLabEnv -->|uses| DependencyBuilder
+    DependencyBuilder -->|creates| CompilerMain
+    DependencyBuilder -->|creates| ObservationFactory
+    DependencyBuilder -->|creates| RewardFactory
+    DependencyBuilder -->|creates| ActionFactory
+    DependencyBuilder -->|creates| MiddlewareABC
+    DependencyBuilder -->|loads| Config
+    DependencyBuilder -->|creates| InstanceConfig
+
+    CompilerMain -->|uses| Repository
+    CompilerMain -->|uses| Manipulators
+    CompilerMain -->|uses| Validators
+    CompilerMain -->|uses| Mappers
+    CompilerMain -->|produces| InstanceConfig
+    CompilerMain -->|produces| State
+
+    MiddlewareABC -.->|abstract| EventBasedBinaryActionMiddleware
+    EventBasedBinaryActionMiddleware -->|uses| ActionFactory
+    EventBasedBinaryActionMiddleware -->|uses| ObservationFactory
+    EventBasedBinaryActionMiddleware -->|manages| SubTimeStepper
+    EventBasedBinaryActionMiddleware -->|calls| step
+
+    ActionFactory -.->|abstract| BinaryJobActionFactory
+    ActionFactory -.->|abstract| MultiDiscreteActionFactory
+    ActionFactory -->|produces| Action
+
+    JobShopLabEnv -->|calls| step
+    step -->|uses| apply_transition
+    step -->|uses| get_possible_transitions
+    step -->|uses| TimeMachines
+    step -->|produces| StateMachineResult
+    
+    step -->|calls| handler
+    handler -->|calls| manipulate
+    step -->|validates with| validate
+
+    JobShopLabEnv -->|renders| render_backend
+    render_backend -->|uses| render_in_dashboard
+    render_backend -->|uses| textual_cli
+
+    ActionTypes -->|defines| Action
+    ActionTypes -->|defines| ComponentTransition
+    StateTypes -->|defines| State
+    StateTypes -->|defines| StateMachineResult
+    ConfigTypes -->|defines| Config
+    ConfigTypes -->|defines| InstanceConfig
+    
+    State -->|contains| MachineState
+    State -->|contains| BufferState
+    State -->|contains| TransportState
+    State -->|contains| JobState
+    JobState -->|contains| OperationState
+    
+    ObservationFactory -->|creates observations from| StateMachineResult
+    RewardFactory -->|calculates rewards from| StateMachineResult
+    
+    %% Additional utils connections
+    JobShopLabEnv -->|uses| logger
+    JobShopLabEnv -->|uses| exceptions
+    CompilerMain -->|uses| logger
+    CompilerMain -->|uses| load_config_utils
+    StateMachine -->|uses| logger
+    Middleware -->|uses| logger
+    Middleware -->|uses| exceptions

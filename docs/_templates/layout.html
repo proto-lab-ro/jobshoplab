@@ -1,0 +1,80 @@
+{% extends "!layout.html" %}
+
+{% block extrahead %}
+<!-- Extra custom JavaScript or CSS includes -->
+<script>
+  // JavaScript to enhance the documentation
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add target="_blank" to external links
+    document.querySelectorAll('a.reference.external').forEach(function(link) {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+    
+    // Initialize mermaid if it exists
+    if (typeof mermaid !== 'undefined') {
+      // Set theme based on current color scheme
+      const currentTheme = document.body.getAttribute('data-md-color-scheme') === 'slate' ? 'dark' : 'default';
+      
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: currentTheme,
+        flowchart: { 
+          useMaxWidth: true,
+          htmlLabels: true,
+          curve: 'basis'
+        },
+        themeVariables: currentTheme === 'dark' ? {
+          primaryColor: '#ff7043',
+          primaryTextColor: '#f8f8f2',
+          primaryBorderColor: '#bd93f9',
+          lineColor: '#f8f8f2',
+          secondaryColor: '#6272a4',
+          tertiaryColor: '#44475a'
+        } : {
+          primaryColor: '#ff7043',
+          primaryTextColor: '#333333',
+          primaryBorderColor: '#ff5722',
+          lineColor: '#333333',
+          secondaryColor: '#ffab91',
+          tertiaryColor: '#f5f5f5'
+        },
+        securityLevel: 'loose'
+      });
+      
+      // Apply theme as a data attribute for CSS to target
+      document.querySelectorAll('div.mermaid').forEach(function(element) {
+        element.setAttribute('data-theme', currentTheme === 'dark' ? 'dark' : 'light');
+      });
+      
+      // Force render any mermaid diagrams
+      setTimeout(function() {
+        document.querySelectorAll('div.mermaid').forEach(function(element) {
+          try {
+            if (!element.hasAttribute('data-processed')) {
+              var id = 'mermaid-diagram-' + Math.random().toString(36).substr(2, 9);
+              element.id = id;
+              mermaid.init(undefined, element);
+            }
+          } catch (error) {
+            console.error('Mermaid diagram error:', error);
+          }
+        });
+      }, 300);
+    }
+  });
+</script>
+{% endblock %}
+
+{% block sidebartitle %}
+{{ super() }}
+<div class="version-info">
+  <p>Version: {{ release }}</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="jobshoplab-content">
+  {{ super() }}
+</div>
+{% endblock %}

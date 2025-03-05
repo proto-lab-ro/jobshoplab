@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools >= 69.5.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["version"]
+name = "JobShopLab"
+authors = [
+    {name = "Felix Schelling", email = "felix.schelling@th-rosenheim.de"},
+    {name = "Jonathan Hoss", email = "jonathan.hoss@th-rosenheim.de"},
+    {name = "Noah Klarmann", email = "noah.klarmann@th-rosenheim.de"},
+]
+
+description = "A RL training environment framework for various JSSP Tasks."
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">= 3.12"
+
+dependencies = [
+    "gymnasium",
+    "heracless",
+    "numpy",
+    "torch",
+    "plotly",
+    "matplotlib",
+    "networkx",
+    "pandas",
+    "kaleido",
+    "dash_daq",
+    "dash",
+    "rich",
+    "keyboard",
+    "ipykernel",
+    "mermaid-py",
+    "stable_baselines3[extra]",
+    "nbformat",
+]
+
+classifiers = [
+    # How mature is this porject? Common values are
+    # 3 - Alpha
+    # 4 - Beta
+    # 5 - Production / Stable
+    "Development Status :: 3 - Alpha",
+
+    # Indicate audience
+    "Intended Audience :: Researchers",
+    "Topic :: JSSP",
+
+    "Programming Lanugage :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+doc = [
+    "sphinx", 
+    "sphinx-immaterial", 
+    "sphinxcontrib-mermaid",
+]
+
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.black]
+line-length = 100
+
+[project.urls]
+Repository = "https://inf-git.fh-rosenheim.de/proto-lab-2.0/jobshoplab"
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+jobshoplab = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+ipykernel = ">=6.29.5,<7"
+nbformat = ">=5.10.4,<6"
+

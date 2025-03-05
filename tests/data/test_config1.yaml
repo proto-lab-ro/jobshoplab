@@ -1,0 +1,66 @@
+title : Dev Environment
+
+
+default_loglevel: &default_loglevel "info" # global loglevel add loglevel to each module to overwrite for spec module
+compiler:
+  loglevel: *default_loglevel
+  repo: "SpecRepository"
+  validator: "DummyValidator"
+  manipulators:
+
+    - "DummyManipulator"
+
+  dsl_repository:
+
+    dir: "data/config/instance.yaml"
+
+  spec_repository:
+
+    dir: "data/instances/3x3.txt"
+
+env:
+  loglevel: *default_loglevel
+  observation_factory: "BinaryActionObservationFactory"
+  reward_factory: "BinaryActionJsspReward"
+  action_action_factory: "BinaryJobActionFactory"
+  render_backend: "render_in_dashboard"
+  max_time_fct: 2
+
+state_machine:
+  loglevel: *default_loglevel
+  middleware: "SimpleEventBasedJsspMiddleWare"
+  action_factory: "BinaryJobActionFactory"
+
+action_factory:
+  binary_job_action_action_factory:
+    loglevel: *default_loglevel
+
+middleware:
+  event_based_binary_action_middleware:
+    loglevel: *default_loglevel
+    truncation_joker: 5
+    truncation_active: false
+
+observation_factories:
+  binary_action_observation_factory:
+    loglevel: *default_loglevel
+
+reward_factories:
+  binary_action_jssp_reward:
+    loglevel: *default_loglevel
+    sparse_bias: 1 #[0,inf] float
+    dense_bias: 0.1 #[0,inf] float
+    truncation_bias: -10000 #[-inf,0] float
+
+
+render_backend:
+  render_in_dashboard:
+    loglevel: *default_loglevel
+    port: 8050
+    debug: false
+
+  simulation:
+    json_dump_dir: "data/tmp/simulation_interface.json"
+    port: 8051
+    loglevel: *default_loglevel
+    bind_all: false

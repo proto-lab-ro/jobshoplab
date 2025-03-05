@@ -1,0 +1,11 @@
+flowchart LR
+    ENV[gym.Env]
+    RENDER{env.render}
+    DEBUG[cli debug util]
+    SIMULATION[3d rendering]
+    DASH[gant chart]
+
+    ENV -->|history & instance| RENDER
+    RENDER -->|debug| DEBUG
+    RENDER -->|dashboard| DASH
+    RENDER -->|simulation| SIMULATION

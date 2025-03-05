@@ -1,0 +1,188 @@
+/* Dark mode styling for Mermaid diagrams */
+.mermaid .label {
+    color: #f8f8f2 !important;
+    font-family: 'trebuchet ms', verdana, arial, sans-serif !important;
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon,
+.mermaid .node path {
+    fill: #282a36 !important;
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid .edgePath .path {
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid .edgeLabel {
+    background-color: #282a36 !important;
+    color: #f8f8f2 !important;
+}
+
+.mermaid .cluster rect {
+    fill: #2d3748 !important;
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid .cluster text {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid div.mermaidTooltip {
+    background-color: #282a36 !important;
+    color: #f8f8f2 !important;
+    border: 1px solid #f8f8f2 !important;
+}
+
+.mermaid .actor {
+    stroke: #f8f8f2 !important;
+    fill: #282a36 !important;
+}
+
+.mermaid text.actor {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .actor-line {
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid .messageLine0 {
+    stroke-width: 1.5;
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid .messageLine1 {
+    stroke-width: 1.5;
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid #arrowhead {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .sequenceNumber {
+    fill: #282a36 !important;
+}
+
+.mermaid #sequencenumber {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid #crosshead path {
+    fill: #f8f8f2 !important;
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid .messageText {
+    fill: #f8f8f2 !important;
+    stroke: none;
+}
+
+.mermaid .labelBox {
+    stroke: #f8f8f2 !important;
+    fill: #282a36 !important;
+}
+
+.mermaid .labelText {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .loopText {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .loopLine {
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid .note {
+    stroke: #f8f8f2 !important;
+    fill: #282a36 !important;
+}
+
+.mermaid .noteText {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .section {
+    stroke: none;
+    opacity: 0.2;
+}
+
+.mermaid .section0 {
+    fill: #6272a4 !important;
+}
+
+.mermaid .section1,
+.mermaid .section2 {
+    fill: #8be9fd !important;
+}
+
+.mermaid .sectionTitle0 {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .sectionTitle1,
+.mermaid .sectionTitle2 {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .grid .tick {
+    stroke: #f8f8f2 !important;
+    opacity: 0.3;
+}
+
+.mermaid .today {
+    fill: none;
+    stroke: #ff5555 !important;
+    stroke-width: 2px;
+}
+
+.mermaid .taskText {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .taskTextOutsideRight {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid .taskTextOutsideLeft {
+    fill: #f8f8f2 !important;
+}
+
+/* Use a dark theme for state diagram */
+.mermaid g.stateGroup rect {
+    fill: #282a36 !important;
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid g.stateGroup text {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid g.statediagram-state rect {
+    fill: #282a36 !important;
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid g.statediagram-state text {
+    fill: #f8f8f2 !important;
+}
+
+.mermaid g.statediagram-cluster rect {
+    fill: #2d3748 !important;
+    stroke: #f8f8f2 !important;
+}
+
+/* For flowcharts */
+.mermaid .flowchart-link {
+    stroke: #f8f8f2 !important;
+}
+
+.mermaid:not([data-processed="true"]) {
+    visibility: hidden;
+}

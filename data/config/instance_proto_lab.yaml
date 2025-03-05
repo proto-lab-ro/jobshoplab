@@ -1,0 +1,42 @@
+title: InstanceConfig
+
+# Example of a 6x6 Instance
+# with AGVs
+
+instance_config:
+  description: "protolab config by felix where traveltimes are measured from scaliros webapp"
+  instance:
+    description: "6x6"
+    specification: |
+      (m0,t)|(m1,t)|(m2,t)|(m3,t)|(m4,t)|(m5,t)
+      j0|(2,1) (0,3) (1,6) (3,7) (5,3) (4,6)
+      j1|(1,8) (2,5) (4,10) (5,10) (0,10) (3,4)
+      j2|(2,5) (3,4) (5,8) (0,9) (1,1) (4,7)
+      j3|(1,5) (0,5) (2,5) (3,3) (4,8) (5,9)
+      j4|(2,9) (1,3) (4,5) (5,4) (0,3) (3,1)
+      j5|(1,3) (3,3) (5,9) (0,10) (4,4) (2,1)
+
+    transport:
+      type: "agv"
+      amount: 6
+
+  logistics: 
+    specification: |
+      m-0|m-1|m-2|m-3|m-4|m-5|in-buf|out-buf
+      m-0|0 21 16 9 37 41 19 19
+      m-1|21 0 13 15 17 23 8 8
+      m-2|16 13 0 13 23 28 7 7
+      m-3|9 15 13 0 31 35 14 14
+      m-4|37 17 23 31 0 7 25 25
+      m-5|41 23 28 35 7 0 24 24
+      in-buf|19 8 7 14 25 24 0 0
+      out-buf|19 8 7 14 25 24 0 0
+      
+init_state:
+  transport:
+    - location: "m-0"
+    - location: "m-1"
+    - location: "m-2"
+    - location: "m-3"
+    - location: "m-4"
+    - location: "m-5"

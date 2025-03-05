@@ -1,0 +1,34 @@
+flowchart LR
+    A["Dsl file"] --> D["DslRepo"]
+    D --> G["AbstractRepo"]
+    G --> H["Compiler"]
+    B["Spec file"] --> E["SpecRepo"]
+    E --> G
+    C["Dsl String"] --> F["DslStrRepo"]
+    F --> G
+    H --> I["Env"]
+
+    A@{ shape: doc}
+    B@{ shape: doc}
+     A:::Sky
+     A:::Ash
+     D:::Sky
+     D:::Ash
+     G:::Sky
+     G:::Ash
+     H:::Sky
+     H:::Ash
+     B:::Sky
+     B:::Ash
+     E:::Sky
+     E:::Ash
+     C:::Sky
+     C:::Ash
+     F:::Sky
+     F:::Ash
+     I:::Sky
+     I:::Ash
+    classDef Sky stroke-width:1px, stroke-dasharray:none, stroke:#374D7C, fill:#E2EBFF, color:#374D7C
+    classDef Ash stroke-width:1px, stroke-dasharray:none, stroke:#999999, fill:#EEEEEE, color:#000000
+
+

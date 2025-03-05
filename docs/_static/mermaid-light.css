@@ -1,0 +1,103 @@
+/* Light mode styling for Mermaid diagrams */
+.mermaid .label {
+    color: #333333 !important;
+    font-family: 'trebuchet ms', verdana, arial, sans-serif !important;
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon,
+.mermaid .node path {
+    fill: #f5f5f5 !important;
+    stroke: #333333 !important;
+    stroke-width: 1px !important;
+}
+
+.mermaid .edgePath .path {
+    stroke: #333333 !important;
+    stroke-width: 1.5px !important;
+}
+
+.mermaid .edgeLabel {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+}
+
+.mermaid .cluster rect {
+    fill: #f0f0f0 !important;
+    stroke: #999999 !important;
+    stroke-width: 1px !important;
+}
+
+.mermaid .cluster text {
+    fill: #333333 !important;
+}
+
+.mermaid div.mermaidTooltip {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border: 1px solid #bbbbbb !important;
+}
+
+/* Graph styles */
+.mermaid .flowchart-link {
+    stroke: #666666 !important;
+    stroke-width: 2px !important;
+}
+
+/* Improve contrast for flowchart text */
+.mermaid g.node .label {
+    font-weight: 500 !important;
+}
+
+/* Edge labels with better contrast */
+.mermaid .edgeLabel rect {
+    opacity: 0.8 !important;
+    fill: #ffffff !important;
+}
+
+/* Make subgraphs more distinct */
+.mermaid g.cluster rect {
+    rx: 5px !important;
+    ry: 5px !important;
+}
+
+/* Stronger arrows */
+.mermaid marker {
+    fill: #333333 !important;
+}
+
+/* For sequence diagrams */
+.mermaid .actor {
+    stroke: #333333 !important;
+    fill: #f5f5f5 !important;
+}
+
+.mermaid text.actor {
+    fill: #333333 !important;
+}
+
+.mermaid .actor-line {
+    stroke: #333333 !important;
+}
+
+.mermaid .messageLine0,
+.mermaid .messageLine1 {
+    stroke-width: 1.5;
+    stroke: #333333 !important;
+}
+
+/* Ensure visibility of node text */
+.mermaid .node .label foreignObject {
+    overflow: visible;
+}
+
+.mermaid text {
+    font-weight: 500 !important;
+}
+
+/* Default state for unprocessed diagrams */
+.mermaid:not([data-processed="true"]) {
+    visibility: hidden;
+}

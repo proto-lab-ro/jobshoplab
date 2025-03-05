@@ -1,0 +1,13 @@
+title: InstanceConfig
+
+# Example of a 3x3 Instance
+
+instance_config:
+  description: "example config"
+  instance:
+    description: "3x3"
+    specification: |
+      (m0,t)|(m1,t)|(m2,t)
+      j0|(0,3) (1,2) (2,2)
+      j1|(0,2) (2,1) (1,4)
+      j2|(1,4) (2,3) (0,3)

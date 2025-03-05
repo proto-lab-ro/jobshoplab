@@ -1,0 +1,1 @@
+from jobshoplab.env.rendering.gant_dashboard import render_in_dashboard
