@@ -106,11 +106,14 @@ JobShopLab is designed to work seamlessly with RL algorithms. It supports:
 
 ### Academic
 Academic instances found in Literature. Definitions can be found in `data/jssp_instances/*.yaml`
+| Instance | mwkr | spt  | lb   | rl |
+| -------- | ---- | ---- | ---- | ---- |
+| ft06     |      |      | 55   | 55   |
+| ft10     |      |      | 930  | 981  |
+| la16     | 1238 | 1588 | 945  | 978  |
+| ta01     | 1786 | 1872 | 1231 | 1231 |
+| ta41     | 2632 | 3067 | 2005 | 2496 |
 
-
-| Instance | fifo| mwkr | spt | rl| lb|
-|---------|---------|---------|---------|---------|---------|
-| ft06    | 83      | 85      | 85      | 76      |
 
 > Note on RL Results: results from Hyperparameter Optimizations 
 
