@@ -29,6 +29,8 @@ html_theme = "sphinx_immaterial"
 html_static_path = ["_static"]
 html_css_files = ["custom.css", "mermaid-dark.css", "mermaid-light.css"]
 html_title = "JobShopLab Documentation"
+html_favicon = "_static/favicon.png"
+html_logo = "_static/favicon.png"
 
 # Theme options
 html_theme_options = {
