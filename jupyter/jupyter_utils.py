@@ -6,25 +6,18 @@ from mermaid.graph import Graph
 
 
 def change_to_jobshoplab():
-    target_dir = "jobshoplab"
+    target_dir_content = "pyproject.toml"
     current_dir = os.getcwd()
 
     while True:
-        if os.path.basename(current_dir) == target_dir:
+        if current_dir == "/":
+            raise Exception("Repository root not found - reached system root")
+        if target_dir_content in os.listdir(current_dir):
             print(f"Already in the desired directory: {current_dir}")
             break
-        elif target_dir in os.listdir(current_dir):
-            os.chdir(os.path.join(current_dir, target_dir))
-            print(f"Changed directory to: {os.getcwd()}")
-            break
-        else:
-            parent_dir = os.path.dirname(current_dir)
-            if parent_dir == current_dir:  # Reached the root directory
-                raise FileNotFoundError(
-                    f"Directory '{target_dir}' not found in the directory tree."
-                )
-            current_dir = parent_dir
-            os.chdir(current_dir)
+        elif target_dir_content not in os.listdir(current_dir):
+            os.chdir("..")
+            current_dir = os.getcwd()
 
 
 def show_mermaid(dir):
