@@ -64,7 +64,7 @@ package-dir = {"" = "."}
 line-length = 100
 
 [project.urls]
-Repository = "https://inf-git.fh-rosenheim.de/proto-lab-2.0/jobshoplab"
+Repository = "https://github.com/proto-lab-ro/jobshoplab.git"
 
 [tool.pixi.project]
 channels = ["conda-forge"]
