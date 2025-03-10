@@ -4,7 +4,7 @@ import pytest
 
 from jobshoplab.env.factories.actions import BinaryJobActionFactory
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactory
+from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
 from jobshoplab.types.state_types import (
     MachineState,
     MachineStateState,
@@ -15,7 +15,7 @@ from jobshoplab.types.state_types import (
 from jobshoplab.utils.exceptions import ActionOutOfActionSpace
 
 
-def test_binary_action_action_factory(default_init_state_result, default_instance, config):
+def test_binary_action_factory(default_init_state_result, default_instance, config):
     action_factory = BinaryJobActionFactory(0, config, default_instance)
     action0 = 0
     action1 = 1

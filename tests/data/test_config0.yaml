@@ -38,7 +38,7 @@ middleware:
     truncation_active: False
     
 action_factory:
-  binary_job_action_action_factory:
+  binary_job_action_factory:
     loglevel: *default_loglevel
 
 observation_factory:

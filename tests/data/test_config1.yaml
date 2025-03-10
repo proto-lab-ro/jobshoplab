@@ -22,7 +22,7 @@ env:
   loglevel: *default_loglevel
   observation_factory: "BinaryActionObservationFactory"
   reward_factory: "BinaryActionJsspReward"
-  action_action_factory: "BinaryJobActionFactory"
+  action_factory: "BinaryJobActionFactory"
   render_backend: "render_in_dashboard"
   max_time_fct: 2
 
@@ -32,7 +32,7 @@ state_machine:
   action_factory: "BinaryJobActionFactory"
 
 action_factory:
-  binary_job_action_action_factory:
+  binary_job_action_factory:
     loglevel: *default_loglevel
 
 middleware:

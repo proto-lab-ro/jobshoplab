@@ -11,7 +11,7 @@ from jobshoplab.state_machine.core.state_machine.state import (
     step,
 )
 from jobshoplab.types import NoTime, State, Time
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactory
+from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
 from jobshoplab.types.state_types import (
     MachineStateState,
     OperationStateState,

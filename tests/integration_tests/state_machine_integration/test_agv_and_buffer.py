@@ -1,8 +1,8 @@
 from functools import partial
 
 from jobshoplab.state_machine.core.state_machine.state import step
-from jobshoplab.state_machine.time_machines import jump_by_one
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactory
+from jobshoplab.state_machine.time_machines import jump_to_event, jump_by_one
+from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
 from jobshoplab.types.instance_config_types import InstanceConfig
 from jobshoplab.types.state_types import (
     BufferStateState,
@@ -41,8 +41,12 @@ def get_next_action(state: State):
                         ),
                     )
     if len(transitions) > 0:
-        return Action(transitions, action_factory_info=ActionFactoryInfo.Valid)
-    return Action(tuple(), action_factory_info=ActionFactoryInfo.NoOperation)
+        return Action(
+            transitions, action_factory_info=ActionFactoryInfo.Valid, time_machine=jump_to_event
+        )
+    return Action(
+        tuple(), action_factory_info=ActionFactoryInfo.NoOperation, time_machine=jump_to_event
+    )
 
 
 class AgvAndBufferAssertions:
@@ -79,7 +83,6 @@ def test_agv_and_buffer(
     agv_and_buffer_instance,
     config,
 ):
-    time_machine = jump_by_one
     assertions = AgvAndBufferAssertions()
     for i in range(assertions.max_i):
         next_action = get_next_action(agv_and_buffer_state)
@@ -89,6 +92,5 @@ def test_agv_and_buffer(
             config,
             agv_and_buffer_state,
             action=next_action,
-            time_machine=time_machine,
         )
         assertions.get_assert_for_i(i, _agv_and_buffer_state.state)

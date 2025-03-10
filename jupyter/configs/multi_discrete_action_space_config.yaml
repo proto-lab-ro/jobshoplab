@@ -22,7 +22,7 @@ env:
   loglevel: *default_loglevel
   observation_factory: "BinaryActionObservationFactory"
   reward_factory: "BinaryActionJsspReward"
-  action_action_factory: "MultiDiscreteActionSpaceFactory"
+  action_factory: "MultiDiscreteActionSpaceFactory"
   render_engine: "plot_gant"
   max_time_fct: 2
 

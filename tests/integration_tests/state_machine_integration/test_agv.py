@@ -4,7 +4,7 @@ import pytest
 
 from jobshoplab.state_machine.core.state_machine import step
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactory
+from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
 from jobshoplab.types.instance_config_types import (
     DeterministicDurationConfig,
     JobConfig,
@@ -34,7 +34,9 @@ def test_start_agv_job0_to_machine0(agv_instance, default_init_state, config, ag
         config=config,
         state=default_init_state,
         action=Action(
-            (agv_transition,), action_factory_info=ActionFactory.Dummy, time_machine=jump_to_event
+            (agv_transition,),
+            action_factory_info=ActionFactoryInfo.Dummy,
+            time_machine=jump_to_event,
         ),
     )
 
@@ -54,7 +56,11 @@ def test_start_start_j0_at_m0(agv_instance, default_init_state, config, agv_tran
     job0 = replace(default_init_state.jobs[0], location="m-1")
     default_init_state = replace(default_init_state, jobs=(job0, *default_init_state.jobs[1:]))
 
-    action_do_job0 = Action(transitions=(comp_transition,), action_factory_info=ActionFactory.Dummy)
+    action_do_job0 = Action(
+        transitions=(comp_transition,),
+        action_factory_info=ActionFactoryInfo.Dummy,
+        time_machine=jump_to_event,
+    )
 
     with pytest.raises(ValueError):
         state_result = step(
@@ -63,12 +69,15 @@ def test_start_start_j0_at_m0(agv_instance, default_init_state, config, agv_tran
             config=config,
             state=default_init_state,
             action=action_do_job0,
-            time_machine=jump_to_event,
         )
 
     t0_j0 = agv_transition
 
-    action_t0_jo = Action(transitions=(t0_j0,), action_factory_info=ActionFactory.Dummy)
+    action_t0_jo = Action(
+        transitions=(t0_j0,),
+        action_factory_info=ActionFactoryInfo.Dummy,
+        time_machine=jump_to_event,
+    )
 
     state_result = step(
         loglevel="DEBUG",
@@ -76,7 +85,6 @@ def test_start_start_j0_at_m0(agv_instance, default_init_state, config, agv_tran
         config=config,
         state=default_init_state,
         action=action_t0_jo,
-        time_machine=jump_to_event,
     )
 
     assert state_result.state.jobs[0].location == "t-0"
@@ -90,8 +98,7 @@ def test_start_start_j0_at_m0(agv_instance, default_init_state, config, agv_tran
         instance=agv_instance,
         config=config,
         state=state_result.state,
-        action=Action((), action_factory_info=ActionFactory.Dummy),
-        time_machine=jump_to_event,
+        action=Action((), action_factory_info=ActionFactoryInfo.Dummy, time_machine=jump_to_event),
     )
 
     assert state_result.state.time == Time(5)
@@ -107,7 +114,6 @@ def test_start_start_j0_at_m0(agv_instance, default_init_state, config, agv_tran
         config=config,
         state=state_result.state,
         action=action_do_job0,
-        time_machine=jump_to_event,
     )
 
     op1_state = replace(

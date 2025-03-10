@@ -5,16 +5,23 @@ from pathlib import Path
 
 
 @dataclass(frozen=True)
-class RenderBackend:
-    render_in_dashboard: "RenderInDashboard"
-    simulation: "Simulation"
+class RenderInDashboard:
+    loglevel: str
+    port: int
+    debug: bool
 
 
 @dataclass(frozen=True)
-class EventBasedBinaryActionMiddleware:
+class BinaryJobActionFactory:
     loglevel: str
-    truncation_joker: int
-    truncation_active: bool
+
+
+@dataclass(frozen=True)
+class BinaryActionJsspReward:
+    loglevel: str
+    sparse_bias: int
+    dense_bias: float
+    truncation_bias: int
 
 
 @dataclass(frozen=True)
@@ -30,28 +37,15 @@ class Env:
 
 
 @dataclass(frozen=True)
-class BinaryActionJsspReward:
-    loglevel: str
-    sparse_bias: int
-    dense_bias: float
-    truncation_bias: int
+class RenderBackend:
+    render_in_dashboard: "RenderInDashboard"
+    simulation: "Simulation"
+    cli_table: "CliTable"
 
 
 @dataclass(frozen=True)
-class Compiler:
+class CliTable:
     loglevel: str
-    repo: str
-    validator: str
-    manipulators: tuple[str]
-    dsl_repository: "DslRepository"
-    spec_repository: "SpecRepository"
-
-
-@dataclass(frozen=True)
-class RenderInDashboard:
-    loglevel: str
-    port: int
-    debug: bool
 
 
 @dataclass(frozen=True)
@@ -60,13 +54,23 @@ class RewardFactory:
 
 
 @dataclass(frozen=True)
-class BinaryJobActionActionFactory:
-    loglevel: str
+class ObservationFactory:
+    binary_action_observation_factory: "BinaryActionObservationFactory"
 
 
 @dataclass(frozen=True)
 class BinaryActionObservationFactory:
     loglevel: str
+
+
+@dataclass(frozen=True)
+class DslRepository:
+    dir: str
+
+
+@dataclass(frozen=True)
+class Middleware:
+    event_based_binary_action_middleware: "EventBasedBinaryActionMiddleware"
 
 
 @dataclass(frozen=True)
@@ -78,13 +82,18 @@ class Simulation:
 
 
 @dataclass(frozen=True)
-class ActionFactory:
-    binary_job_action_action_factory: "BinaryJobActionActionFactory"
+class SpecRepository:
+    dir: str
 
 
 @dataclass(frozen=True)
-class StateMachine:
+class Compiler:
     loglevel: str
+    repo: str
+    validator: str
+    manipulators: tuple[str]
+    dsl_repository: "DslRepository"
+    spec_repository: "SpecRepository"
 
 
 @dataclass(frozen=True)
@@ -102,23 +111,20 @@ class Config:
 
 
 @dataclass(frozen=True)
-class SpecRepository:
-    dir: str
+class EventBasedBinaryActionMiddleware:
+    loglevel: str
+    truncation_joker: int
+    truncation_active: bool
 
 
 @dataclass(frozen=True)
-class Middleware:
-    event_based_binary_action_middleware: "EventBasedBinaryActionMiddleware"
+class ActionFactory:
+    binary_job_action_factory: "BinaryJobActionFactory"
 
 
 @dataclass(frozen=True)
-class DslRepository:
-    dir: str
-
-
-@dataclass(frozen=True)
-class ObservationFactory:
-    binary_action_observation_factory: "BinaryActionObservationFactory"
+class StateMachine:
+    loglevel: str
 
 
 def load_config(config_path: str) -> Config: ...

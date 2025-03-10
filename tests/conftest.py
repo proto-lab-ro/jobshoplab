@@ -488,7 +488,7 @@ def target_simple_jssp_obs_space():
             "current_time": gym.spaces.Box(low=0, high=1, shape=(1,), dtype=np.float32),
         }
     )
-    return gym.spaces.Dict(spaces)
+    return spaces
 
 
 @pytest.fixture
@@ -685,7 +685,11 @@ def action_start_t0_for_j0():
     comp_transition = ComponentTransition(
         component_id="t-0", new_state=TransportStateState.WORKING, job_id="j-0"
     )
-    return Action(transitions=(comp_transition,), action_factory_info=ActionFactoryInfo.Dummy)
+    return Action(
+        transitions=(comp_transition,),
+        action_factory_info=ActionFactoryInfo.Dummy,
+        time_machine=jump_to_event,
+    )
 
 
 @pytest.fixture
@@ -701,13 +705,13 @@ def actions_allowed_at_time_dict():
         component_id="m-1", new_state=MachineStateState.WORKING, job_id="j-2"
     )
 
-    a0 = Action((m0_j0, m1_j2), ActionFactoryInfo.Dummy)
+    a0 = Action((m0_j0, m1_j2), ActionFactoryInfo.Dummy, time_machine=jump_to_event)
 
     m0_j1 = ComponentTransition(
         component_id="m-0", new_state=MachineStateState.WORKING, job_id="j-1"
     )
 
-    a1 = Action((m0_j1,), ActionFactoryInfo.Dummy)
+    a1 = Action((m0_j1,), ActionFactoryInfo.Dummy, time_machine=jump_to_event)
 
     return {0: a0, 3: a1}
 
@@ -725,7 +729,7 @@ def invalid_first_action():
         component_id="m-0", new_state=MachineStateState.WORKING, job_id="j-1"
     )
 
-    return Action((m0_j0, m0_j0), ActionFactoryInfo.Dummy)
+    return Action((m0_j0, m0_j0), ActionFactoryInfo.Dummy, time_machine=jump_to_event)
 
 
 @pytest.fixture
