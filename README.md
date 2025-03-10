@@ -9,7 +9,7 @@
 </p>
 
 
-JobShopLab is a flexible and modular framework designed to advance research and development in job shop scheduling using Reinforcement Learning (RL) techniques. It provides an adaptable gym environment, enabling users to test and benchmark different scheduling algorithms under realistic constraints found in industrial settings.
+JobShopLab is a flexible and modular framework designed to advance research and development in job shop scheduling using Reinforcement Learning (RL) techniques. It provides an adaptable Gym environment, enabling users to test and benchmark different scheduling algorithms under realistic constraints found in industrial settings.
 
 ## Features
 
@@ -21,7 +21,10 @@ JobShopLab is a flexible and modular framework designed to advance research and 
 
 ## Installation
 
-To install JobShopLab, clone the repository and install it in editable mode using `pip`. It is recommended to use a venv.
+> JobShopLab requires Python 3.12 or higher.
+
+
+To install JobShopLab, clone the repository and install it in editable mode using `pip`.
 
 ```bash
 
@@ -33,14 +36,11 @@ git clone git@github.com:proto-lab-ro/jobshoplab.git
 # or https
 git clone https://github.com/proto-lab-ro/jobshoplab.git
 
-# activate venv
-source <venv-activate>
-
-# install from source
+# install python module in edible mode
 pip install -e <repo_dir>
 ```
 
-Replace `<desired_dir>` with your target directory, `<venv-activate>` with the path to your virtual environment activation script, and `<repo_dir>` with the path to your local clone of the JobShopLab repository.
+Replace `<desired_dir>` with your target directory and `<repo_dir>` with the path to your local clone of the JobShopLab repository.
 
 ## Getting Started
 

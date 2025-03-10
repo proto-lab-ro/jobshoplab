@@ -1,4 +1,4 @@
-.. JobShopLab documentation master file
+JobShopLab documentation master file
 
 ================================
 JobShopLab:
@@ -24,7 +24,7 @@ Features
 Installation
 ------------
 
-To install JobShopLab, clone the repository and install it in editable mode using `pip`. It is recommended to use a venv.
+To install JobShopLab, clone the repository and install it in editable mode using `pip`.
 
 .. code-block:: bash
 
@@ -35,17 +35,16 @@ To install JobShopLab, clone the repository and install it in editable mode usin
 
     # or https
     git clone https://github.com/proto-lab-ro/jobshoplab.git
-
-    # activate venv
-    source <venv-activate>
-
     # install from source
     pip install -e <repo_dir>
 
-Replace `<desired_dir>` with your target directory, `<venv-activate>` with the path to your virtual environment activation script, and `<repo_dir>` with the path to your local clone of the JobShopLab repository.
+Replace `<desired_dir>` with your target directory and `<repo_dir>` with the path to your local clone of the JobShopLab repository.
 
 Getting Started
 ---------------
+
+.. hint::
+   JobShopLab requires Python 3.12 or higher.
 
 After installation, you can initialize and interact with JobShopLab in your Python scripts as follows:
 
