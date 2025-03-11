@@ -165,5 +165,3 @@ JobShopLab supports advanced features including:
 - **Stochastic processing**: Distribution-based processing durations 
 - **Machine breakdowns**: Scheduled or random downtime events
 - **Alternative process plans**: Multiple operation sequences for jobs
-
-See the DSL documentation for more details on these features.

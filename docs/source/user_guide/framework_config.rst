@@ -109,7 +109,7 @@ Translates agent actions into scheduling decisions:
         # Interpreter-specific settings
 
 Middleware
-^^^^^^^^^
+^^^^^^^^^^^
 
 Controls state machine interaction and time management:
 
@@ -121,7 +121,7 @@ Controls state machine interaction and time management:
         truncation_active: False  # Whether to truncate after invalid actions
 
 Render Backend
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 Configures visualization:
 

@@ -12,13 +12,17 @@ JobShopLab supports three main visualization backends:
 2. **Debug CLI**: Rich text-based visualization for debugging
 3. **Simulation**: 3D visualization of the production environment
 
-.. mermaid::
 
+
+.. raw:: html
+
+   <div class="mermaid">
    graph LR
        Env[Environment] --> |history & instance| Render[env.render]
        Render -->|debug| Debug[CLI Debug Util]
        Render -->|dashboard| Gantt[Gantt Chart]
        Render -->|simulation| Simulation[3D Rendering]
+   </div>
 
 Basic Usage
 ----------
@@ -84,13 +88,13 @@ Dashboard Features:
 - Color-coded jobs and machines
 - Zooming and panning
 - Detailed tooltips with operation information
-- Machine utilization statistics
-- Critical path highlighting
+- Table view of job and machine status
+
 
 When using the dashboard:
 
 - The dashboard runs as a web application on the specified port (default: 8050)
-- In Jupyter notebooks, it displays inline if supported
+- In Jupyter notebooks, it displays inline
 - Otherwise, it opens in your default web browser
 
 CLI Debug Visualization
@@ -136,46 +140,3 @@ This visualization helps understand:
 - Spatial aspects of scheduling
 - Transport logistics
 - Resource contentions
-
-Programmatic Access to Visualization Data
----------------------------------------
-
-For custom visualizations, you can access the raw schedule data:
-
-.. code-block:: python
-
-    # Get schedule data
-    history = env.state_simulator.history
-    
-    # Extract operation timestamps
-    operations = []
-    for event in history:
-        if event.transition_type == "COMPLETE_OPERATION":
-            job_id = event.job_id
-            machine_id = event.machine_id
-            start_time = event.start_time
-            end_time = event.time
-            
-            operations.append({
-                "job": job_id,
-                "machine": machine_id,
-                "start": start_time,
-                "end": end_time
-            })
-    
-    # Use with your preferred plotting library
-    import matplotlib.pyplot as plt
-    # ... custom visualization code ...
-
-Interpretation Guidelines
------------------------
-
-When analyzing visualized schedules, look for:
-
-1. **Critical path**: The sequence of operations that determines the makespan
-2. **Bottleneck resources**: Machines with highest utilization
-3. **Idle times**: Periods where machines are unused
-4. **Transport delays**: Time spent moving between operations
-5. **Buffer blockages**: Jobs waiting due to full buffers
-
-Understanding these patterns can help identify opportunities for improving scheduling policies.

@@ -14,13 +14,7 @@ Development Setup
 
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
-    pip install -e ".[dev]"
-
-4. Set up pre-commit hooks:
-
-.. code-block:: bash
-
-    pre-commit install
+    pip install -e .[dev]
 
 Code Style
 ---------
@@ -29,7 +23,6 @@ JobShopLab follows these coding conventions:
 
 - **Python**: Python 3.12+
 - **Formatting**: Black with line-length=100
-- **Imports**: Standard lib ’ Third-party ’ Local (alphabetically sorted within each)
 - **Naming**:
   - snake_case for functions/variables
   - PascalCase for classes
@@ -55,26 +48,6 @@ Example of a well-formatted function with docstring:
         """
         return a * b
 
-Running Tests
------------
-
-Before submitting a pull request, ensure all tests pass:
-
-.. code-block:: bash
-
-    # Run all tests
-    pytest
-    
-    # Run specific test categories
-    pytest tests/unit_tests/
-    pytest tests/integration_tests/
-    pytest tests/end_to_end_tests/
-    
-    # Run a specific test
-    pytest tests/path/to/test_file.py::test_function_name
-    
-    # Get test coverage
-    scripts/get_test_coverage.sh
 
 Pull Request Process
 -----------------
@@ -131,48 +104,8 @@ To build and preview the documentation locally:
     cd docs
     
     # Build the documentation
-    make html
-    
-    # Open in browser
-    # On Linux/macOS
-    open _build/html/index.html
-    # On Windows
-    start _build/html/index.html
+    make clean && make html
 
-Adding New Components
-------------------
-
-When adding new component types:
-
-Factory Components
-^^^^^^^^^^^^^^^
-
-For new observation factories, reward factories, or action interpreters:
-
-1. Create a new class extending the appropriate base class
-2. Implement all required methods
-3. Register the factory using the registration function
-4. Add tests for the new factory
-5. Document the factory and its parameters
-
-Example for registering a new observation factory:
-
-.. code-block:: python
-
-    from jobshoplab.env.factories import register_observation_factory
-    
-    # Register the factory
-    register_observation_factory("CustomObservationFactory", CustomObservationFactory)
-
-State Machine Extensions
-^^^^^^^^^^^^^^^^^^^^^
-
-For extending the state machine:
-
-1. Add new state types to the appropriate files in `jobshoplab/types/`
-2. Create handlers for the new state components
-3. Update validators as needed
-4. Add tests covering the new functionality
 
 Bug Reports
 ---------
@@ -180,11 +113,10 @@ Bug Reports
 When reporting bugs:
 
 1. Check if the bug has already been reported
-2. Use the bug report template
-3. Include a clear description of the bug
-4. Provide steps to reproduce the issue
-5. Include expected and actual behavior
-6. Add information about your environment (Python version, OS, etc.)
+2. Include a clear description of the bug
+3. Provide steps to reproduce the issue
+4. Include expected and actual behavior
+5. Add information about your environment (Python version, OS, etc.)
 
 Feature Requests
 --------------
@@ -192,11 +124,5 @@ Feature Requests
 When suggesting new features:
 
 1. Check if the feature has already been suggested
-2. Use the feature request template
-3. Clearly describe the feature and its benefits
-4. Provide examples of how the feature would be used
-
-Code of Conduct
--------------
-
-Please note that JobShopLab has a Code of Conduct. By participating in this project, you agree to abide by its terms.
+2. Clearly describe the feature and its benefits
+3. Provide examples of how the feature would be used

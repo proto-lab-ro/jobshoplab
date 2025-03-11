@@ -22,7 +22,8 @@ The DSL is processed by the compiler, which generates the internal problem repre
    <div class="mermaid">
    graph TD
        DSL[DSL File] --> Compiler
-       Compiler --> Validator[Validator]
+       Compiler --> Repository
+       Repository --> Validator[Validator]
        Compiler --> Manipulator[Manipulators]
        Validator --> Instance[Instance Config]
        Manipulator --> Instance
@@ -155,7 +156,3 @@ Define limited buffer capacities:
       global_output_buffer:
         capacity: 5
 
-Custom Extensions
----------------
-
-The DSL is extensible, allowing users to define custom components through the compiler's manipulator system. This enables domain-specific extensions while maintaining compatibility with the core framework.

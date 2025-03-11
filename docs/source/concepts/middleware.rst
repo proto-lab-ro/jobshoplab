@@ -65,7 +65,6 @@ Middleware controls how time progresses in the simulation:
 
 1. **Event-based**: Time jumps directly to the next event
 2. **Continuous**: Time advances in fixed increments
-3. **Mixed**: Combination of event-based and continuous modes
 
 This is implemented through "time machines" that calculate the next state based on different time progression models.
 
@@ -98,6 +97,13 @@ JobShopLab provides different middleware implementations for various use cases:
 Event-Based Binary Action Middleware
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. info::
+    The Event-Based Binary Action Middleware, breaks the complex flow into descrete decisions.
+    It has a binary action space, where the agent selects whether to schedule a job/transport or not.
+    It utilities event-based time progression and supports truncation behavior.
+    The Time is progresses only if all possible actions where considered by the agent.
+
+
 The most common middleware type, suitable for discrete action spaces:
 
 .. code-block:: yaml
@@ -115,20 +121,6 @@ Features:
 - Uses event-based time progression
 - Configurable truncation behavior
 
-Multi-Discrete Action Middleware
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For environments with more complex action spaces:
-
-.. code-block:: yaml
-
-    env:
-      middleware: "MultiDiscreteActionMiddleware"
-
-Features:
-- Supports multi-dimensional discrete action spaces
-- Allows more complex decision-making
-- Compatible with different observation factories
 
 Customizing Middleware
 -------------------
@@ -166,9 +158,8 @@ Configure middleware behavior through these parameters:
       event_based_binary_action_middleware:
         truncation_joker: 5       # Actions allowed after invalid action
         truncation_active: False  # Whether to truncate on invalid actions
-        time_machine: "EventBasedTimeMachine"  # Time progression model
+
 
 These parameters control:
 - How invalid actions are handled
-- How simulated time progresses
 - When episodes terminate

@@ -78,9 +78,9 @@ JobShopLab implements a comprehensive configuration system with two primary type
    - Buffer settings
 
 Configuration is parsed into immutable dataclass objects providing:
-- Type validation
-- Dot notation access
-- IDE autocompletion support
+   - Type validation
+   - Dot notation access
+   - IDE autocompletion support
 
 .. raw:: html
 

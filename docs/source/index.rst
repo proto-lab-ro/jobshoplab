@@ -1,10 +1,7 @@
-JobShopLab documentation master file
-
 ================================
-JobShopLab:
+JobShopLab
 ================================
-
-.. image:: ../docs/assets/JobShopLabLogo.svg
+.. image:: ../../assets/JobShopLabLogo.svg
    :width: 150px
    :align: center
    :alt: JobShopLab Logo
@@ -35,7 +32,7 @@ To install JobShopLab, clone the repository and install it in editable mode usin
 
     # or https
     git clone https://github.com/proto-lab-ro/jobshoplab.git
-    # install from source
+  # install python module in edible mode
     pip install -e <repo_dir>
 
 Replace `<desired_dir>` with your target directory and `<repo_dir>` with the path to your local clone of the JobShopLab repository.
@@ -43,7 +40,7 @@ Replace `<desired_dir>` with your target directory and `<repo_dir>` with the pat
 Getting Started
 ---------------
 
-.. hint::
+.. note::
    JobShopLab requires Python 3.12 or higher.
 
 After installation, you can initialize and interact with JobShopLab in your Python scripts as follows:
@@ -83,7 +80,7 @@ We also provide a **Getting Started Jupyter Notebook** that walks you through th
 ..    </div>
 
 Framework Overview
------------------
+-------------------
 
 JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by integrating real-world production constraints and enabling RL-based optimization. It provides a state-machine-based simulation model that includes:
 
@@ -93,30 +90,45 @@ JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by integrati
 
 Experiments
 -----------
-To validate the framework, we trained an RL agent and compared its scheduling performance against traditional Priority Dispatch Rules (PDRs). Using the PPO algorithm from Stable Baselines3, the agent learned to optimize makespan efficiently. Compared to heuristic methods like Shortest Processing Time (SPT) and Most Work Remaining (MWKR), the RL-based approach achieved superior scheduling performance, even under additional constraints like buffer and transport limitations.
-
+To validate the framework, we trained an RL agent and compared its scheduling performance against traditional Priority Dispatch Rules (PDRs). Using the PPO algorithm from Stable Baselines3, the agent learned to optimize makespan efficiently. Compared to heuristic methods like Shortest Processing Time (SPT) and Most Work Remaining (MWKR), the RL-based approach achieves superior scheduling performance out of the box, in the standard academic cases and also with significantly increased complexity due to additional constraints such as buffer and transport constraints.
 **Academic Instances**
 Academic instances found in Literature. Definitions can be found in `data/jssp_instances/*.yaml`
 
-.. image:: ../docs/assets/results_validation.svg
+.. image:: ../../assets/results_validation.svg
    :width: 400px
    :align: left
    :alt: RL vs. Heuristic Comparison for Academic Instances
 
-*Note on RL Results*: results from Hyperparameter Optimizations 
+*Note on RL Results*: Results from individual hyperparameter optimizations 
 
 **Extendet real-world constrains**
 *Academic instances with arbitrary transport times between machines
 definitions can be found in 
 `data/instances/jssptransport/*.yaml`
 
-.. image:: ../docs/assets/results_verification.svg
+.. image:: ../../assets/results_verification.svg
    :width: 400px
    :align: left
    :alt: RL vs. Heuristic Comparison for Real-World Instances
 
-*Note on RL Results*: training was performed with one set of Hyperparameter over all instances
+*Note on RL Results*: training was performed with one set of hyperparameter over all instances
 
+Testing
+--------
+
+JobShopLab uses pytest for testing. The test suite includes unit tests, integration tests, and end-to-end tests.
+
+To run the tests, execute the following commands:
+
+.. code-block:: bash
+
+    # Run all tests
+    pytest
+    # Run tests with coverage report
+    ./scripts/get_test_coverage.sh
+    # Run specific test categories
+    pytest tests/unit_tests/
+    pytest tests/integration_tests/
 
 Contributing
 ------------
@@ -134,45 +146,38 @@ How to Contribute
 
 Contents
 --------
+.. toctree::
+   :maxdepth: 1
+   :caption: Userguide
+
+   user_guide/getting_started
+   user_guide/framework_config
+   user_guide/custom_instances
+   user_guide/custom_rewards
+   user_guide/custom_observations
+   user_guide/visualisation
+   user_guide/testing
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Tutorials
-   
-   tutorials/framework_config
-   tutorials/custom_instances
-   tutorials/custom_rewards
-   custom_observations
-   tutorials/visualisation
-
-.. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Concepts
    
    concepts/design_choices
    concepts/state_machine
+   concepts/middleware
    concepts/the_dsl
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: API Reference
-   
-   modules
-   dsl_reference
+
+   _modules/modules
+
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Additional Resources
-   
-   contributing
-   authors
-..
-   testing
 
-..
-   Indices and tables
-   -----------------
-
-   * :ref:`genindex`
-   * :ref:`modindex`
-   * :ref:`search`
+   additional_resources/contributing
+   additional_resources/next_steps
+   additional_resources/authors

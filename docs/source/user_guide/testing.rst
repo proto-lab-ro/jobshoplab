@@ -104,14 +104,6 @@ When writing tests for JobShopLab, follow these guidelines:
            with pytest.raises(InvalidTransitionError):
                state_machine.transition(invalid_action)
 
-4. **Use parameterized tests for multiple scenarios**
-
-   .. code-block:: python
-
-       @pytest.mark.parametrize("num_machines,num_jobs", [(2, 2), (3, 3), (5, 10)])
-       def test_various_problem_sizes(num_machines, num_jobs):
-           config = create_config(num_machines, num_jobs)
-           # Test implementation
 
 Test Data
 ---------
@@ -124,10 +116,6 @@ Test data is stored in ``tests/data/`` and includes:
 
 When adding new features, ensure that appropriate test data is included.
 
-CI/CD Integration
-----------------
-
-When contributing to JobShopLab, ensure all tests pass before submitting pull requests. The CI pipeline will run the test suite automatically on each commit.
 
 Troubleshooting Tests
 --------------------

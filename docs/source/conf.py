@@ -108,7 +108,6 @@ autosectionlabel_maxdepth = 2
 # -- Object description options -----------------------------------------
 object_description_options = [
     ("py:.*", dict(wrap_signatures_with_css=True)),
-    ("cpp:.*", dict(clang_format_style={"BasedOnStyle": "LLVM"})),
 ]
 
 # -- Search configuration ----------------------------------------------
