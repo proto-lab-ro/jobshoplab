@@ -57,6 +57,9 @@ doc = [
 ]
 
 dev = [
+    "sphinx", 
+    "sphinx-immaterial", 
+    "sphinxcontrib-mermaid",
     "pytest",
     "black",
     "isort"]

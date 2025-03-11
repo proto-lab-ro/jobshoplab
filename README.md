@@ -71,7 +71,7 @@ We also provide a **Getting Started Jupyter Notebook** that walks you through th
 
 ## Framework Overview
 
-JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by integrating real-world production constraints and enabling RL-based optimization. It provides a state-machine-based simulation model that includes:
+JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by considering real-world production constraints and enabling RL-based optimization. It provides a state-machine-based simulation model that includes:
 
 - **Machines**: Modeled with setup times, breakdowns, and stochastic processing.
 - **Transport Units**: Handling job movements between machines with delays and constraints.
@@ -79,7 +79,7 @@ JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by integrati
 
 ## Experiments
 
-To validate the framework, we trained an RL agent and compared its scheduling performance against traditional Priority Dispatch Rules (PDRs). Using the PPO algorithm from Stable Baselines3, the agent learned to optimize makespan efficiently. Compared to heuristic methods like Shortest Processing Time (SPT) and Most Work Remaining (MWKR), the RL-based approach achieved superior scheduling performance, even under additional constraints like buffer and transport limitations.
+To validate the framework, we trained an RL agent and compared its scheduling performance against traditional Priority Dispatch Rules (PDRs). Using the PPO algorithm from Stable Baselines3, the agent learned to optimize makespan efficiently. Compared to heuristic methods like Shortest Processing Time (SPT) and Most Work Remaining (MWKR), the RL-based approach achieves superior scheduling performance out of the box, in the standard academic cases and also with significantly increased complexity due to additional constraints such as buffer and transport constraints.
 
 Academic instances found in Literature. Definitions can be found in `data/jssp_instances/*.yaml`
 
@@ -94,7 +94,7 @@ Academic instances found in Literature. Definitions can be found in `data/jssp_i
 | ta41     | 2632 | 3067 | 2005 | 2496 |
 
 
-> Note on RL Results: results from Hyperparameter Optimizations 
+> Note on RL Results: Results from individual hyperparameter optimizations 
 
 **Extendet real-world constrains**
 
@@ -135,11 +135,29 @@ definitions can be found in
 | la23-t  | 1617    | 1504    | 1450    | 1325    |
 | la24-t  | 1774    | 1616    | 1620    | 1277    |
 
-> Note on RL Results: training was performed with one set of Hyperparameter over all instances
+> Note on RL Results: Training was performed with one set of hyperparameter over all instances
+
+## Testing
+
+JobShopLab uses pytest for testing. The test suite includes unit tests, integration tests, and end-to-end tests.
+
+To run the test suite:
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage report
+./scripts/get_test_coverage.sh
+
+# Run specific test categories
+pytest tests/unit_tests/
+pytest tests/integration_tests/
+```
 
 ## Contributing
 
-We welcome contributions to JobShopLab! If you have ideas for improvements or bug fixes, feel free to submit an issue or pull request on our repository.
+We welcome contributions to JobShopLab! If you have ideas for improvements or bug fixes, feel free to submit an issue, or pull request on our repository.
 
 ### How to Contribute
 
