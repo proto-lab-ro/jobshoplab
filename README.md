@@ -3,10 +3,12 @@
 </div>
 
 # JobShopLab: A Scheduling Framework for Reinforcement Learning Under Real-World Constraints 
-<p align="center">
+<!-- <p align="center">
     <a href="https://lbesson.mit-license.org/" alt="Backers on Open Collective">
-        <img src="https://img.shields.io/badge/License-MIT-green.svg?logo=github" /></a>
-</p>
+        <img src="https://badgen.net/github/license/micromatch/micromatch" /></a>
+    <a href="https://proto-lab-ro.github.io/jobshoplab/" alt="Backers on Open Collective">
+        <img src="https://img.shields.io/readthedocs" /></a>
+</p> -->
 
 
 JobShopLab is a flexible and modular framework designed to advance research and development in job shop scheduling using Reinforcement Learning (RL) techniques. It provides an adaptable Gym environment, enabling users to test and benchmark different scheduling algorithms under realistic constraints found in industrial settings.
