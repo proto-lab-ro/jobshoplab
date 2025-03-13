@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 from gymnasium import spaces
 from heracless import load_config
+import gymnasium as gym
 
 from jobshoplab.env.env import JobShopLabEnv
 from jobshoplab.env.factories.observations import (
@@ -22,8 +23,11 @@ def test_simple_jssp_of_space(target_simple_jssp_obs_space, default_instance):
     simple_jssp_observation_factory = SimpleJsspObservationFactory(
         loglevel, config, default_instance  # type: ignore
     )
+
     assert type(simple_jssp_observation_factory.observation_space) == spaces.Dict
-    assert simple_jssp_observation_factory.observation_space == target_simple_jssp_obs_space
+    assert simple_jssp_observation_factory.observation_space == gym.spaces.Dict(
+        target_simple_jssp_obs_space
+    )
 
 
 def test_simple_jssp_obs(target_simple_jssp_obs, default_init_state_result, default_instance):
@@ -44,18 +48,16 @@ def test_binary_action_jssp_obs_space(
     binary_action_jssp_obs_factory = BinaryActionObservationFactory(
         loglevel, config, default_instance
     )
-    _spaces = target_simple_jssp_obs_space.spaces
+    _spaces = target_simple_jssp_obs_space
     _spaces["current_job"] = spaces.Discrete(4, start=0)
     _spaces["current_component_id"] = spaces.Discrete(7, start=0)
     _spaces["current_component_type"] = spaces.Discrete(3, start=0)
     _spaces.move_to_end("current_job")
     _spaces.move_to_end("current_component_id")
     _spaces.move_to_end("current_component_type")
+    _spaces = gym.spaces.Dict(_spaces)
     assert isinstance(binary_action_jssp_obs_factory.observation_space, spaces.Dict)
-    assert (
-        binary_action_jssp_obs_factory.observation_space.spaces
-        == target_simple_jssp_obs_space.spaces
-    )
+    assert binary_action_jssp_obs_factory.observation_space.spaces == target_simple_jssp_obs_space
 
 
 def test_binary_action_jssp_obs_done(

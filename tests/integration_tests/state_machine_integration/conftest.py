@@ -7,7 +7,7 @@ import pytest
 from jobshoplab.types.action_types import (
     Action,
     ComponentTransition,
-    ActionFactory,
+    ActionFactoryInfo,
     TransportStateState,
 )
 from jobshoplab.types.instance_config_types import (
@@ -17,6 +17,7 @@ from jobshoplab.types.instance_config_types import (
     InstanceConfig,
 )
 from jobshoplab.types.state_types import BufferState, BufferStateState, State
+from jobshoplab.state_machine.time_machines import jump_to_event
 
 
 @pytest.fixture
@@ -81,6 +82,7 @@ def agv_action(agv_transition):
     return Action(
         transitions=(agv_transition,),
         action_factory_info=ActionFactoryInfo.Valid,
+        time_machine=jump_to_event,
     )
 
 

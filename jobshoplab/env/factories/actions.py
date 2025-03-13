@@ -189,7 +189,7 @@ class MultiDiscreteActionSpaceFactory(ActionFactory):
         *args,
         **kwargs,
     ) -> Action:
-
+        raise NotImplementedError
         if not self.action_space.contains(action):
             raise ActionOutOfActionSpace(action, self.action_space)
 

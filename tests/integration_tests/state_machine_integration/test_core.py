@@ -4,7 +4,7 @@ import pytest
 
 from jobshoplab.state_machine.core.state_machine import step
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactory
+from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
 from jobshoplab.types.instance_config_types import (
     DeterministicDurationConfig,
     JobConfig,
@@ -53,7 +53,6 @@ def test_assign_job1_to_machine0(
         config=config,
         state=default_init_state,
         action=action_start_job0_on_machine0,
-        time_machine=partial(jump_to_event, jump_to_event),
     )
     op1_state = replace(
         default_init_state.jobs[0].operations[0],
@@ -145,7 +144,7 @@ def test_teleporter(default_instance, default_init_state, config):
         state=default_init_state,
         action=Action(
             (t0_j0, t1_j1),
-            ActionFactory.Dummy,
+            ActionFactoryInfo.Dummy,
             time_machine=jump_to_event,
         ),
     )

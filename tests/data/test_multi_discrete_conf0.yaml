@@ -18,9 +18,11 @@ env:
   loglevel: *default_loglevel
   observation_factory: "BinaryActionObservationFactory"
   reward_factory: "BinaryActionJsspReward"
-  action_action_factory: "MultiDiscreteActionSpaceFactory"
-  render_engine: "plot_gant"
-  max_time_fct: 2
+  action_factory: "MultiDiscreteActionSpaceFactory"
+  render_backend: "render_in_dashboard"
+  middleware: "EventBasedBinaryActionMiddleware"
+  max_time_fct: 2 # allowed fct for truncation max_time = lower_bound * max_time_fct where 2 is evaluated empirically
+  max_action_fct: 3 # truncation if there is num_actions >   max_action_fct * number of operations 
 
 state_machine:
   loglevel: *default_loglevel
@@ -32,19 +34,21 @@ action_factory:
     loglevel: *default_loglevel
 
 middleware:
-  multi_discrete_action_space_middleware:
+  event_based_binary_action_middleware:
     loglevel: *default_loglevel
+    truncation_joker: 5
+    truncation_active: false
 
 observation_factories:
   binary_action_observation_factory:
     loglevel: *default_loglevel
 
-reward_factories:
+reward_factory:
   binary_action_jssp_reward:
     loglevel: *default_loglevel
     sparse_bias: 1 #[0,inf] float
-    dense_bias: 0.1 #[0,inf] float
-    truncation_bias: -10000 #[-inf,0] float
+    dense_bias: 0.001 #[0,inf] float
+    truncation_bias: -1 #[-inf,0] float
 
 
 render_backend:
@@ -58,4 +62,8 @@ render_backend:
     port: 8051
     loglevel: *default_loglevel
     bind_all: false
+  
+  cli_table:
+    loglevel: *default_loglevel
+
 

@@ -26,7 +26,8 @@ jobs:
       - name: Build Sphinx Documentation
         run: |
           cd docs/
-          sphinx-apidoc -o . ..
+          make clean
+          sphinx-apidoc -o ./source/modules ../jobshoplab
           make html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

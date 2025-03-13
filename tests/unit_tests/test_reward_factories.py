@@ -3,7 +3,7 @@ from dataclasses import replace
 import pytest
 
 from jobshoplab.env.factories.rewards import BinaryActionJsspReward
-from jobshoplab.types.action_types import Action, ActionFactory
+from jobshoplab.types.action_types import Action, ActionFactoryInfo
 from jobshoplab.types.state_types import FailTime, StateMachineResult, Time
 from jobshoplab.utils.exceptions import InvalidValue
 from jobshoplab.utils.load_config import Config

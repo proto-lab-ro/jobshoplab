@@ -3,13 +3,20 @@
 </div>
 
 # JobShopLab: A Scheduling Framework for Reinforcement Learning Under Real-World Constraints 
-<p align="center">
+<!-- <p align="center">
     <a href="https://lbesson.mit-license.org/" alt="Backers on Open Collective">
-        <img src="https://img.shields.io/badge/License-MIT-green.svg?logo=github" /></a>
-</p>
+        <img src="https://badgen.net/github/license/micromatch/micromatch" /></a>
+    <a href="https://proto-lab-ro.github.io/jobshoplab/" alt="Backers on Open Collective">
+        <img src="https://img.shields.io/readthedocs" /></a>
+</p> -->
 
 
-JobShopLab is a flexible and modular framework designed to advance research and development in job shop scheduling using Reinforcement Learning (RL) techniques. It provides an adaptable gym environment, enabling users to test and benchmark different scheduling algorithms under realistic constraints found in industrial settings.
+JobShopLab is a flexible and modular framework designed to advance research and development in job shop scheduling using Reinforcement Learning (RL) techniques. It provides an adaptable Gym environment, enabling users to test and benchmark different scheduling algorithms under realistic constraints found in industrial settings.
+
+
+![3D Visualization](docs/assets/3d_sim.gif)
+
+The GIF above showcases our framework in action, visualizing an automated production process where an RL agent dynamically assigns task to machines and vehicles. Colored blocks represent orders moving through different production stations, while AI makes real-time decisions to optimize order allocation and scheduling.
 
 ## Features
 
@@ -21,7 +28,10 @@ JobShopLab is a flexible and modular framework designed to advance research and 
 
 ## Installation
 
-To install JobShopLab, clone the repository and install it in editable mode using `pip`. It is recommended to use a venv.
+> JobShopLab requires Python 3.12 or higher.
+
+
+To install JobShopLab, clone the repository and install it in editable mode using `pip`.
 
 ```bash
 
@@ -33,14 +43,11 @@ git clone git@github.com:proto-lab-ro/jobshoplab.git
 # or https
 git clone https://github.com/proto-lab-ro/jobshoplab.git
 
-# activate venv
-source <venv-activate>
-
-# install from source
+# install python module in edible mode
 pip install -e <repo_dir>
 ```
 
-Replace `<desired_dir>` with your target directory, `<venv-activate>` with the path to your virtual environment activation script, and `<repo_dir>` with the path to your local clone of the JobShopLab repository.
+Replace `<desired_dir>` with your target directory and `<repo_dir>` with the path to your local clone of the JobShopLab repository.
 
 ## Getting Started
 
@@ -71,7 +78,7 @@ We also provide a **Getting Started Jupyter Notebook** that walks you through th
 
 ## Framework Overview
 
-JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by integrating real-world production constraints and enabling RL-based optimization. It provides a state-machine-based simulation model that includes:
+JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by considering real-world production constraints and enabling RL-based optimization. It provides a state-machine-based simulation model that includes:
 
 - **Machines**: Modeled with setup times, breakdowns, and stochastic processing.
 - **Transport Units**: Handling job movements between machines with delays and constraints.
@@ -79,7 +86,7 @@ JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by integrati
 
 ## Experiments
 
-To validate the framework, we trained an RL agent and compared its scheduling performance against traditional Priority Dispatch Rules (PDRs). Using the PPO algorithm from Stable Baselines3, the agent learned to optimize makespan efficiently. Compared to heuristic methods like Shortest Processing Time (SPT) and Most Work Remaining (MWKR), the RL-based approach achieved superior scheduling performance, even under additional constraints like buffer and transport limitations.
+To validate the framework, we trained an RL agent and compared its scheduling performance against traditional Priority Dispatch Rules (PDRs). Using the PPO algorithm from Stable Baselines3, the agent learned to optimize makespan efficiently. Compared to heuristic methods like Shortest Processing Time (SPT) and Most Work Remaining (MWKR), the RL-based approach achieves superior scheduling performance out of the box, in the standard academic cases and also with significantly increased complexity due to additional constraints such as buffer and transport constraints.
 
 Academic instances found in Literature. Definitions can be found in `data/jssp_instances/*.yaml`
 
@@ -94,7 +101,7 @@ Academic instances found in Literature. Definitions can be found in `data/jssp_i
 | ta41     | 2632 | 3067 | 2005 | 2496 |
 
 
-> Note on RL Results: results from Hyperparameter Optimizations 
+> Note on RL Results: Results from individual hyperparameter optimizations 
 
 **Extendet real-world constrains**
 
@@ -114,32 +121,50 @@ definitions can be found in
 | la02-t  | 973     | 993     | 1023    | 782     |
 | la03-t  | 971     | 1098    | 945     | 789     |
 | la04-t  | 1122    | 1113    | 1113    | 828     |
-| la05-t  | 784     | 851     | 776     | 681     |
+| la05-t  | 784     | 851     | 776     | 642     |
 | la06-t  | 1405    | 1366    | 1240    | 1112    |
 | la07-t  | 1419    | 1332    | 1356    | 1127    |
 | la08-t  | 1363    | 1337    | 1357    | 1143    |
 | la09-t  | 1379    | 1403    | 1332    | 1120    |
 | la10-t  | 1295    | 1205    | 1226    | 1044    |
 | la11-t  | 1534    | 1689    | 1675    | 1409    |
-| la12-t  | 1552    | 1638    | 1447    | 1248    |
+| la12-t  | 1552    | 1638    | 1447    | 1240    |
 | la13-t  | 1782    | 1599    | 1689    | 1400    |
-| la14-t  | 2036    | 1954    | 1883    | 1712    |
+| la14-t  | 2036    | 1954    | 1883    | 1710    |
 | la15-t  | 1719    | 1752    | 1631    | 1512    |
 | la16-t  | 1502    | 1634    | 1338    | 1186    |
 | la17-t  | 1307    | 1318    | 1318    | 999     |
-| la18-t  | 1226    | 1235    | 1261    | 1089    |
-| la19-t  | 1147    | 1409    | 1129    | 1092    |
+| la18-t  | 1226    | 1235    | 1261    | 1079    |
+| la19-t  | 1147    | 1409    | 1129    | 1075    |
 | la20-t  | 1476    | 1359    | 1195    | 1123    |
-| la21-t  | 1675    | 1655    | 1575    | 1369    |
-| la22-t  | 1637    | 1920    | 1499    | 1340    |
+| la21-t  | 1675    | 1655    | 1575    | 1355    |
+| la22-t  | 1637    | 1920    | 1499    | 1341    |
 | la23-t  | 1617    | 1504    | 1450    | 1325    |
 | la24-t  | 1774    | 1616    | 1620    | 1277    |
 
-> Note on RL Results: training was performed with one set of Hyperparameter over all instances
+> Note on RL Results: Training was performed with one set of hyperparameter over all instances
+
+## Testing
+
+JobShopLab uses pytest for testing. The test suite includes unit tests, integration tests, and end-to-end tests.
+
+To run the test suite:
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage report
+./scripts/get_test_coverage.sh
+
+# Run specific test categories
+pytest tests/unit_tests/
+pytest tests/integration_tests/
+```
 
 ## Contributing
 
-We welcome contributions to JobShopLab! If you have ideas for improvements or bug fixes, feel free to submit an issue or pull request on our repository.
+We welcome contributions to JobShopLab! If you have ideas for improvements or bug fixes, feel free to submit an issue, or pull request on our repository.
 
 ### How to Contribute
 
