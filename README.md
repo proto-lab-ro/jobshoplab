@@ -15,6 +15,7 @@ JobShopLab is a flexible and modular framework designed to advance research and 
 
 
 ![3D Visualization](docs/assets/3d_sim.gif)
+
 The GIF above showcases our framework in action, visualizing an automated production process where an RL agent dynamically assigns task to machines and vehicles. Colored blocks represent orders moving through different production stations, while AI makes real-time decisions to optimize order allocation and scheduling.
 
 ## Features
