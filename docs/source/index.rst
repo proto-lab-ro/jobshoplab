@@ -1,14 +1,14 @@
 ================================
 JobShopLab
 ================================
-.. image:: ../../assets/JobShopLabLogo.svg
+.. image:: ../assets/JobShopLabLogo.svg
    :width: 150px
    :align: center
    :alt: JobShopLab Logo
 
 JobShopLab is a flexible and modular framework designed to advance research and development in job shop scheduling using Reinforcement Learning (RL) techniques. It provides an adaptable gym environment, enabling users to test and benchmark different scheduling algorithms under realistic constraints found in industrial settings.
 
-.. image:: ../../assets/3d_sim.gif
+.. image:: ../assets/3d_sim.gif
    :width: 400px
    :align: left
    :alt: 3D Simulation of JobShopLab
@@ -101,7 +101,7 @@ To validate the framework, we trained an RL agent and compared its scheduling pe
 **Academic Instances**
 Academic instances found in Literature. Definitions can be found in `data/jssp_instances/*.yaml`
 
-.. image:: ../../assets/results_validation.svg
+.. image:: ../assets/results_validation.svg
    :width: 400px
    :align: left
    :alt: RL vs. Heuristic Comparison for Academic Instances
@@ -113,7 +113,7 @@ Academic instances found in Literature. Definitions can be found in `data/jssp_i
 definitions can be found in 
 `data/instances/jssptransport/*.yaml`
 
-.. image:: ../../assets/results_verification.svg
+.. image:: ../assets/results_verification.svg
    :width: 400px
    :align: left
    :alt: RL vs. Heuristic Comparison for Real-World Instances
