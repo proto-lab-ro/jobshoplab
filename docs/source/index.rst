@@ -8,6 +8,13 @@ JobShopLab
 
 JobShopLab is a flexible and modular framework designed to advance research and development in job shop scheduling using Reinforcement Learning (RL) techniques. It provides an adaptable gym environment, enabling users to test and benchmark different scheduling algorithms under realistic constraints found in industrial settings.
 
+.. image:: ../../assets/3d_sim.gif
+   :width: 400px
+   :align: left
+   :alt: 3D Simulation of JobShopLab
+
+The GIF above showcases our framework in action, visualizing an automated production process where an RL agent dynamically assigns task to machines and vehicles. Colored blocks represent orders moving through different production stations, while AI makes real-time decisions to optimize order allocation and scheduling.
+
 
 Features
 ------------
