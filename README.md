@@ -13,6 +13,11 @@
 
 JobShopLab is a flexible and modular framework designed to advance research and development in job shop scheduling using Reinforcement Learning (RL) techniques. It provides an adaptable Gym environment, enabling users to test and benchmark different scheduling algorithms under realistic constraints found in industrial settings.
 
+
+![3D Visualization](docs/assets/3d_sim.gif)
+
+The GIF above showcases our framework in action, visualizing an automated production process where an RL agent dynamically assigns task to machines and vehicles. Colored blocks represent orders moving through different production stations, while AI makes real-time decisions to optimize order allocation and scheduling.
+
 ## Features
 
 - **Modular Gym Environment**: A customizable and extensible framework for testing diverse scheduling strategies and problem specifications.
@@ -116,24 +121,24 @@ definitions can be found in
 | la02-t  | 973     | 993     | 1023    | 782     |
 | la03-t  | 971     | 1098    | 945     | 789     |
 | la04-t  | 1122    | 1113    | 1113    | 828     |
-| la05-t  | 784     | 851     | 776     | 681     |
+| la05-t  | 784     | 851     | 776     | 642     |
 | la06-t  | 1405    | 1366    | 1240    | 1112    |
 | la07-t  | 1419    | 1332    | 1356    | 1127    |
 | la08-t  | 1363    | 1337    | 1357    | 1143    |
 | la09-t  | 1379    | 1403    | 1332    | 1120    |
 | la10-t  | 1295    | 1205    | 1226    | 1044    |
 | la11-t  | 1534    | 1689    | 1675    | 1409    |
-| la12-t  | 1552    | 1638    | 1447    | 1248    |
+| la12-t  | 1552    | 1638    | 1447    | 1240    |
 | la13-t  | 1782    | 1599    | 1689    | 1400    |
-| la14-t  | 2036    | 1954    | 1883    | 1712    |
+| la14-t  | 2036    | 1954    | 1883    | 1710    |
 | la15-t  | 1719    | 1752    | 1631    | 1512    |
 | la16-t  | 1502    | 1634    | 1338    | 1186    |
 | la17-t  | 1307    | 1318    | 1318    | 999     |
-| la18-t  | 1226    | 1235    | 1261    | 1089    |
-| la19-t  | 1147    | 1409    | 1129    | 1092    |
+| la18-t  | 1226    | 1235    | 1261    | 1079    |
+| la19-t  | 1147    | 1409    | 1129    | 1075    |
 | la20-t  | 1476    | 1359    | 1195    | 1123    |
-| la21-t  | 1675    | 1655    | 1575    | 1369    |
-| la22-t  | 1637    | 1920    | 1499    | 1340    |
+| la21-t  | 1675    | 1655    | 1575    | 1355    |
+| la22-t  | 1637    | 1920    | 1499    | 1341    |
 | la23-t  | 1617    | 1504    | 1450    | 1325    |
 | la24-t  | 1774    | 1616    | 1620    | 1277    |
 
