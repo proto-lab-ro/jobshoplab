@@ -8,9 +8,10 @@ Middleware Architecture
 
 The middleware layer sits between the gym interface and the state machine, performing several essential functions:
 
-.. mermaid::
+.. raw:: html
 
-   graph TD
+   <div class="mermaid">
+    graph TD
        Agent[RL Agent] -->|Actions| GymEnv[Gym Environment]
        GymEnv -->|Actions| Middleware
        Middleware -->|Transitions| StateMachine[State Machine]
@@ -19,8 +20,10 @@ The middleware layer sits between the gym interface and the state machine, perfo
        GymEnv -->|Observations| Agent
        Middleware -->|Uses| ObsFactory[Observation Factory]
        Middleware -->|Uses| RewardFactory[Reward Factory]
-       Middleware -->|Uses| ActionInterpreter[Action Interpreter]
-       Middleware -->|Uses| TimeMachine[Time Machine]
+       Middleware -->|Uses| ActionFactory[Action Factory]
+   </div>
+
+
 
 Key Responsibilities
 ------------------
@@ -28,7 +31,7 @@ Key Responsibilities
 The middleware has several core responsibilities:
 
 Action Translation
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 Middleware translates abstract gym actions into concrete state machine transitions:
 
@@ -148,7 +151,7 @@ Create custom middleware by subclassing the base middleware:
             pass
 
 Key Middleware Parameters
-----------------------
+-------------------------
 
 Configure middleware behavior through these parameters:
 
