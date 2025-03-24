@@ -115,6 +115,12 @@ For quick debugging or when working in terminal environments:
     # Show CLI table
     env.render(mode="debug")
 
+.. image:: ../../assets/richcli.png
+  :alt: Dashboard showing job schedules and machine utilization 
+  :width: 100%
+  :align: center
+
+
 The CLI visualization provides:
 
 - A text-based representation of the schedule
