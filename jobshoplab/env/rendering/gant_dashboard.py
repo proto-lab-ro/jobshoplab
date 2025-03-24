@@ -5,7 +5,7 @@ import time
 import uuid
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional, Union, Set, Iterator
 
 import dash_daq as daq
 import pandas as pd
@@ -31,8 +31,20 @@ from jobshoplab.utils.logger import get_logger
 
 
 class DashboardUtils:
+    """Utility class for dashboard operations."""
+
     @staticmethod
     def map_time(int_time: int, current_time: int) -> str:
+        """
+        Map integer time to real-time representation.
+
+        Args:
+            int_time: Integer time to be mapped.
+            current_time: Current time reference.
+
+        Returns:
+            Formatted time string in the format 'YYYY-MM-DD HH:MM:SS'.
+        """
         current_time += 1
         real_time = time.time()
         time_fct = real_time / current_time
@@ -41,17 +53,44 @@ class DashboardUtils:
 
     @staticmethod
     def is_port_in_use(port: int) -> bool:
+        """
+        Check if a port is in use.
+
+        Args:
+            port: Port number to check.
+
+        Returns:
+            True if port is in use, False otherwise.
+        """
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             return s.connect_ex(("localhost", port)) == 0
 
     @staticmethod
     def check_port(port: int) -> int:
+        """
+        Find an available port starting from the given port.
+
+        Args:
+            port: Starting port number to check.
+
+        Returns:
+            An available port number.
+        """
         while DashboardUtils.is_port_in_use(port):
             port += 1
         return port
 
     @staticmethod
     def has_transports(data: Dict[str, Any]) -> bool:
+        """
+        Check if the data contains transport information.
+
+        Args:
+            data: Dictionary containing state data.
+
+        Returns:
+            True if transport data is present and valid, False otherwise.
+        """
         try:
             return any(
                 item.get("duration", 0) > 0 for item in data.get("travel_times", {}).values()
@@ -61,8 +100,19 @@ class DashboardUtils:
 
 
 class DashboardDataMapper:
+    """Class responsible for mapping data for dashboard visualization."""
+
     @staticmethod
     def map_key_to_sort(key: str) -> int:
+        """
+        Map component keys to sort values for consistent ordering.
+
+        Args:
+            key: Component identifier key (e.g., 'j1', 'm2', 't3', 'b4').
+
+        Returns:
+            Integer value for sorting purposes.
+        """
         if key.startswith("j"):
             return int(key[2:])
         if key.startswith("m"):
@@ -74,7 +124,16 @@ class DashboardDataMapper:
         return 0
 
     @staticmethod
-    def get_color_mapping(keys: set) -> Dict[str, str]:
+    def get_color_mapping(keys: Set[str]) -> Dict[str, str]:
+        """
+        Create a color mapping for different component types.
+
+        Args:
+            keys: Set of component identifier keys.
+
+        Returns:
+            Dictionary mapping component keys to color values.
+        """
         colors = {}
         job_colors = plotly_colors.qualitative.Plotly
         machine_colors = plotly_colors.qualitative.Plotly
@@ -93,6 +152,15 @@ class DashboardDataMapper:
 
     @staticmethod
     def make_hover_text(d: Dict[str, Any]) -> str:
+        """
+        Generate hover text for Gantt chart elements.
+
+        Args:
+            d: Dictionary containing element data.
+
+        Returns:
+            Formatted HTML string for hover tooltip.
+        """
         if d["type"] == "Schedule":
             return (
                 f"Typ: {d['type']}<br>Job: {d['job']}<br>"
@@ -107,6 +175,17 @@ class DashboardDataMapper:
 
     @staticmethod
     def build_figure(data: List[Dict[str, Any]], current_time: Any, axis: bool) -> go.Figure:
+        """
+        Build Plotly Gantt chart figure from data.
+
+        Args:
+            data: List of dictionaries containing schedule, transport, and buffer data.
+            current_time: Current time to display as vertical line.
+            axis: If True, use components as y-axis; if False, use jobs as y-axis.
+
+        Returns:
+            Plotly Figure object.
+        """
         fig = go.Figure()
         y_axis_key = "id" if axis else "job"
         legend_key = "job" if axis else "id"
@@ -171,7 +250,19 @@ class DashboardDataMapper:
         return fig
 
     @staticmethod
-    def map_states_to_schedule_data(last_state: Any, latest_time: Any) -> Tuple[dict, ...]:
+    def map_states_to_schedule_data(
+        last_state: Any, latest_time: Any
+    ) -> Tuple[Dict[str, Any], ...]:
+        """
+        Extract schedule data from state machine state.
+
+        Args:
+            last_state: The final state machine state containing job and operation info.
+            latest_time: The latest time in the state machine history.
+
+        Returns:
+            Tuple of dictionaries containing schedule data.
+        """
         data = []
         for job in last_state.jobs:
             active_op = next(
@@ -208,7 +299,17 @@ class DashboardDataMapper:
         return tuple(data)
 
     @staticmethod
-    def map_transports_to_data(transport: Any, current_time: Any) -> dict:
+    def map_transports_to_data(transport: Any, current_time: Any) -> Dict[str, Any]:
+        """
+        Map transport data to visualization format.
+
+        Args:
+            transport: Transport object with state information.
+            current_time: Current time reference.
+
+        Returns:
+            Dictionary containing formatted transport data.
+        """
         return {
             "type": "Transport",
             "id": transport.id,
@@ -219,7 +320,16 @@ class DashboardDataMapper:
         }
 
     @staticmethod
-    def make_transport_data(transports: List[Any]) -> Tuple[dict, ...]:
+    def make_transport_data(transports: List[Any]) -> Iterator[Dict[str, Any]]:
+        """
+        Generate transport data in visualization-ready format.
+
+        Args:
+            transports: List of transport objects with state information.
+
+        Yields:
+            Dictionaries containing formatted transport data.
+        """
         for _, group in groupby(transports, lambda x: x[0].id):
             group_list = list(group)
             for _, sub_group in groupby(group_list, lambda x: x[0].location.location):
@@ -231,7 +341,17 @@ class DashboardDataMapper:
     @staticmethod
     def map_states_to_transport_data(
         history: Tuple[Any, ...], latest_time: Any
-    ) -> Tuple[dict, ...]:
+    ) -> Tuple[Dict[str, Any], ...]:
+        """
+        Extract transport data from state machine history.
+
+        Args:
+            history: Tuple of state machine results.
+            latest_time: The latest time in the state machine history.
+
+        Returns:
+            Tuple of dictionaries containing transport data.
+        """
         transport_states = ((tran, h.time.time) for h in history for tran in h.transports)
         transports = filter(lambda x: x[0].state != TransportStateState.IDLE, transport_states)
         transports = sorted(tuple(transports), key=lambda x: (int(x[0].id[2:]), x[1]))
@@ -239,12 +359,33 @@ class DashboardDataMapper:
         return tuple(transport_list)
 
     @staticmethod
-    def map_states_to_buffer_data(history: Tuple[Any, ...], latest_time: Any) -> Tuple[dict, ...]:
+    def map_states_to_buffer_data(
+        history: Tuple[Any, ...], latest_time: Any
+    ) -> Tuple[Dict[str, Any], ...]:
+        """
+        Extract buffer data from state machine history.
+
+        Args:
+            history: Tuple of state machine results.
+            latest_time: The latest time in the state machine history.
+
+        Returns:
+            Tuple of dictionaries containing buffer data (currently not implemented).
+        """
         # Buffer data mapping not implemented.
         return tuple()
 
     @staticmethod
-    def get_latest_time(last_state: Any) -> Any:
+    def get_latest_time(last_state: Any) -> int:
+        """
+        Get the latest time from the state machine state.
+
+        Args:
+            last_state: The final state machine state.
+
+        Returns:
+            The latest time value from operations.
+        """
         return max(
             op.end_time.time
             for job in last_state.jobs
@@ -254,6 +395,15 @@ class DashboardDataMapper:
 
     @staticmethod
     def add_sub_states_to_history(history: Tuple[Any, ...]) -> Tuple[Any, ...]:
+        """
+        Extract and combine sub-states from history.
+
+        Args:
+            history: Tuple of state machine results.
+
+        Returns:
+            Tuple of states including sub-states.
+        """
         all_states = []
         for h in history:
             all_states.extend(list(h.sub_states))
@@ -261,7 +411,16 @@ class DashboardDataMapper:
         return tuple(all_states)
 
     @staticmethod
-    def map_states_to_gant_data(history: Tuple[Any, ...]) -> Dict[str, Tuple[dict, ...]]:
+    def map_states_to_gant_data(history: Tuple[Any, ...]) -> Dict[str, Tuple[Dict[str, Any], ...]]:
+        """
+        Map state machine history to Gantt chart data.
+
+        Args:
+            history: Tuple of state machine results.
+
+        Returns:
+            Dictionary containing schedules, transports, and buffer data.
+        """
         all_history = DashboardDataMapper.add_sub_states_to_history(history)
         latest_time = DashboardDataMapper.get_latest_time(all_history[-1])
         schedules = DashboardDataMapper.map_states_to_schedule_data(all_history[-1], latest_time)
@@ -276,6 +435,21 @@ class DashboardDataMapper:
 
 
 class JobShopDashboard:
+    """
+    Main dashboard class for visualizing job shop scheduling data.
+
+    Attributes:
+        data: Dictionary containing schedule, transport, and buffer data.
+        num_machines: Tuple containing the number of machines.
+        num_jobs: Number of jobs in the instance.
+        current_time: Current time reference.
+        has_transports: Boolean indicating if transport data is present.
+        debug: Boolean flag for debug mode.
+        port: Port number for the dashboard server.
+        logger: Logger instance.
+        app: Dash application instance.
+    """
+
     def __init__(
         self,
         data: Dict[str, Any],
@@ -286,6 +460,18 @@ class JobShopDashboard:
         debug: bool,
         port: int,
     ) -> None:
+        """
+        Initialize the JobShopDashboard.
+
+        Args:
+            data: Dictionary containing schedule, transport, and buffer data.
+            num_machines: Tuple containing the number of machines.
+            num_jobs: Number of jobs in the instance.
+            current_time: Current time reference.
+            has_transports: Boolean indicating if transport data is present.
+            debug: Boolean flag for debug mode.
+            port: Port number for the dashboard server.
+        """
         self.data = data
         self.num_machines = num_machines
         self.num_jobs = num_jobs
@@ -316,6 +502,7 @@ class JobShopDashboard:
         self._register_callbacks()
 
     def _setup_layout(self) -> None:
+        """Set up the layout for the Dash application."""
         table_data = [
             dict(item)
             for item in self.data["schedules"] + self.data["transports"] + self.data["buffer"]
@@ -332,7 +519,7 @@ class JobShopDashboard:
                     style={
                         "text-align": "center",
                         "font-size": "24px",
-                        "font-family": "Roboto",
+                        "font-family": "Roboto, arial",
                         "margin-bottom": "6px",
                     },
                 ),
@@ -340,7 +527,7 @@ class JobShopDashboard:
                     id=self.graph_id,
                     style={
                         "font-size": "14px",
-                        "font-family": "Roboto",
+                        "font-family": "Roboto, arial",
                         "margin-bottom": "12px",
                     },
                 ),
@@ -353,7 +540,7 @@ class JobShopDashboard:
                                     on=self.has_transports,
                                     label="Show Transport",
                                     labelPosition="top",
-                                    style={"font-size": "16px", "font-family": "Roboto"},
+                                    style={"font-size": "16px", "font-family": "Roboto, arial"},
                                     disabled=not self.has_transports,
                                 ),
                             ],
@@ -366,7 +553,7 @@ class JobShopDashboard:
                                     on=True,
                                     label="Show Machine-Schedules",
                                     labelPosition="top",
-                                    style={"font-size": "16px", "font-family": "Roboto"},
+                                    style={"font-size": "16px", "font-family": "Roboto, arial"},
                                 ),
                             ],
                             style={"margin-right": "20px"},
@@ -378,7 +565,7 @@ class JobShopDashboard:
                                     on=False,
                                     label="Show Buffer occupancy",
                                     labelPosition="top",
-                                    style={"font-size": "16px", "font-family": "Roboto"},
+                                    style={"font-size": "16px", "font-family": "Roboto, arial"},
                                     disabled=True,
                                 ),
                             ],
@@ -388,7 +575,7 @@ class JobShopDashboard:
                             id=self.axis_toggle_id,
                             value=False,
                             label="Job or Component bound Axis",
-                            style={"font-size": "16px", "font-family": "Roboto"},
+                            style={"font-size": "16px", "font-family": "Roboto, arial"},
                         ),
                     ],
                     style={"display": "flex", "justify-content": "center", "margin-bottom": "46px"},
@@ -419,7 +606,7 @@ class JobShopDashboard:
                                 "cellStyle": {
                                     "textAlign": "center",
                                     "fontSize": "14px",
-                                    "fontFamily": "Roboto",
+                                    "fontFamily": "Roboto, arial",
                                 },
                                 # "checkboxSelection": {
                                 #     "function": "params.column == params.columnApi.getAllDisplayedColumns()[0]"
@@ -442,7 +629,7 @@ class JobShopDashboard:
                                 "width": "1012px",
                                 "justify-content": "center",
                                 "font-size": "14px",
-                                "font-family": "Roboto",
+                                "font-family": "Roboto, arial",
                             },
                         )
                     ],
@@ -452,7 +639,7 @@ class JobShopDashboard:
                         "alignItems": "center",
                         "margin-bottom": "12px",
                         "font-size": "14px",
-                        "font-family": "Roboto",
+                        "font-family": "Roboto, arial",
                         "width": "100%",
                     },
                 ),
@@ -463,7 +650,7 @@ class JobShopDashboard:
                             id=self.download_btn_id,
                             style={
                                 "font-size": "16px",
-                                "font-family": "Roboto",
+                                "font-family": "Roboto, arial",
                                 "width": "180px",
                                 "display": "inline-block",
                                 "margin-bottom": "12px",
@@ -489,7 +676,7 @@ class JobShopDashboard:
                             id=self.download_csv_btn_id,
                             style={
                                 "font-size": "16px",
-                                "font-family": "Roboto",
+                                "font-family": "Roboto, arial",
                                 "width": "180px",
                                 "display": "inline-block",
                                 "margin-bottom": "12px",
@@ -520,13 +707,15 @@ class JobShopDashboard:
                 "backgroundColor": "white",
                 "text-align": "center",
                 "font-size": "20px",
-                "font-family": "Roboto",
+                "font-family": "Roboto, arial",
                 "padding": "20px",
             },
         )
         self.app.title = "JobShopLab Dashboard"
 
     def _register_callbacks(self) -> None:
+        """Register callback functions for Dash application interactivity."""
+
         @self.app.callback(
             Output(self.graph_id, "figure"),
             Input(self.store_data_id, "data"),
@@ -563,8 +752,28 @@ class JobShopDashboard:
             return self.download_csv(data, n_clicks)
 
     def update_fig(
-        self, data, current_time, show_transport, show_schedules, show_buffer, axis
+        self,
+        data: Dict[str, List[Dict[str, Any]]],
+        current_time: int,
+        show_transport: bool,
+        show_schedules: bool,
+        show_buffer: bool,
+        axis: bool,
     ) -> go.Figure:
+        """
+        Update the Gantt chart figure based on user selections.
+
+        Args:
+            data: Dictionary containing schedule, transport, and buffer data.
+            current_time: Current time reference.
+            show_transport: Whether to display transport data.
+            show_schedules: Whether to display schedule data.
+            show_buffer: Whether to display buffer data.
+            axis: If True, use components as y-axis; if False, use jobs as y-axis.
+
+        Returns:
+            Updated Plotly Figure object.
+        """
         try:
             filtered_data = []
             if show_transport:
@@ -580,7 +789,27 @@ class JobShopDashboard:
             self.logger.error(f"Error updating figure: {e}")
             return go.Figure()
 
-    def download_db(self, data, current_time, num_jobs, num_machines, n_clicks):
+    def download_db(
+        self,
+        data: Dict[str, Any],
+        current_time: int,
+        num_jobs: int,
+        num_machines: Tuple[int],
+        n_clicks: int,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Prepare dashboard data for download in binary format.
+
+        Args:
+            data: Dictionary containing schedule, transport, and buffer data.
+            current_time: Current time reference.
+            num_jobs: Number of jobs in the instance.
+            num_machines: Tuple containing the number of machines.
+            n_clicks: Number of times the download button has been clicked.
+
+        Returns:
+            Dictionary containing download data or None if an error occurs.
+        """
         try:
             file_bytes = pickle.dumps((data, num_jobs, num_machines, current_time))
             return dcc.send_bytes(file_bytes, "dashboard_db.lab")
@@ -588,7 +817,19 @@ class JobShopDashboard:
             self.logger.error(f"Error preparing file download: {e}")
             return None
 
-    def download_csv(self, data, n_clicks):
+    def download_csv(
+        self, data: Dict[str, List[Dict[str, Any]]], n_clicks: int
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Prepare dashboard data for download in CSV format.
+
+        Args:
+            data: Dictionary containing schedule, transport, and buffer data.
+            n_clicks: Number of times the download button has been clicked.
+
+        Returns:
+            Dictionary containing download data or None if an error occurs.
+        """
         try:
             df = pd.DataFrame(data["schedules"] + data["transports"] + data["buffer"])
             return dcc.send_data_frame(df.to_csv, "dashboard_data.csv")
@@ -597,6 +838,12 @@ class JobShopDashboard:
             return None
 
     def run(self) -> None:
+        """
+        Run the dashboard application.
+
+        Raises:
+            Exception: If dashboard fails to launch.
+        """
         try:
             port = DashboardUtils.check_port(self.port)
             self.app.run(
@@ -612,6 +859,18 @@ class JobShopDashboard:
 
 
 def start_dashboard_from_file(file_path: str, debug: bool, port: int) -> None:
+    """
+    Start the dashboard from a data file.
+
+    Args:
+        file_path: Path to the data file.
+        debug: Flag to enable debug mode.
+        port: Port number for the dashboard server.
+
+    Raises:
+        FileNotFound: If the file does not exist.
+        Exception: If the file cannot be loaded.
+    """
     path = Path(file_path)
     if not path.exists():
         raise FileNotFound(path)
@@ -631,7 +890,7 @@ def start_dashboard_from_file(file_path: str, debug: bool, port: int) -> None:
 
 
 def render_in_dashboard(
-    loglevel: int | str,
+    loglevel: Union[int, str],
     history: Tuple[StateMachineResult, ...],
     instance: InstanceConfig,
     debug: bool = False,
@@ -639,6 +898,18 @@ def render_in_dashboard(
     *args,
     **kwargs,
 ) -> None:
+    """
+    Render state machine results in a dashboard.
+
+    Args:
+        loglevel: Log level for the dashboard.
+        history: Tuple of state machine results.
+        instance: Instance configuration.
+        debug: Flag to enable debug mode.
+        port: Port number for the dashboard server.
+        *args: Additional positional arguments.
+        **kwargs: Additional keyword arguments.
+    """
     logger = get_logger("GanttPlotter", loglevel)
     logger.info("Plotting Gantt Chart")
     if len(history) < 2:
@@ -657,6 +928,12 @@ def render_in_dashboard(
 
 
 def parse_cli_arguments() -> argparse.Namespace:
+    """
+    Parse command line arguments.
+
+    Returns:
+        Parsed command line arguments.
+    """
     parser = argparse.ArgumentParser(description="Job Shop Lab Dashboard")
     parser.add_argument("file_path", type=str, help="Path of the file to load")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
@@ -665,6 +942,9 @@ def parse_cli_arguments() -> argparse.Namespace:
 
 
 def main() -> None:
+    """
+    Main entry point for the dashboard application.
+    """
     args = parse_cli_arguments()
     try:
         start_dashboard_from_file(args.file_path, args.debug, args.port)

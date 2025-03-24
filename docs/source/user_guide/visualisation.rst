@@ -82,6 +82,14 @@ The Gantt chart dashboard is the most comprehensive visualization tool:
     # Show dashboard
     env.render(mode="dashboard")
 
+.. image:: ../../assets/dashboard.png
+  :alt: Dashboard showing job schedules and machine utilization 
+  :width: 100%
+  :align: center
+
+
+Example of the JobShopLab Gantt chart dashboard showing job schedules and machine utilization
+
 Dashboard Features:
 
 - Interactive timeline of all operations

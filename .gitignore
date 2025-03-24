@@ -73,7 +73,7 @@ jobshoplab/types/auto_config_types.py
 *.webp
 
 # Portable Network Graphics
-*.png
+
 
 # Animated Portable Network Graphics
 *.apng
