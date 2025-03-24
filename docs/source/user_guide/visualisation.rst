@@ -143,6 +143,11 @@ For a more immersive visualization of the production environment:
     # Show 3D simulation
     env.render(mode="simulation")
 
+.. image:: ../../assets/3d_sim.gif
+  :alt: 3D Simulation of JobShopLab
+  :width: 600px
+  :align: center
+
 The 3D simulation shows:
 
 - Physical layout of machines
