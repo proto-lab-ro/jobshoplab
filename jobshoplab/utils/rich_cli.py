@@ -11,6 +11,12 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+import threading
+import time
+
+import readchar
+from readchar import key
+
 
 from jobshoplab.types.state_types import (
     JobState,
@@ -195,65 +201,47 @@ def render_from_file(file_path: str):
     render(history, None)
 
 
-def render(
-    history: tuple[StateMachineResult, ...],
-    *args,
-    **kwargs,
-):
-
-    # Playback Controls
-    index = 0  # Track current position
-    paused = True  # Playback state
-    """Render the history of the simulation."""
+def render(history: tuple, *args, **kwargs):
     if not history:
         print("No history data found.")
-    else:
-        with Live(render_table(history[index]), auto_refresh=False) as live:
-            update = partial(live.update, refresh=True)
-            while True:
-                # time.sleep(0.1)  # Debounce
-                if not paused:
-                    time.sleep(1)
-                    index = min(index + 1, len(history) - 1)  # Move forward automatically
-                    update(render_table(history[index]))
+        return
 
-                # Key controls
-                if keyboard.is_pressed("space"):  # Pause/Resume
-                    paused = not paused
-                    time.sleep(1)  # Debounce
+    # Shared state for playback control
+    state = {
+        "index": 0,  # Current position in the history
+        "paused": True,  # Playback paused/active state
+        "quit": False,  # Flag to exit the loop
+    }
 
-                if keyboard.is_pressed("right"):  # Forward
-                    index = min(index + 1, len(history) - 1)
-                    update(render_table(history[index]))
-                    time.sleep(0.3)
+    def key_listener():
+        """Listens for key presses and updates the state accordingly."""
+        while not state["quit"]:
+            ch = readchar.readkey()
+            if ch == " ":
+                state["paused"] = not state["paused"]
+            elif ch == key.RIGHT:
+                state["index"] = min(state["index"] + 1, len(history) - 1)
+            elif ch == key.LEFT:
+                state["index"] = max(state["index"] - 1, 0)
+            elif ch.lower() == "q":
+                state["quit"] = True
 
-                if keyboard.is_pressed("left"):  # Backward
-                    index = max(index - 1, 0)
-                    update(render_table(history[index]))
-                    time.sleep(0.3)
+    # Start the key listener in a background thread
+    listener_thread = threading.Thread(target=key_listener, daemon=True)
+    listener_thread.start()
 
-                if keyboard.is_pressed("q"):  # Quit
-                    print("Quitting...")
-                    break
+    # Render the simulation history with Rich's Live display
+    with Live(render_table(history[state["index"]]), auto_refresh=False) as live:
+        update = partial(live.update, refresh=True)
+        while not state["quit"]:
+            if not state["paused"]:
+                time.sleep(0.1)
+                state["index"] = min(state["index"] + 1, len(history) - 1)
+            else:
+                time.sleep(1)  # Small sleep to avoid busy waiting
+            update(render_table(history[state["index"]]))
 
-                # Key controls
-                if keyboard.is_pressed("space"):  # Pause/Resume
-                    paused = not paused
-                    time.sleep(1)  # Debounce
-
-                if keyboard.is_pressed("right"):  # Forward
-                    index = min(index + 1, len(history) - 1)
-                    live.update(render_table(history[index]))
-                    time.sleep(0.3)
-
-                if keyboard.is_pressed("left"):  # Backward
-                    index = max(index - 1, 0)
-                    live.update(render_table(history[index]))
-                    time.sleep(0.3)
-
-                if keyboard.is_pressed("q"):  # Quit
-                    print("Quitting...")
-                    break
+    print("Quitting...")
 
 
 if __name__ == "__main__":

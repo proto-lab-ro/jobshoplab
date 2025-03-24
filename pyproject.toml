@@ -32,7 +32,8 @@ dependencies = [
     "ipykernel",
     "mermaid-py",
     "stable_baselines3[extra]",
-    "nbformat",
+    "nbformat"
+    "readchar",
 ]
 
 classifiers = [
