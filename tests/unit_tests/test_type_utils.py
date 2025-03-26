@@ -6,7 +6,7 @@ import jobshoplab.types.instance_config_types as config_types
 # from jobshoplab.types.state_types import JobState, OperationStateState
 import jobshoplab.types.state_types as state_types
 from jobshoplab.types.instance_config_types import (
-    DeterministicDurationConfig,
+    DeterministicTimeConfig,
     InstanceConfig,
     JobConfig,
     OperationConfig,
@@ -32,9 +32,15 @@ def test_get_job_state_by_id(default_init_state: state_types.State):
 
 def test_get_job_config_by_id(default_instance: InstanceConfig):
 
-    o1 = OperationConfig(id="o-1", machine="m-0", duration=DeterministicDurationConfig(duration=3))
-    o4 = OperationConfig(id="o-4", machine="m-1", duration=DeterministicDurationConfig(duration=2))
-    o7 = OperationConfig(id="o-7", machine="m-2", duration=DeterministicDurationConfig(duration=2))
+    o1 = OperationConfig(
+        id="o-1", machine="m-0", duration=DeterministicTimeConfig(time=3), tool="tl-0"
+    )
+    o4 = OperationConfig(
+        id="o-4", machine="m-1", duration=DeterministicTimeConfig(time=2), tool="tl-0"
+    )
+    o7 = OperationConfig(
+        id="o-7", machine="m-2", duration=DeterministicTimeConfig(time=2), tool="tl-0"
+    )
     product0 = Product(id="p-0", name="Product1")
     expected_job1 = JobConfig(id="j-1", product=product0, operations=(o1, o4, o7), priority=0)
 
@@ -59,7 +65,7 @@ def test_get_operation_state_by_id(default_init_state: InstanceConfig):
 
 def test_get_operation_config_by_id(default_instance: InstanceConfig):
     o1 = OperationConfig(
-        id="o-0-0", machine="m-0", duration=DeterministicDurationConfig(duration=3)
+        id="o-0-0", machine="m-0", duration=DeterministicTimeConfig(time=3), tool="tl-0"
     )
     operation1 = job_type_utils.get_operation_config_by_id(
         default_instance.instance.specification, "o-0-0"

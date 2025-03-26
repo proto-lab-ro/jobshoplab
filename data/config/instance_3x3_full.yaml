@@ -1,0 +1,97 @@
+title: InstanceConfig
+
+# Example of a 3x3 Instance
+# with AGVs and outages and setup times and stochastic times
+
+instance_config:
+  description: "example config"
+  instance:
+    description: "3x3"
+    specification: |
+      (m0,t)|(m1,t)|(m2,t)
+      j0|(0,3) (1,2) (2,2)
+      j1|(0,2) (2,1) (1,4)
+      j2|(1,4) (2,3) (0,3)
+    time_behavior: static
+    tool_usage:
+      - job: "j0"
+        operation_tools: ["tl-0", "tl-1", "tl-2"]
+      - job: "j1"
+        operation_tools: ["tl-0", "tl-1", "tl-2"]
+      - job: "j2"
+        operation_tools: ["tl-0", "tl-1", "tl-2"]
+  
+  setup_times:
+    - machine: "m-0"
+      specification: |
+        tl-0|tl-1|tl-2
+        tl-0|0 2 5
+        tl-1|2 0 8
+        tl-2|5 2 0
+      time_behavior: static
+          
+    - machine: "m-1"
+      specification: |
+        tl-0|tl-1|tl-2
+        tl-0|0 2 5
+        tl-1|2 0 8
+        tl-2|5 2 0
+      time_behavior:
+        type: "beta"
+        alpha: 2
+        beta: 2
+
+    - machine: "m-2"
+      specification: |
+        tl-0|tl-1|tl-2
+        tl-0|0 2 5
+        tl-1|2 0 8
+        tl-2|5 2 0
+
+      time_behavior:
+        type: "beta"
+        alpha: 2
+        beta: 2
+
+
+  logistics: 
+    type: "agv"
+    amount: 3
+    specification: |
+      m-0|m-1|m-2|in-buf|out-buf
+      m-0|0 2 5 2 7
+      m-1|2 0 8 3 6
+      m-2|5 2 0 6 2
+      in-buf|2 3 6 0 9
+      out-buf|7 5 2 9 0
+    
+    time_behavior:
+      type: "poisson"
+      mean: 5
+  
+  outages:
+    - component: "m-1"
+      type: "maintenance"
+      duration: 5
+      frequency: 
+        type: "gamma"
+        shape: 2
+        scale: 5
+        base: 10
+
+    - component: "t"
+      type: "recharge"
+      duration: 
+        type: "gaussian"
+        mean: 5
+        std: 1
+        base: 10
+      frequency: 10
+
+        
+
+init_state:
+  transport:
+    - location: "m-1"
+    - location: "m-2"
+    - location: "m-2"

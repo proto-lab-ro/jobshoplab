@@ -69,7 +69,7 @@ def get_machine_prebuffer_jobs_by_processing_time(
         if not operations:
             continue
 
-        selected_operation = sorting_func(operations, key=lambda op: op.duration.duration)
+        selected_operation = sorting_func(operations, key=lambda op: op.duration.time)
         job = find_job_state_from_operation(state, selected_operation.id)
 
         if job:
@@ -97,7 +97,7 @@ def get_machine_jobs_by_remaining_processing_time(
         selected_operation = sorting_func(
             operations,
             key=lambda op: sum(
-                op.duration.duration
+                op.duration.time
                 for op in find_job_config_from_operation(instance, op.id).operations
             ),
         )
@@ -137,7 +137,7 @@ def get_job_with_most_remaining_processing_time(
     for job in job_states:
         job_config = job_type_utils.get_job_config_by_id(instance.instance.specification, job.id)
         remaining_time = sum(
-            op.duration.duration
+            op.duration.time
             for op in job_config.operations
             if op.id
             in {

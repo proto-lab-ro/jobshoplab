@@ -312,7 +312,7 @@ def calculate_lower_bound(instance):
 
     schedule = np.array(
         [
-            [(int(o.machine.split("-")[1]), o.duration.duration) for o in job.operations]
+            [(int(o.machine.split("-")[1]), o.duration.time) for o in job.operations]
             for job in instance.instance.specification
         ]
     )
@@ -339,9 +339,5 @@ def get_max_allowed_time(instance_config):
         allowed time.
     """
     return sum(
-        [
-            o.duration.duration
-            for job in instance_config.instance.specification
-            for o in job.operations
-        ]
+        [o.duration.time for job in instance_config.instance.specification for o in job.operations]
     )  # max allowed time is the sum of all operation durations, witch can be seen a the worst scheduling stragety without obviors mistakes

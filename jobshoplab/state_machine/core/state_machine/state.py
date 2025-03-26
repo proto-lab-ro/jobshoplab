@@ -20,7 +20,7 @@ from jobshoplab.types import (
 )
 from jobshoplab.types.action_types import Action, ComponentTransition
 from jobshoplab.types.state_types import (
-    DeterministicDurationConfig,
+    DeterministicTimeConfig,
     MachineState,
     MachineStateState,
     TransportState,
@@ -278,8 +278,8 @@ def _get_travel_time_for_transport(
 
     duration = instance.logistics.travel_times.get((current_location, next_location))
     match duration:
-        case DeterministicDurationConfig():
-            return duration.duration
+        case DeterministicTimeConfig():
+            return duration.time
         case _:
             raise NotImplementedError()
 

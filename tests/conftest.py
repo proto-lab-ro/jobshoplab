@@ -19,7 +19,7 @@ from jobshoplab.types.action_types import (
 from jobshoplab.types.instance_config_types import (
     BufferConfig,
     BufferTypeConfig,
-    DeterministicDurationConfig,
+    DeterministicTimeConfig,
     InstanceConfig,
     JobConfig,
     LogisticsConfig,
@@ -78,12 +78,10 @@ def minimal_instance_dict_with_intralogistics():
                     j1|(0,2) (2,1) (1,4)
                     j2|(1,4) (2,3) (0,3)
                 """,
-                "transport": {
-                    "type": "agv",
-                    "amount": 3,
-                },
             },
             "logistics": {
+                "type": "agv",
+                "amount": 3,
                 "specification": """
                     m-0|m-1|m-2|in-buf|out-buf
                     m-0|0 5 4 0 0
@@ -148,15 +146,15 @@ def default_products() -> tuple[Product, Product, Product]:
 @pytest.fixture
 def default_setup_times(
     default_products,
-) -> dict[tuple[Product, Product], DeterministicDurationConfig]:
+) -> dict[tuple[Product, Product], DeterministicTimeConfig]:
     product0, product1, product2 = default_products
     return {
-        (product0, product1): DeterministicDurationConfig(0),
-        (product1, product0): DeterministicDurationConfig(0),
-        (product0, product2): DeterministicDurationConfig(0),
-        (product2, product0): DeterministicDurationConfig(0),
-        (product1, product2): DeterministicDurationConfig(0),
-        (product2, product1): DeterministicDurationConfig(0),
+        (product0, product1): DeterministicTimeConfig(0),
+        (product1, product0): DeterministicTimeConfig(0),
+        (product0, product2): DeterministicTimeConfig(0),
+        (product2, product0): DeterministicTimeConfig(0),
+        (product1, product2): DeterministicTimeConfig(0),
+        (product2, product1): DeterministicTimeConfig(0),
     }
 
 
@@ -241,31 +239,31 @@ def default_jobs(default_products, default_machines) -> tuple[JobConfig, ...]:
     product0, product1, product2 = default_products
     machine0, machine1, machine2 = default_machines
     operation0 = OperationConfig(
-        id="o-0-0", machine=machine0.id, duration=DeterministicDurationConfig(duration=3)
+        id="o-0-0", machine=machine0.id, duration=DeterministicTimeConfig(time=3), tool="tl-0"
     )
     operation1 = OperationConfig(
-        id="o-0-1", machine=machine0.id, duration=DeterministicDurationConfig(duration=2)
+        id="o-0-1", machine=machine0.id, duration=DeterministicTimeConfig(time=2), tool="tl-0"
     )
     operation2 = OperationConfig(
-        id="o-0-2", machine=machine1.id, duration=DeterministicDurationConfig(duration=4)
+        id="o-0-2", machine=machine1.id, duration=DeterministicTimeConfig(time=4), tool="tl-0"
     )
     operation3 = OperationConfig(
-        id="o-1-3", machine=machine1.id, duration=DeterministicDurationConfig(duration=2)
+        id="o-1-3", machine=machine1.id, duration=DeterministicTimeConfig(time=2), tool="tl-0"
     )
     operation4 = OperationConfig(
-        id="o-1-4", machine=machine2.id, duration=DeterministicDurationConfig(duration=1)
+        id="o-1-4", machine=machine2.id, duration=DeterministicTimeConfig(time=1), tool="tl-0"
     )
     operation5 = OperationConfig(
-        id="o-1-5", machine=machine2.id, duration=DeterministicDurationConfig(duration=3)
+        id="o-1-5", machine=machine2.id, duration=DeterministicTimeConfig(time=3), tool="tl-0"
     )
     operation6 = OperationConfig(
-        id="o-2-6", machine=machine2.id, duration=DeterministicDurationConfig(duration=2)
+        id="o-2-6", machine=machine2.id, duration=DeterministicTimeConfig(time=2), tool="tl-0"
     )
     operation7 = OperationConfig(
-        id="o-2-7", machine=machine1.id, duration=DeterministicDurationConfig(duration=4)
+        id="o-2-7", machine=machine1.id, duration=DeterministicTimeConfig(time=4), tool="tl-0"
     )
     operation8 = OperationConfig(
-        id="o-2-8", machine=machine0.id, duration=DeterministicDurationConfig(duration=3)
+        id="o-2-8", machine=machine0.id, duration=DeterministicTimeConfig(time=3), tool="tl-0"
     )
 
     job1 = JobConfig(
@@ -302,31 +300,31 @@ def default_logistics(default_machines, default_buffer) -> LogisticsConfig:
     return LogisticsConfig(
         capacity=sys.maxsize,
         travel_times={
-            (machine0.id, machine0.id): DeterministicDurationConfig(0),
-            (machine1.id, machine1.id): DeterministicDurationConfig(0),
-            (machine2.id, machine2.id): DeterministicDurationConfig(0),
-            (machine0.id, machine1.id): DeterministicDurationConfig(0),
-            (machine1.id, machine0.id): DeterministicDurationConfig(0),
-            (machine0.id, machine2.id): DeterministicDurationConfig(0),
-            (machine2.id, machine0.id): DeterministicDurationConfig(0),
-            (machine1.id, machine2.id): DeterministicDurationConfig(0),
-            (machine2.id, machine1.id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, machine0.id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, machine1.id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, machine2.id): DeterministicDurationConfig(0),
-            (machine0.id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (machine2.id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (machine1.id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, machine0.id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, machine1.id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, machine2.id): DeterministicDurationConfig(0),
-            (machine0.id, default_buffer[1].id): DeterministicDurationConfig(0),
-            (machine1.id, default_buffer[1].id): DeterministicDurationConfig(0),
-            (machine2.id, default_buffer[1].id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, default_buffer[1].id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, default_buffer[1].id): DeterministicDurationConfig(0),
+            (machine0.id, machine0.id): DeterministicTimeConfig(0),
+            (machine1.id, machine1.id): DeterministicTimeConfig(0),
+            (machine2.id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, machine1.id): DeterministicTimeConfig(0),
+            (machine1.id, machine0.id): DeterministicTimeConfig(0),
+            (machine0.id, machine2.id): DeterministicTimeConfig(0),
+            (machine2.id, machine0.id): DeterministicTimeConfig(0),
+            (machine1.id, machine2.id): DeterministicTimeConfig(0),
+            (machine2.id, machine1.id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, machine0.id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, machine1.id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (machine2.id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (machine1.id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, machine0.id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, machine1.id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (machine1.id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (machine2.id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, default_buffer[1].id): DeterministicTimeConfig(0),
         },
     )
 
@@ -763,31 +761,31 @@ def default_deterministic_logistics(default_machines, default_buffer) -> Logisti
         # m1 5  0  2
         # m2 4  2  0
         travel_times={
-            (machine0.id, machine0.id): DeterministicDurationConfig(0),
-            (machine1.id, machine1.id): DeterministicDurationConfig(0),
-            (machine2.id, machine2.id): DeterministicDurationConfig(0),
-            (machine0.id, machine1.id): DeterministicDurationConfig(5),
-            (machine1.id, machine0.id): DeterministicDurationConfig(5),
-            (machine0.id, machine2.id): DeterministicDurationConfig(4),
-            (machine2.id, machine0.id): DeterministicDurationConfig(4),
-            (machine1.id, machine2.id): DeterministicDurationConfig(2),
-            (machine2.id, machine1.id): DeterministicDurationConfig(2),
-            (default_buffer[0].id, machine0.id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, machine1.id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, machine2.id): DeterministicDurationConfig(0),
-            (machine0.id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (machine2.id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (machine1.id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, machine0.id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, machine1.id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, machine2.id): DeterministicDurationConfig(0),
-            (machine0.id, default_buffer[1].id): DeterministicDurationConfig(0),
-            (machine1.id, default_buffer[1].id): DeterministicDurationConfig(0),
-            (machine2.id, default_buffer[1].id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, default_buffer[1].id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (default_buffer[0].id, default_buffer[0].id): DeterministicDurationConfig(0),
-            (default_buffer[1].id, default_buffer[1].id): DeterministicDurationConfig(0),
+            (machine0.id, machine0.id): DeterministicTimeConfig(0),
+            (machine1.id, machine1.id): DeterministicTimeConfig(0),
+            (machine2.id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, machine1.id): DeterministicTimeConfig(5),
+            (machine1.id, machine0.id): DeterministicTimeConfig(5),
+            (machine0.id, machine2.id): DeterministicTimeConfig(4),
+            (machine2.id, machine0.id): DeterministicTimeConfig(4),
+            (machine1.id, machine2.id): DeterministicTimeConfig(2),
+            (machine2.id, machine1.id): DeterministicTimeConfig(2),
+            (default_buffer[0].id, machine0.id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, machine1.id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (machine2.id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (machine1.id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, machine0.id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, machine1.id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (machine1.id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (machine2.id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (default_buffer[0].id, default_buffer[0].id): DeterministicTimeConfig(0),
+            (default_buffer[1].id, default_buffer[1].id): DeterministicTimeConfig(0),
         },
     )
 

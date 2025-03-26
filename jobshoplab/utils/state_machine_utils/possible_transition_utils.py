@@ -4,8 +4,8 @@ from typing import Generator
 from jobshoplab.types import InstanceConfig
 from jobshoplab.types.action_types import ComponentTransition
 from jobshoplab.types.instance_config_types import (
-    DeterministicDurationConfig,
-    StochasticDurationConfig,
+    DeterministicTimeConfig,
+    StochasticTimeConfig,
     TransportTypeConfig,
 )
 from jobshoplab.types.state_types import (
@@ -159,7 +159,7 @@ def get_num_possible_events(state, instance) -> int:
 
 
 def sort_by_id(
-    components: tuple[JobState | TransportState, ...]
+    components: tuple[JobState | TransportState, ...],
 ) -> tuple[JobState | TransportState, ...]:
     return tuple(sorted(components, key=lambda x: get_id_int(x.id)))
 
@@ -346,7 +346,7 @@ def replace_components(state, updated_components):
     return state
 
 
-def get_duration(time: DeterministicDurationConfig | StochasticDurationConfig) -> int:
+def get_duration(time: DeterministicTimeConfig | StochasticTimeConfig) -> int:
     """
     Get the duration of a time object.
     Args:
@@ -354,7 +354,7 @@ def get_duration(time: DeterministicDurationConfig | StochasticDurationConfig) -
     Returns:
         Time: The duration of the time object.
     """
-    if isinstance(time, DeterministicDurationConfig):
-        return time.duration
+    if isinstance(time, DeterministicTimeConfig):
+        return time.time
     else:
         raise NotImplementedError()

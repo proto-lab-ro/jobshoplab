@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     config = load_config()
     compiler = Compiler(config, "debug", manipulators=[manipulators.InstanceRandomizer])
-    # instance, init_state = compiler.compile()\
+    # instance, init_state = compiler.compile()
     instance = compiler.compile()
     # print(instance)
     # print(init_state)

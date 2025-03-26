@@ -100,6 +100,6 @@ def get_make_span(sol_seq, instance: InstanceConfig) -> int:
     for op, job_id in last_operations:
         for sol_el in sol_seq[::-1]:
             if get_id_int(op.machine) == sol_el[0] and get_id_int(job_id) == sol_el[1]:
-                machine_end_times.append(sol_el[2] + int(op.duration.duration))
+                machine_end_times.append(sol_el[2] + int(op.duration.time))
 
     return max(machine_end_times)

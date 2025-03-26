@@ -13,7 +13,7 @@ from jobshoplab.types.action_types import (
 from jobshoplab.types.instance_config_types import (
     BufferConfig,
     BufferTypeConfig,
-    DeterministicDurationConfig,
+    DeterministicTimeConfig,
     InstanceConfig,
 )
 from jobshoplab.types.state_types import BufferState, BufferStateState, State
@@ -56,8 +56,8 @@ def agv_and_buffer_instance(default_instance_with_intralogistics_and_buffer: Ins
     _travel_times = _instance.logistics.travel_times
     for machine in _instance.machines:
         s_time = int(machine.id.split("-")[-1]) + 1
-        e_time = DeterministicDurationConfig(duration=3 - s_time)
-        s_time = DeterministicDurationConfig(duration=s_time)
+        e_time = DeterministicTimeConfig(time=3 - s_time)
+        s_time = DeterministicTimeConfig(time=s_time)
         _travel_times[("b-100", machine.id)] = s_time
         _travel_times[(machine.id, "b-100")] = s_time
         _travel_times[("b-101", machine.id)] = e_time

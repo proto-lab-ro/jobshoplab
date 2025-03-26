@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Literal, Mapping
-
+from typing import Callable, Literal, Mapping, TypeAlias
 from jobshoplab.utils.utils import hash
 
-OutageTypeConfig = Literal["Recharge", "Fail", "Maintenance"]
+
 ResourceConfig = Literal["EnergyConsumption", "Waste", "C02Emission", "FinancialCost"]
 EnergyConsumptionConfig = "Consumption"
 WasteConfig = "Consumption"
@@ -13,6 +12,7 @@ FinancialCostConfig = "Consumption"
 FailConfig = "OutageConfig"
 MaintenanceConfig = "OutageConfig"
 RechargeConfig = "OutageConfig"
+Tool: TypeAlias = str
 
 
 class TransportTypeConfig(Enum):
@@ -89,77 +89,54 @@ class ConsumptionConfig:
 
 
 @dataclass(frozen=True)
-class DeterministicFrequencyConfig:
+class DeterministicTimeConfig:
     """
-    Data class representing the configuration for deterministic frequency.
+    Data class representing the configuration for deterministic time.
 
     Attributes:
-        period (int): The period of the frequency.
+        time (int): The time value.
     """
 
-    frequency: int
+    time: int
 
     def asdict(self) -> dict:
-        return {"deterministic_frequency": self.frequency}
+        return {"deterministic_duration": self.time}
 
 
 @dataclass(frozen=True)
-class StochasticFrequencyConfig:
+class StochasticTimeConfig:
     """
-    Represents a stochastic frequency with a distribution and function arguments.
+    Represents a stochastic time with a distribution function as arguments.
 
     Attributes:
-        distribution (callable): The distribution function used for generating frequencies.
-        function_args (dict): The arguments to be passed to the distribution function.
+        distribution function (callable): The distribution function used for generating stochastic times.
     """
 
-    distribution: Callable
-    function_args: dict
-
-    def asdict(self) -> dict:
-        return {
-            "stochastic_frequency": {
-                "distribution": self.distribution,
-                "function_args": self.function_args,
-            }
-        }
-
-
-@dataclass(frozen=True)
-class DeterministicDurationConfig:
-    """
-    Data class representing the configuration for deterministic duration.
-
-    Attributes:
-        duration (int): The duration value.
-    """
-
-    duration: int
-
-    def asdict(self) -> dict:
-        return {"deterministic_duration": self.duration}
-
-
-@dataclass(frozen=True)
-class StochasticDurationConfig:
-    """
-    Represents a stochastic duration with a distribution and function arguments.
-
-    Attributes:
-        distribution (callable): The distribution function used for generating durations.
-        function_args (dict): The arguments to be passed to the distribution function.
-    """
-
-    distribution: Callable
-    function_args: dict
+    time: Callable
 
     def asdict(self) -> dict:
         return {
             "stochastic_duration": {
-                "distribution": self.distribution,
-                "function_args": self.function_args,
+                "duration": self.time,
             }
         }
+
+
+class OutageTypeConfig(Enum):
+    """
+    Enumeration for outage configuration types.
+    Attributes:
+        FAIL (str): The fail type.
+        MAINTENANCE (str): The maintenance type.
+        RECHARGE (str): The recharge type.
+    """
+
+    FAIL = "fail"
+    MAINTENANCE = "maintenance"
+    RECHARGE = "recharge"
+
+    def asdict(self) -> str:
+        return self.value
 
 
 @dataclass(frozen=True)
@@ -168,12 +145,13 @@ class OutageConfig:
     Data class representing an outage.
 
     Attributes:
-        frequency (DeterministicFrequencyConfig | StochasticFrequency): The frequency of the outage.
-        duration (DeterministicDurationConfig | StochasticDurationConfig): The duration of the outage.
+        frequency (DeterministicTimeConfig | StochasticFrequency): The frequency of the outage.
+        duration (DeterministicTimeConfig | StochasticTimeConfig): The duration of the outage.
     """
 
-    frequency: DeterministicFrequencyConfig | StochasticFrequencyConfig
-    duration: DeterministicDurationConfig | StochasticDurationConfig
+    frequency: DeterministicTimeConfig | StochasticTimeConfig
+    duration: DeterministicTimeConfig | StochasticTimeConfig
+    type: OutageTypeConfig
 
     def asdict(self) -> dict:
         return {
@@ -250,7 +228,7 @@ class MachineConfig:
     Attributes:
         id (str): The ID of the machine.
         outages (tuple[OutageConfig]): The outages of the machine.
-        setup_times (dict[tuple[Product, Product], DeterministicDurationConfig | StochasticDurationConfig]): The setup times for different product pairs.
+        setup_times (dict[tuple[Product, Product], DeterministicTimeConfig | StochasticTimeConfig]): The setup times for different product pairs.
         prebuffer (BufferConfig): The prebuffer configuration.
         postbuffer (BufferConfig): The postbuffer configuration.
         batches (int): The number of batches the machine can process.
@@ -259,9 +237,7 @@ class MachineConfig:
 
     id: str
     outages: tuple[OutageTypeConfig, ...]
-    setup_times: Mapping[
-        tuple[Product, Product], DeterministicDurationConfig | StochasticDurationConfig
-    ]
+    setup_times: Mapping[tuple[Tool, Tool], DeterministicTimeConfig | StochasticTimeConfig]
     prebuffer: BufferConfig
     postbuffer: BufferConfig
     batches: int
@@ -319,12 +295,13 @@ class OperationConfig:
     Attributes:
         id (str): The ID of the operation.
         machine (MachineConfig | TwinMachineConfig): The machine configuration for the operation.
-        duration (DeterministicDurationConfig | StochasticDurationConfig): The duration configuration for the operation.
+        duration (DeterministicTimeConfig | StochasticTimeConfig): The duration configuration for the operation.
     """
 
     id: str
     machine: str
-    duration: DeterministicDurationConfig | StochasticDurationConfig
+    duration: DeterministicTimeConfig | StochasticTimeConfig
+    tool: Tool
 
     def asdict(self) -> dict:
         return {
@@ -391,7 +368,7 @@ class ProblemInstanceConfig:
 #     capacity: int
 #     travel_times: Mapping[
 #         tuple[MachineConfig | BufferConfig, MachineConfig | BufferConfig],
-#         DeterministicDurationConfig | StochasticDurationConfig,
+#         DeterministicTimeConfig | StochasticTimeConfig,
 #     ]
 
 #     def __repr__(self) -> str:
@@ -410,7 +387,7 @@ class LogisticsConfig:
     capacity: int
     travel_times: Mapping[
         tuple[str, str],  # Use strings for ids
-        DeterministicDurationConfig | StochasticDurationConfig,
+        DeterministicTimeConfig | StochasticTimeConfig,
     ]
 
     def asdict(self) -> dict:

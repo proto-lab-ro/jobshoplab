@@ -48,3 +48,23 @@ def test_state_mapping_with_intralogistics(
     # JUST TESTING AGAINST LOCATION STRING
     for mapped_transport, location in zip(mapped_state.transports, ["m-1", "m-2", "m-2"]):
         assert mapped_transport.location.location == location
+
+
+def test_outages():
+    pass
+
+
+def test_stochastic_machine_times():
+    pass
+
+
+def test_stochastic_transport_times():
+    pass
+
+
+def test_static_setup_times():
+    pass
+
+
+def test_stochastic_setup_times():
+    pass

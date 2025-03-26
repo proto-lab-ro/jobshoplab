@@ -3,6 +3,7 @@ import sys
 from abc import ABC, abstractmethod
 from functools import partial
 from logging import Logger
+from dataclasses import replace
 from typing import Dict, Generator, Iterator, List, Union
 
 from jobshoplab.types import Config, InstanceConfig, State
@@ -11,6 +12,12 @@ from jobshoplab.types.state_types import *
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import NotImplementedError
 from jobshoplab.utils.utils import get_id_int
+from jobshoplab.utils.stochasticy_models import (
+    PoissonFunction,
+    GammaFunction,
+    BetaFunction,
+    GaussianFunction,
+)
 
 
 class ID_Counter:
@@ -56,9 +63,12 @@ class DefaultInstanceLookUpFactory:
         self.job_priority: float = 0.5
         self.instance_type: str = "job_shop"
 
+    def get_default_tool(self):
+        return "tl-0"
+
     def _get_setup_times(
         self, products: List[Product]
-    ) -> Dict[tuple[Product, Product], DeterministicDurationConfig]:
+    ) -> Dict[tuple[Product, Product], DeterministicTimeConfig]:
         """
         Get the setup times between products.
 
@@ -66,12 +76,12 @@ class DefaultInstanceLookUpFactory:
             products (List[Product]): The list of products.
 
         Returns:
-            Dict[tuple[Product, Product], DeterministicDurationConfig]: The setup times.
+            Dict[tuple[Product, Product], DeterministicTimeConfig]: The setup times.
         """
         setup_times = {}
         for product in products:
             for other_product in products:
-                setup_times[(product, other_product)] = DeterministicDurationConfig(0)
+                setup_times[(product, other_product)] = DeterministicTimeConfig(0)
         return setup_times
 
     def get_default_products(self) -> List[Product]:
@@ -184,7 +194,7 @@ class DefaultInstanceLookUpFactory:
         return LogisticsConfig(
             capacity=sys.maxsize,  # max int
             travel_times={
-                (c0.id, c1.id): DeterministicDurationConfig(0)
+                (c0.id, c1.id): DeterministicTimeConfig(0)
                 for c0 in machines_and_buffer
                 for c1 in machines_and_buffer
             },
@@ -434,7 +444,7 @@ class DictToInstanceMapper(AbstractDictMapper):
 
     def _parse_travel_times(
         self, spec_dict: Dict, input_buffer_id: str, output_buffer_id: str
-    ) -> Mapping[tuple[str, str], DeterministicDurationConfig | StochasticDurationConfig]:
+    ) -> Mapping[tuple[str, str], DeterministicTimeConfig | StochasticTimeConfig]:
         """
         Parse the given logistics specification string.
 
@@ -448,12 +458,17 @@ class DictToInstanceMapper(AbstractDictMapper):
         if not self.has_key(("instance_config", "logistics", "specification"), spec_dict):
             raise ValueError("Logistics specification must be provided.")
 
+        if self.has_key(("instance_config", "logistics", "time_behavior"), spec_dict):
+            time_behavior = spec_dict["instance_config"]["logistics"]["time_behavior"]
+        else:
+            time_behavior = "static"
         logistics_spec_str = spec_dict["instance_config"]["logistics"]["specification"]
         lines = [line.strip() for line in logistics_spec_str.strip().split("\n")]
         headers = lines[0].split("|")  # Get machine names from the header row
 
         # Create a dictionary to map each (machine1, machine2) tuple to its value
         mapper = {}
+
         for line in lines[1:]:
             parts = line.split("|")
             row_machine = parts[0]
@@ -466,7 +481,7 @@ class DictToInstanceMapper(AbstractDictMapper):
                 col_name = self._map_travel_times_names(
                     col_machine, input_buffer_id, output_buffer_id
                 )
-                mapper[(row_name, col_name)] = DeterministicDurationConfig(value)
+                mapper[(row_name, col_name)] = self._get_time(value, time_behavior)
 
         return mapper
 
@@ -515,7 +530,50 @@ class DictToInstanceMapper(AbstractDictMapper):
             return output_buffer_id
         raise ValueError(f"Unknown location name: {name}")
 
-    def _parse_specification(self, spec_str: str) -> Generator[JobConfig, None, None]:
+    def _get_time(
+        self, duration: int | None, time_behavior: Union[str, dict[str, Union[str, int]], int]
+    ) -> DeterministicTimeConfig | StochasticTimeConfig:
+        if duration is None:
+            if isinstance(time_behavior, int):
+                return DeterministicTimeConfig(time=time_behavior)
+            elif isinstance(time_behavior, dict) and "base" in time_behavior:
+                duration = int(time_behavior["base"])
+
+        if not isinstance(duration, int):
+            raise ValueError("Duration must be an integer")
+
+        if time_behavior == "static":
+            return DeterministicTimeConfig(time=duration)
+
+        if isinstance(time_behavior, dict):
+            if "type" not in time_behavior:
+                raise ValueError("Distribution type must be specified")
+
+            dist_type = str(time_behavior["type"])
+            match dist_type:
+                case "poisson":
+                    mean = float(time_behavior["mean"])
+                    func = PoissonFunction(duration, mean)
+                case "gamma":
+                    shape = float(time_behavior["shape"])
+                    scale = float(time_behavior["scale"])
+                    func = GammaFunction(duration, shape, scale)
+                case "beta":
+                    alpha = float(time_behavior["alpha"])
+                    beta = float(time_behavior["beta"])
+                    func = BetaFunction(duration, alpha, beta)
+                case "gaussian":
+                    mean = float(time_behavior["mean"])
+                    std = float(time_behavior["std"])
+                    func = GaussianFunction(duration, mean, std)
+                case _:
+                    raise ValueError(f"Unknown distribution function: {dist_type}")
+            return StochasticTimeConfig(time=func)
+        raise ValueError(f"Unknown time behavior: {time_behavior}")
+
+    def _parse_specification(
+        self, spec_dict: dict, time_behavior: str | dict
+    ) -> Generator[JobConfig, None, None]:
         """
         Parse the given specification string.
 
@@ -525,6 +583,7 @@ class DictToInstanceMapper(AbstractDictMapper):
         Yields:
             JobConfig: The parsed JobConfig object.
         """
+        spec_str = spec_dict["instance_config"]["instance"]["specification"]
         lines = spec_str.split("\n")  # remove first line description only
         self.logger.debug("Parse specification")
         lines = (line.replace(" ", "") for line in lines)  # remove whitespace
@@ -543,13 +602,28 @@ class DictToInstanceMapper(AbstractDictMapper):
         # Map job_param_tuple to JobConfig
         for job_id, operation_tuple in job_param_tuple:
             operations: tuple[OperationConfig, ...] = tuple()
+            operation_tuple = tuple(operation_tuple)
+            if self.has_key(("instance_config", "instance", "tool_usage"), spec_dict):
+                tools_per_operation = next(
+                    filter(
+                        lambda i: i["job"] == f"j{job_id}",
+                        spec_dict["instance_config"]["instance"]["tool_usage"],
+                    ),
+                    None,
+                )
+                if tools_per_operation is None:
+                    raise ValueError(f"No tool usage found for job {job_id}")
+            else:
+                tools_per_operation = [self.defaults.get_default_tool()] * len(operation_tuple)
             for operation_id, operation_params in enumerate(operation_tuple):
                 machine_id, duration = operation_params
+                tool = tools_per_operation[operation_id]
                 operations += (
                     OperationConfig(
                         id=f"o-{job_id}-{operation_id}",
                         machine=f"m-{machine_id}",
-                        duration=DeterministicDurationConfig(duration),
+                        duration=self._get_time(duration, time_behavior),
+                        tool=tool,
                     ),
                 )
             yield JobConfig(
@@ -565,7 +639,7 @@ class DictToInstanceMapper(AbstractDictMapper):
         Map the given specification string to a JobConfig object.
 
         Args:
-            spec_str (Dict): The specification string.
+            spec_dict (Dict): The specification string.
 
         Returns:
             JobConfig: The mapped JobConfig object.
@@ -576,25 +650,104 @@ class DictToInstanceMapper(AbstractDictMapper):
             spec_type = spec_dict["instance_config"]["instance"]["type"]
         else:
             spec_type = self.defaults.instance_type
-        spec_str = spec_dict["instance_config"]["instance"]["specification"]
+
         spec_type = ProblemInstanceTypeConfig(spec_type)
-        specification = tuple(self._parse_specification(spec_str))
+        if self.has_key(
+            ("instance_config", "instance", "specification", "time_behavior"), spec_dict
+        ):
+            time_behavior = spec_dict["instance_config"]["instance"]["specification"][
+                "time_behavior"
+            ]
+        else:
+            time_behavior = "static"
+        specification = tuple(self._parse_specification(spec_dict, time_behavior))
         self.logger.debug("Successfully mapped specification")
         return ProblemInstanceConfig(
             specification=specification,
             type=spec_type,
         )
 
+    def _parse_setup_times(
+        self, setup_times_str: str, time_behavior: str | dict
+    ) -> Mapping[tuple[str, str], DeterministicTimeConfig | StochasticTimeConfig]:
+
+        # self.logger.debug("Parse logistics specification")
+        # if not self.has_key(("instance_config", "logistics", "specification"), spec_dict):
+        #     raise ValueError("Logistics specification must be provided.")
+
+        # if self.has_key(("instance_config", "logistics", "time_behavior"), spec_dict):
+        #     time_behavior = spec_dict["instance_config"]["logistics"]["time_behavior"]
+        # else:
+        #     time_behavior = "static"
+        lines = [line.strip() for line in setup_times_str.strip().split("\n")]
+        headers = lines[0].split("|")  # Get machine names from the header row
+
+        # Create a dictionary to map each (machine1, machine2) tuple to its value
+        mapper = {}
+
+        for line in lines[1:]:
+            parts = line.split("|")
+            row_name = parts[0]
+            values = map(int, parts[1].split())
+            for col_name, value in zip(headers, values):
+                mapper[(row_name, col_name)] = self._get_time(value, time_behavior)
+
+        return mapper
+
     def _add_machine_spec(self, default: MachineConfig, spec_dict: Dict) -> MachineConfig:
-        if self.has_key(("instance_config", "components", "machine", "0"), spec_dict):
-            raise NotImplementedError
-        return default
+        machine = default
+        if self.has_key(("instance_config", "outages"), spec_dict):
+            component_list = ["m", "machine", "Machine", "MACHINE"]
+            outages = self._map_spec_dict_to_outage(spec_dict, component_list, default.outages)
+            machine = replace(machine, outages=outages)
+        if self.has_key(("instance_config", "setup_times"), spec_dict):
+            if self.has_key(("instance_config", "setup_times", "time_behavior"), spec_dict):
+                _time_behavior = spec_dict["instance_config"]["setup_times"]["time_behavior"]
+            else:
+                _time_behavior = "static"
+            setup_times_str = spec_dict["instance_config"]["setup_times"]
+            setup_times_str = next(
+                filter(lambda i: i["machine"] == machine.id, setup_times_str), None
+            )
+            if setup_times_str is None:
+                raise ValueError(f"No setup times found for machine {machine.id}")
+            setup_times = self._parse_setup_times(setup_times_str["specification"], _time_behavior)
+            machine = replace(machine, setup_times=setup_times)
+        return machine
+
+    def _match_outage_type(self, type: str) -> OutageTypeConfig:
+        match type:
+            case "maintenance" | "repair":
+                return OutageTypeConfig.MAINTENANCE
+            case "breakdown" | "fail":
+                return OutageTypeConfig.FAIL
+            case "recharge" | "recharging":
+                return OutageTypeConfig.RECHARGE
+            case _:
+                raise ValueError(f"Unknown outage type: {type}")
+
+    def _map_spec_dict_to_outage(self, spec_dict, component_list, outages):
+        if not self.has_key(("instance_config", "outages"), spec_dict):
+            return outages
+        for maintance_spec in spec_dict["instance_config"]["outages"]:
+            if maintance_spec["component"] in component_list:
+                duration_behavior = maintance_spec["duration"]
+                frequency_behavior = maintance_spec["frequency"]
+                _type = self._match_outage_type(maintance_spec["type"])
+                outages += (
+                    OutageConfig(
+                        duration=self._get_time(None, duration_behavior),
+                        frequency=self._get_time(None, frequency_behavior),
+                        type=_type,
+                    ),
+                )
+        return outages
 
     def _add_buffer_spec(self, default: BufferConfig, spec_dict: Dict) -> BufferConfig:
         raise NotImplementedError
 
     def _add_transport_spec(self, spec_dict: Dict) -> tuple[TransportConfig, ...]:
-        transport = spec_dict["instance_config"]["instance"]["transport"]
+        transport = spec_dict["instance_config"]["logistics"]
 
         if "amount" not in transport:
             raise ValueError("Transport configuration must include 'amount' key.")
@@ -608,13 +761,16 @@ class DictToInstanceMapper(AbstractDictMapper):
                 raise ValueError(f"Unknown transport type: {transport.get('type')}")
 
         transports: tuple[TransportConfig, ...] = tuple()
+        outages = self._map_spec_dict_to_outage(
+            spec_dict, ["t", "transport", "Transport", "TRANSPORT"], tuple()
+        )
         for i in range(transport["amount"]):
             transport_id = self.counter.get_transport_id()
             transports += (
                 TransportConfig(
                     id=transport_id,
                     type=type,
-                    outages=tuple(),
+                    outages=outages,
                     resources=tuple(),
                     buffer=BufferConfig(
                         id=self.counter.get_buffer_id(),
@@ -656,7 +812,7 @@ class DictToInstanceMapper(AbstractDictMapper):
             machines += (machine,)
 
         # mapping transport
-        if self.has_key(("instance_config", "instance", "transport", "type"), spec_dict):
+        if self.has_key(("instance_config", "logistics", "type"), spec_dict):
             transport = self._add_transport_spec(spec_dict)
 
         else:

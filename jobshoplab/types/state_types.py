@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Protocol, TypeVar, Union
 
 from jobshoplab.types.instance_config_types import (
-    DeterministicDurationConfig,
+    DeterministicTimeConfig,
 )
 
 EnergyConsumption = TypeVar("EnergyConsumption")
@@ -47,7 +47,7 @@ Action = ActionProtocol
 class Time:
     time: int
 
-    def __add__(self, other: Union["Time", "DeterministicDurationConfig"]) -> "Time":
+    def __add__(self, other: Union["Time", "DeterministicTimeConfig"]) -> "Time":
         if isinstance(other, Time):
             return Time(self.time + other.time)
         raise TypeError(

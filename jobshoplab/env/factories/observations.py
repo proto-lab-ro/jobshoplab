@@ -287,15 +287,15 @@ class PassTroughObservation(ObservationFactory):
 #                 self.instance.instance.specification, jobState.id
 #             )
 #             total_duration = sum(
-#                 op.duration.duration
+#                 op.duration.time
 #                 for op in job_config.operations
-#                 if isinstance(op.duration, DeterministicDurationConfig)
+#                 if isinstance(op.duration, DeterministicTimeConfig)
 #             )
 
 #             completed_duration = sum(
 #                 job_type_utils.get_operation_config_by_id(
 #                     self.instance.instance.specification, op.id
-#                 ).duration.duration
+#                 ).duration.time
 #                 for op in jobState.operations
 #                 if op.operation_state_state == OperationStateState.DONE
 #             )
@@ -335,7 +335,7 @@ class PassTroughObservation(ObservationFactory):
 #             idle_ops_config = [
 #                 job_type_utils.get_operation_config_by_id((job_config,), op.id) for op in idle_ops
 #             ]
-#             sum_idle_durations = sum(idle_op.duration.duration for idle_op in idle_ops_config)
+#             sum_idle_durations = sum(idle_op.duration.time for idle_op in idle_ops_config)
 
 #             processing_ops = filter(
 #                 lambda x: x.operation_state_state == OperationStateState.PROCESSING,

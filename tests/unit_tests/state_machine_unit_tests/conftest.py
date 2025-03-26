@@ -10,6 +10,7 @@ from jobshoplab.types.instance_config_types import (
     InstanceConfig,
     Product,
     TransportTypeConfig,
+    DeterministicTimeConfig,
 )
 from jobshoplab.types.state_types import (
     BufferState,
@@ -572,7 +573,10 @@ def simple_job_config():
         id="j-1",
         operations=(
             OperationConfig(
-                id="op-1", machine="m-1", duration=10  # Changed from machine_id to machine
+                id="op-1",
+                machine="m-1",
+                duration=DeterministicTimeConfig(time=10),
+                tool="tl-0",  # Changed from machine_id to machine
             ),
         ),
         product=Product(id="p-1", name="product-1"),

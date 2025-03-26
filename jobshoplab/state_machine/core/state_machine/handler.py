@@ -8,7 +8,7 @@ from jobshoplab.types.action_types import ComponentTransition
 from jobshoplab.types.instance_config_types import BufferConfig, TransportTypeConfig
 from jobshoplab.types.state_types import (
     BufferState,
-    DeterministicDurationConfig,
+    DeterministicTimeConfig,
     MachineState,
     MachineStateState,
     NoTime,
@@ -279,7 +279,7 @@ def handle_agv_transport_pickup_to_transit_transition(
     if transport_source.startswith("m") or transport_destination.startswith("m"):
         travel_time = instance.logistics.travel_times.get((transport_source, transport_destination))
         match travel_time:
-            case DeterministicDurationConfig(duration):
+            case DeterministicTimeConfig(duration):
                 travel_time = duration
             case None:
                 raise ValueError(
@@ -390,10 +390,10 @@ def handle_agv_transport_idle_to_working_transition(
         (transport_state.location.location, source_id)
     )
 
-    if not isinstance(time_to_pickup, DeterministicDurationConfig):
+    if not isinstance(time_to_pickup, DeterministicTimeConfig):
         raise ValueError("time_to_pickup", time_to_pickup)
 
-    time_to_pickup = time_to_pickup.duration
+    time_to_pickup = time_to_pickup.time
 
     current_time = extract_time(state.time)
 
