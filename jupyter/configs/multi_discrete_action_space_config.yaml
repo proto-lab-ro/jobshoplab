@@ -5,7 +5,7 @@ default_loglevel: &default_loglevel "warning" # global loglevel add loglevel to 
 compiler:
   loglevel: *default_loglevel
   repo: "DslRepository"
-  validator: "DummyValidator"
+  validator: "SimpleDSLValidator"
   manipulators:
 
     - "DummyManipulator"

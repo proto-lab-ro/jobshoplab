@@ -124,7 +124,7 @@ Below is an example configuration file for JobShopLab:
     compiler:
         loglevel: "warning"
         repo: "SpecRepository"  # Set to "YamlRepository" to use custom problem instances.
-        validator: "DummyValidator"
+        validator: "SimpleDSLValidator"
         manipulators:
             - "DummyManipulator"
         yaml_repository:
@@ -315,7 +315,7 @@ Spec files are academic JSSP problem instances as found in the literature. Commo
     compiler:
       loglevel: *default_loglevel
       repo: "SpecRepository"  # Use the SpecRepository here.
-      validator: "DummyValidator"
+      validator: "SimpleDSLValidator"
       manipulators:
         - "DummyManipulator"
       yaml_repository:
@@ -372,7 +372,7 @@ To set up a DSL repository, specify the DSL file path in the configuration file:
     compiler:
     loglevel: *default_loglevel
     repo: "DslRepository" # <- set the repo here
-    validator: "DummyValidator"
+    validator: "SimpleDSLValidator"
     manipulators:
         - "DummyManipulator"
     dsl_repository:

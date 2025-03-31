@@ -6,7 +6,7 @@ compiler:
   loglevel: *default_loglevel
   repo: "DslRepository"
   # repo: "SpecRepository"
-  validator: "DummyValidator"
+  validator: "SimpleDSLValidator"
   manipulators:
 
     - "DummyManipulator"

@@ -6,7 +6,7 @@ compiler:
   loglevel: *default_loglevel
   # repo: "DslRepository" # change here to mod repo from spec to yaml or vice versa
   repo: "SpecRepository"
-  validator: "DummyValidator"
+  validator: "SimpleDSLValidator"
   manipulators:
 
     - "DummyManipulator"

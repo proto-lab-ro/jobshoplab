@@ -24,7 +24,7 @@ Configuration in JobShopLab is managed through YAML files. A typical configurati
     # Component-specific settings
     compiler:
       repo: "SpecRepository"
-      validator: "DummyValidator"
+      validator: "SimpleDSLValidator"
       manipulators:
         - "DummyManipulator"
       spec_repository:
