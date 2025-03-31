@@ -3,7 +3,7 @@ from dataclasses import replace
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.instance_config_types import BufferConfig
 from jobshoplab.types.state_types import BufferState, BufferStateState, JobState
-from jobshoplab.utils.exceptions import InvalidValue
+from jobshoplab.utils.exceptions import InvalidValue, BufferFullError, JobNotInBufferError
 
 
 def replace_buffer_state(state: State, buffer_state) -> State:
@@ -68,7 +68,7 @@ def put_in_buffer(
         BufferState: The updated buffer state.
     """
     if len(buffer_state.store) >= buffer_config.capacity:
-        raise ValueError("Buffer is full")
+        raise BufferFullError(buffer_state.id)
 
     store = buffer_state.store + (job_state.id,)
     job_state = replace(job_state, location=buffer_state.id)
@@ -103,7 +103,7 @@ def switch_buffer(
         tuple[BufferState, BufferState, JobState]: The updated buffer states and job state.
     """
     if job_state.id not in buffer_from_state.store:
-        raise ValueError("Job not in buffer")
+        raise JobNotInBufferError(job_state.id, buffer_from_state.id)
 
     buffer_from_state = remove_from_buffer(buffer_from_state, job_state.id)
 
@@ -128,7 +128,7 @@ def remove_from_buffer(buffer_state: BufferState, job_id: str) -> BufferState:
         BufferState: The updated buffer state.
     """
     if job_id not in buffer_state.store:
-        raise ValueError("Job not in buffer")
+        raise JobNotInBufferError(job_id, buffer_state.id)
 
     store = tuple(j for j in buffer_state.store if j != job_id)
 

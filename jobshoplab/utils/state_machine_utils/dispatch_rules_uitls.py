@@ -2,6 +2,7 @@ import jobshoplab.utils.state_machine_utils.job_type_utils as job_type_utils
 import jobshoplab.utils.state_machine_utils.machine_type_utils as machine_type_utils
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.state_types import JobState, OperationStateState
+from jobshoplab.utils.exceptions import InvalidDispatchRuleError, OperationMachineMatchError
 
 # TODO: Validate and test the functions in this file
 
@@ -23,9 +24,7 @@ def get_prebuffer_operations_for_machine(instance: InstanceConfig, state: State,
         next_operation = job_type_utils.get_next_not_done_operation(job_state)
 
         if next_operation.machine_id != machine_id:
-            raise ValueError(
-                f"Bug: Next operation (ID: {next_operation.id}) is not at machine {machine_id}, but it is in the prebuffer."
-            )
+            raise OperationMachineMatchError(next_operation.id, machine_id, next_operation.machine_id)
 
         operations.append(
             job_type_utils.get_operation_config_by_id(
@@ -59,7 +58,7 @@ def get_machine_prebuffer_jobs_by_processing_time(
     """Gets jobs for machines based on the processing time of their next operation."""
 
     if mode not in {"SPT", "LPT"}:
-        raise ValueError(f"Invalid mode: {mode}")
+        raise InvalidDispatchRuleError(mode, ["SPT", "LPT"])
 
     sorting_func = min if mode == "SPT" else max
     machine_jobs = {}
@@ -84,7 +83,7 @@ def get_machine_jobs_by_remaining_processing_time(
     """Assigns jobs to machines based on Shortest/Longest Remaining Processing Time."""
 
     if mode not in {"srpt", "lrpt"}:
-        raise ValueError(f"Invalid mode: {mode}")
+        raise InvalidDispatchRuleError(mode, ["srpt", "lrpt"])
 
     sorting_func = min if mode == "srpt" else max
     machine_jobs = {}

@@ -18,6 +18,7 @@ from jobshoplab.utils.state_machine_utils import (
     job_type_utils,
     machine_type_utils,
 )
+from jobshoplab.utils.exceptions import JobNotInBufferError
 
 
 def test_get_job_state_by_id(default_init_state: state_types.State):
@@ -169,9 +170,9 @@ def test_remove_from_buffer(
     buffer_state = buffer_type_utils.remove_from_buffer(buffer_state, "j-0")
     expected_buffer = replace(buffer_state, store=())
     assert buffer_state == expected_buffer
-    with unittest.TestCase().assertRaises(ValueError):
+    with unittest.TestCase().assertRaises(JobNotInBufferError):
         buffer_type_utils.remove_from_buffer(buffer_state, "j-0")
-    with unittest.TestCase().assertRaises(ValueError):
+    with unittest.TestCase().assertRaises(JobNotInBufferError):
         buffer_type_utils.remove_from_buffer(buffer_state, "j-1000")
 
 

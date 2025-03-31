@@ -10,7 +10,20 @@ from jobshoplab.types import Config, InstanceConfig, State
 from jobshoplab.types.instance_config_types import *
 from jobshoplab.types.state_types import *
 from jobshoplab.utils import get_logger
-from jobshoplab.utils.exceptions import NotImplementedError
+from jobshoplab.utils.exceptions import (
+    NotImplementedError,
+    MissingSpecificationError,
+    UnknownLocationNameError,
+    InvalidDurationError,
+    InvalidDistributionError,
+    UnknownDistributionTypeError,
+    InvalidTimeBehaviorError,
+    InvalidSetupTimesError,
+    InvalidToolUsageError,
+    InvalidTransportConfig,
+    ComponentAssociationError,
+    InvalidOutageTypeError
+)
 from jobshoplab.utils.utils import get_id_int
 from jobshoplab.utils.stochasticy_models import (
     PoissonFunction,
@@ -290,7 +303,7 @@ class DefaultStateLookUpFactory:
         location_gen = map(lambda x: x.id, location_gen)
         location = next(location_gen, None)
         if location is None:
-            raise ValueError(f"Transport with id={transport.id} can not associate with a machine")
+            raise ComponentAssociationError(transport.id, "Transport")
         return TransportState(
             id=transport.id,
             state=TransportStateState.IDLE,
@@ -461,7 +474,7 @@ class DictToInstanceMapper(AbstractDictMapper):
         """
         self.logger.debug("Parse logistics specification")
         if not self.has_key(("instance_config", "logistics", "specification"), spec_dict):
-            raise ValueError("Logistics specification must be provided.")
+            raise MissingSpecificationError("Logistics specification")
 
         if self.has_key(("instance_config", "logistics", "time_behavior"), spec_dict):
             time_behavior = spec_dict["instance_config"]["logistics"]["time_behavior"]
@@ -533,7 +546,7 @@ class DictToInstanceMapper(AbstractDictMapper):
             "out-buf",
         ]:
             return output_buffer_id
-        raise ValueError(f"Unknown location name: {name}")
+        raise UnknownLocationNameError(name)
 
     def _get_time(
         self, duration: int | None, time_behavior: Union[str, dict[str, Union[str, int]], int]
@@ -545,14 +558,14 @@ class DictToInstanceMapper(AbstractDictMapper):
                 duration = int(time_behavior["base"])
 
         if not isinstance(duration, int):
-            raise ValueError("Duration must be an integer")
+            raise InvalidDurationError(duration)
 
         if time_behavior == "static":
             return DeterministicTimeConfig(time=duration)
 
         if isinstance(time_behavior, dict):
             if "type" not in time_behavior:
-                raise ValueError("Distribution type must be specified")
+                raise InvalidDistributionError("Distribution type must be specified")
 
             dist_type = str(time_behavior["type"])
             match dist_type:
@@ -572,9 +585,9 @@ class DictToInstanceMapper(AbstractDictMapper):
                     std = float(time_behavior["std"])
                     func = GaussianFunction(duration, mean, std)
                 case _:
-                    raise ValueError(f"Unknown distribution function: {dist_type}")
+                    raise UnknownDistributionTypeError(dist_type)
             return StochasticTimeConfig(time=func)
-        raise ValueError(f"Unknown time behavior: {time_behavior}")
+        raise InvalidTimeBehaviorError(time_behavior)
 
     def _parse_specification(
         self, spec_dict: dict, time_behavior: str | dict
@@ -617,7 +630,7 @@ class DictToInstanceMapper(AbstractDictMapper):
                     None,
                 )
                 if tools_per_operation is None:
-                    raise ValueError(f"No tool usage found for job {job_id}")
+                    raise InvalidToolUsageError(f"j{job_id}")
                 tools_per_operation = tools_per_operation["operation_tools"]
             else:
                 tools_per_operation = [self.defaults.get_default_tool()] * len(operation_tuple)
@@ -713,7 +726,7 @@ class DictToInstanceMapper(AbstractDictMapper):
                 filter(lambda i: i["machine"] == machine.id, setup_times_str), None
             )
             if setup_times_str is None:
-                raise ValueError(f"No setup times found for machine {machine.id}")
+                raise InvalidSetupTimesError(machine.id)
             if "time_behavior" in setup_times_str.keys():
                 _time_behavior = setup_times_str["time_behavior"]
             else:
@@ -731,7 +744,7 @@ class DictToInstanceMapper(AbstractDictMapper):
             case "recharge" | "recharging":
                 return OutageTypeConfig.RECHARGE
             case _:
-                raise ValueError(f"Unknown outage type: {type}")
+                raise InvalidOutageTypeError(type)
 
     def _map_spec_dict_to_outage(self, spec_dict, component_list, outages):
         if not self.has_key(("instance_config", "outages"), spec_dict):
@@ -757,7 +770,7 @@ class DictToInstanceMapper(AbstractDictMapper):
         transport = spec_dict["instance_config"]["logistics"]
 
         if "amount" not in transport:
-            raise ValueError("Transport configuration must include 'amount' key.")
+            raise InvalidTransportConfig("Transport configuration must include 'amount' key")
 
         type = transport.get("type", TransportTypeConfig.AGV)
 
@@ -765,7 +778,7 @@ class DictToInstanceMapper(AbstractDictMapper):
             case "agv":
                 type = TransportTypeConfig.AGV
             case _:
-                raise ValueError(f"Unknown transport type: {transport.get('type')}")
+                raise InvalidTransportConfig(f"Unknown transport type: {transport.get('type')}")
 
         transports: tuple[TransportConfig, ...] = tuple()
         outages = self._map_spec_dict_to_outage(
