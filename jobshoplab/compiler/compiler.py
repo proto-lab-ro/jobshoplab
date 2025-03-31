@@ -47,10 +47,13 @@ class Compiler:
             getattr(manipulators, manipulator)(**self._build_obj_args(manipulator))
             for manipulator in config.compiler.manipulators
         )
-
-        self.validator: validators.AbstractValidator = getattr(
-            validators, config.compiler.validator
-        )(**self._build_obj_args(config.compiler.validator))
+        if isinstance(self.repo, repos.SpecRepository):
+            validator_cls = "DummyValidator"  # if using spec repo, no validation needed (syntax is commonly used)
+        else:
+            validator_cls = config.compiler.validator
+        self.validator: validators.AbstractValidator = getattr(validators, validator_cls)(
+            **self._build_obj_args(config.compiler.validator)
+        )
 
         self.init_state_mapper: mapper.DictToInitStateMapper = mapper.DictToInitStateMapper(
             **self._build_obj_args("DictToInitStateMapper")

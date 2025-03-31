@@ -100,7 +100,7 @@ class DummyValidator(AbstractValidator):
         return f"DummyValidator()"
 
 
-class InstanceDSLValidator(AbstractValidator):
+class SimpleDSLValidator(AbstractValidator):
     """
     Validator for Instance DSL syntax in YAML configurations.
 
