@@ -198,3 +198,42 @@ class OperationMachineMatchError(JobShopException):
     def __init__(self, operation_id, expected_machine, actual_machine):
         self.message = f"Operation {operation_id} is in prebuffer of machine {expected_machine} but is assigned to machine {actual_machine}"
         super().__init__(self.message)
+
+
+class InstanceSchemaError(JobShopException):
+    def __init__(self, message, field=None):
+        if field:
+            self.message = f"Instance schema error in field '{field}': {message}"
+        else:
+            self.message = f"Instance schema error: {message}"
+        super().__init__(self.message)
+
+
+class MissingRequiredFieldError(InstanceSchemaError):
+    def __init__(self, field_name, parent_field=None):
+        self.field = field_name
+        if parent_field:
+            self.message = f"Missing required field '{field_name}' in '{parent_field}'"
+        else:
+            self.message = f"Missing required field '{field_name}'"
+        super().__init__(self.message, field_name)
+
+
+class InvalidFieldValueError(InstanceSchemaError):
+    def __init__(self, field_name, value, expected_format=None):
+        self.field = field_name
+        if expected_format:
+            self.message = f"Invalid value '{value}' for field '{field_name}'. Expected format: {expected_format}"
+        else:
+            self.message = f"Invalid value '{value}' for field '{field_name}'"
+        super().__init__(self.message, field_name)
+
+
+class JobSpecificationSyntaxError(InstanceSchemaError):
+    def __init__(self, line_number, line_content, details=None):
+        self.line_number = line_number
+        self.line_content = line_content
+        message = f"Invalid job specification syntax at line {line_number}: '{line_content}'"
+        if details:
+            message += f" - {details}"
+        super().__init__(message, "instance.specification")
