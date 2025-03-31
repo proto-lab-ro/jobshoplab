@@ -16,6 +16,14 @@ class StochasticFunction(ABC):
     def __str__(self):
         return self.__class__.__name__
 
+    @abstractmethod
+    def __repr__(self):
+        return self.__str__()
+
+    @abstractmethod
+    def __eq__(self, value: object) -> bool:
+        pass
+
 
 class PoissonFunction(StochasticFunction):
     def __init__(self, base_time: int, mean: float):
@@ -27,6 +35,14 @@ class PoissonFunction(StochasticFunction):
 
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, mean={self.mean})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PoissonFunction):
+            return False
+        return self.base_time == other.base_time and self.mean == other.mean
 
 
 class GaussianFunction(StochasticFunction):
@@ -41,6 +57,16 @@ class GaussianFunction(StochasticFunction):
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, mean={self.mean}, std={self.std})"
 
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GaussianFunction):
+            return False
+        return (
+            self.base_time == other.base_time and self.mean == other.mean and self.std == other.std
+        )
+
 
 class BetaFunction(StochasticFunction):
     def __init__(self, base_time: int, alpha: float, beta: float):
@@ -54,6 +80,18 @@ class BetaFunction(StochasticFunction):
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, alpha={self.alpha}, beta={self.beta})"
 
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BetaFunction):
+            return False
+        return (
+            self.base_time == other.base_time
+            and self.alpha == other.alpha
+            and self.beta == other.beta
+        )
+
 
 class GammaFunction(StochasticFunction):
     def __init__(self, base_time: int, shape: float, scale: float):
@@ -66,3 +104,15 @@ class GammaFunction(StochasticFunction):
 
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, shape={self.shape}, scale={self.scale})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GammaFunction):
+            return False
+        return (
+            self.base_time == other.base_time
+            and self.shape == other.shape
+            and self.scale == other.scale
+        )

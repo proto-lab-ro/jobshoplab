@@ -13,7 +13,21 @@ from jobshoplab.types.instance_config_types import InstanceConfig, JobConfig, Ma
 from dataclasses import replace
 from jobshoplab.types.instance_config_types import OutageConfig, OutageTypeConfig
 from jobshoplab.types.instance_config_types import DeterministicTimeConfig, StochasticTimeConfig
-from jobshoplab.utils.stochasticy_models import GammaFunction, GaussianFunction
+from jobshoplab.utils.stochasticy_models import (
+    GammaFunction,
+    GaussianFunction,
+    PoissonFunction,
+    BetaFunction,
+)
+
+from jobshoplab.types.instance_config_types import (
+    DeterministicTimeConfig,
+    StochasticTimeConfig,
+    Product,
+)
+from jobshoplab.utils.stochasticy_models import BetaFunction
+from tests.conftest import default_instance
+from jobshoplab.types.instance_config_types import StochasticTimeConfig
 
 
 @pytest.fixture
@@ -69,6 +83,18 @@ def instance_dict_with_outages(minimal_instance_dict):
             "frequency": 10,
         },
     ]
+    minimal_instance_dict["instance_config"]["logistics"] = {
+        "type": "agv",
+        "amount": 3,
+        "specification": """
+            m-0|m-1|m-2|in-buf|out-buf
+            m-0|0 5 4 0 0
+            m-1|5 0 2 0 0
+            m-2|4 2 0 0 0
+            in-buf|0 0 0 0 0
+            out-buf|0 0 0 0 0
+        """,
+    }
     minimal_instance_dict["instance_config"]["outages"] = outages
     return minimal_instance_dict
 
@@ -77,24 +103,6 @@ def instance_dict_with_outages(minimal_instance_dict):
 def instance_dict_with_stochastic_machine_times(minimal_instance_dict):
     time_behavior = {"type": "beta", "alpha": 2, "beta": 2}
     minimal_instance_dict["instance_config"]["instance"]["time_behavior"] = time_behavior
-    return minimal_instance_dict
-
-
-@pytest.fixture
-def instance_dict_with_stochastic_job_times(minimal_instance_dict):
-    # Modify the original job descriptions to include stochastic times
-    modified_spec = """
-        (m0,t)|(m1,t)|(m2,t)
-        j0|(0,3) (1,2) (2,2)
-        j1|(0,2) (2,1) (1,4)
-        j2|(1,4) (2,3) (0,3)
-    """
-    minimal_instance_dict["instance_config"]["instance"]["specification"] = modified_spec
-    minimal_instance_dict["instance_config"]["instance"]["time_behavior"] = {
-        "type": "gaussian",
-        "mean": 0,
-        "std": 1,
-    }
     return minimal_instance_dict
 
 
@@ -150,7 +158,6 @@ def instance_dict_with_stochastic_setup_times(minimal_instance_dict):
         {
             "machine": "m-2",
             "specification": "tl-0|tl-1|tl-2\ntl-0|0 2 5\ntl-1|2 0 8\ntl-2|5 2 0",
-            "time_behavior": {"type": "beta", "alpha": 2, "beta": 2},
         },
     ]
     tool_usage = [
@@ -164,20 +171,22 @@ def instance_dict_with_stochastic_setup_times(minimal_instance_dict):
 
 
 ### INSTANCE FIXTURES
+
+
 @pytest.fixture
-def instance_with_outages(minimal_instance, default_machines):
+def instance_with_outages(default_instance, default_machines):
     # Create machine with maintenance outage
     machine1 = default_machines[1]  # Use m-1
-    gamma_func = GammaFunction(10, 2, 5)
+    gamma_func = GammaFunction(10, 2.0, 5.0)
     maintenance_outage = OutageConfig(
-        frequency=DeterministicTimeConfig(5),
-        duration=StochasticTimeConfig(gamma_func),
+        frequency=StochasticTimeConfig(gamma_func),
+        duration=DeterministicTimeConfig(5),
         type=OutageTypeConfig.MAINTENANCE,
     )
     modified_machine1 = replace(machine1, outages=(maintenance_outage,))
 
     # Create modified transports with recharge outage
-    gaussian_func = GaussianFunction(10, 5, 1)
+    gaussian_func = GaussianFunction(10, 5.0, 1.0)
     recharge_outage = OutageConfig(
         frequency=DeterministicTimeConfig(10),
         duration=StochasticTimeConfig(gaussian_func),
@@ -185,25 +194,22 @@ def instance_with_outages(minimal_instance, default_machines):
     )
 
     modified_transports = tuple(
-        replace(transport, outages=(recharge_outage,)) for transport in minimal_instance.transports
+        replace(transport, outages=(recharge_outage,)) for transport in default_instance.transports
     )
 
     # Replace the machines and transports in the minimal instance
-    new_machines = list(minimal_instance.machines)
+    new_machines = list(default_instance.machines)
     new_machines[1] = modified_machine1
 
-    return replace(minimal_instance, machines=tuple(new_machines), transports=modified_transports)
+    return replace(default_instance, machines=tuple(new_machines), transports=modified_transports)
 
 
 @pytest.fixture
-def instance_with_stochastic_machine_times(minimal_instance):
-    from dataclasses import replace
-    from jobshoplab.types.instance_config_types import StochasticTimeConfig
-    from jobshoplab.utils.stochasticy_models import BetaFunction
+def instance_with_stochastic_machine_times(default_instance):
 
     # Create stochastic job operations
     modified_jobs = []
-    for job in minimal_instance.instance.specification:
+    for job in default_instance.instance.specification:
         modified_operations = []
         for op in job.operations:
             # Replace deterministic duration with stochastic beta function
@@ -218,45 +224,29 @@ def instance_with_stochastic_machine_times(minimal_instance):
 
     # Create modified problem instance
     modified_problem_instance = replace(
-        minimal_instance.instance, specification=tuple(modified_jobs)
+        default_instance.instance, specification=tuple(modified_jobs)
     )
 
     # Return modified instance
-    return replace(minimal_instance, instance=modified_problem_instance)
+    return replace(default_instance, instance=modified_problem_instance)
 
 
 @pytest.fixture
-def instance_with_stochastic_job_times(minimal_instance):
-    from dataclasses import replace
-    from jobshoplab.types.instance_config_types import StochasticTimeConfig
-    from jobshoplab.utils.stochasticy_models import GaussianFunction
-
-    # Create stochastic job operations
-    modified_jobs = []
-    for job in minimal_instance.instance.specification:
-        modified_operations = []
-        for op in job.operations:
-            # Replace deterministic duration with stochastic gaussian function
-            gaussian_func = GaussianFunction(
-                base_time=op.duration.time, mean=0, std=1  # Use the original time as base
-            )
-            modified_op = replace(op, duration=StochasticTimeConfig(gaussian_func))
-            modified_operations.append(modified_op)
-
-        modified_job = replace(job, operations=tuple(modified_operations))
-        modified_jobs.append(modified_job)
-
-    # Create modified problem instance
-    modified_problem_instance = replace(
-        minimal_instance.instance, specification=tuple(modified_jobs)
-    )
-
-    # Return modified instance
-    return replace(minimal_instance, instance=modified_problem_instance)
+def instance_with_stochastic_transport_times(default_instance_with_intralogistics):
+    # Add intralogistics with stochastic behavior
+    default_instance = default_instance_with_intralogistics
+    tt_time = dict()
+    for locations, _time in default_instance.logistics.travel_times.items():
+        # Replace deterministic duration with stochastic beta function
+        beta_func = PoissonFunction(base_time=_time.time, mean=2.0)
+        tt_time[locations] = StochasticTimeConfig(beta_func)
+    logistics = replace(default_instance.logistics, travel_times=tt_time)
+    instance = replace(default_instance, logistics=logistics)
+    return instance
 
 
 @pytest.fixture
-def instance_with_static_setup_times(minimal_instance, default_products):
+def instance_with_static_setup_times(default_instance, default_products):
     from dataclasses import replace
     from jobshoplab.types.instance_config_types import DeterministicTimeConfig, Product
 
@@ -278,7 +268,7 @@ def instance_with_static_setup_times(minimal_instance, default_products):
     }
 
     # Apply setup times to each machine
-    for machine in minimal_instance.machines:
+    for machine in default_instance.machines:
         modified_machine = replace(machine, setup_times=setup_times_matrix)
         modified_machines.append(modified_machine)
 
@@ -290,7 +280,7 @@ def instance_with_static_setup_times(minimal_instance, default_products):
         ["tl-0", "tl-1", "tl-2"],  # job 2
     ]
 
-    for job_idx, job in enumerate(minimal_instance.instance.specification):
+    for job_idx, job in enumerate(default_instance.instance.specification):
         modified_operations = []
         for op_idx, op in enumerate(job.operations):
             tool = tool_assignments[job_idx][op_idx]
@@ -302,24 +292,17 @@ def instance_with_static_setup_times(minimal_instance, default_products):
 
     # Create modified problem instance
     modified_problem_instance = replace(
-        minimal_instance.instance, specification=tuple(modified_jobs)
+        default_instance.instance, specification=tuple(modified_jobs)
     )
 
     # Return modified instance
     return replace(
-        minimal_instance, machines=tuple(modified_machines), instance=modified_problem_instance
+        default_instance, machines=tuple(modified_machines), instance=modified_problem_instance
     )
 
 
 @pytest.fixture
-def instance_with_stochastic_setup_times(minimal_instance, default_products):
-    from dataclasses import replace
-    from jobshoplab.types.instance_config_types import (
-        DeterministicTimeConfig,
-        StochasticTimeConfig,
-        Product,
-    )
-    from jobshoplab.utils.stochasticy_models import BetaFunction
+def instance_with_stochastic_setup_times(default_instance, default_products):
 
     # Create tool-based setup times for each machine
     modified_machines = []
@@ -349,7 +332,7 @@ def instance_with_stochastic_setup_times(minimal_instance, default_products):
             setup_times_m1_m2[key] = StochasticTimeConfig(beta_func)
 
     # Apply different setup times to different machines
-    for idx, machine in enumerate(minimal_instance.machines):
+    for idx, machine in enumerate(default_instance.machines):
         if idx == 0:
             modified_machine = replace(machine, setup_times=setup_times_m0)
         else:
@@ -364,7 +347,7 @@ def instance_with_stochastic_setup_times(minimal_instance, default_products):
         ["tl-0", "tl-1", "tl-2"],  # job 2
     ]
 
-    for job_idx, job in enumerate(minimal_instance.instance.specification):
+    for job_idx, job in enumerate(default_instance.instance.specification):
         modified_operations = []
         for op_idx, op in enumerate(job.operations):
             tool = tool_assignments[job_idx][op_idx]
@@ -376,10 +359,10 @@ def instance_with_stochastic_setup_times(minimal_instance, default_products):
 
     # Create modified problem instance
     modified_problem_instance = replace(
-        minimal_instance.instance, specification=tuple(modified_jobs)
+        default_instance.instance, specification=tuple(modified_jobs)
     )
 
     # Return modified instance
     return replace(
-        minimal_instance, machines=tuple(modified_machines), instance=modified_problem_instance
+        default_instance, machines=tuple(modified_machines), instance=modified_problem_instance
     )

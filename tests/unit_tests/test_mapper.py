@@ -50,78 +50,48 @@ def test_state_mapping_with_intralogistics(
         assert mapped_transport.location.location == location
 
 
-def test_outages(
-    instance_dict_with_outages, instance_dict_with_outages, config, default_init_state
-):
+def test_outages(instance_dict_with_outages, config, instance_with_outages):
     mapper = DictToInstanceMapper(0, config=config)
-    mapped_instance = mapper.map(minimal_instance_dict)
-    assert mapped_instance.machines == default_instance.machines
-    assert mapped_instance.buffers == default_instance.buffers
-    assert mapped_instance.transports == default_instance.transports
-    assert mapped_instance.instance == default_instance.instance
-    assert mapped_instance.description == default_instance.description
-    assert mapped_instance.logistics == default_instance.logistics
+    mapped_instance = mapper.map(instance_dict_with_outages)
+    assert mapped_instance.machines == instance_with_outages.machines
+    assert mapped_instance.transports == instance_with_outages.transports
 
 
 def test_stochastic_machine_times(
     instance_dict_with_stochastic_machine_times,
     instance_with_stochastic_machine_times,
     config,
-    default_init_state,
 ):
     mapper = DictToInstanceMapper(0, config=config)
-    mapped_instance = mapper.map(minimal_instance_dict)
-    assert mapped_instance.machines == default_instance.machines
-    assert mapped_instance.buffers == default_instance.buffers
-    assert mapped_instance.transports == default_instance.transports
-    assert mapped_instance.instance == default_instance.instance
-    assert mapped_instance.description == default_instance.description
-    assert mapped_instance.logistics == default_instance.logistics
+    mapped_instance = mapper.map(instance_dict_with_stochastic_machine_times)
+    assert mapped_instance.machines == instance_with_stochastic_machine_times.machines
 
 
 def test_stochastic_transport_times(
     instance_dict_with_stochastic_transport_times,
     instance_with_stochastic_transport_times,
     config,
-    default_init_state,
 ):
     mapper = DictToInstanceMapper(0, config=config)
-    mapped_instance = mapper.map(minimal_instance_dict)
-    assert mapped_instance.machines == default_instance.machines
-    assert mapped_instance.buffers == default_instance.buffers
-    assert mapped_instance.transports == default_instance.transports
-    assert mapped_instance.instance == default_instance.instance
-    assert mapped_instance.description == default_instance.description
-    assert mapped_instance.logistics == default_instance.logistics
+    mapped_instance = mapper.map(instance_dict_with_stochastic_transport_times)
+    assert mapped_instance.logistics == instance_with_stochastic_transport_times.logistics
 
 
 def test_static_setup_times(
     instance_dict_with_static_setup_times,
     instance_with_static_setup_times,
     config,
-    default_init_state,
 ):
     mapper = DictToInstanceMapper(0, config=config)
-    mapped_instance = mapper.map(minimal_instance_dict)
-    assert mapped_instance.machines == default_instance.machines
-    assert mapped_instance.buffers == default_instance.buffers
-    assert mapped_instance.transports == default_instance.transports
-    assert mapped_instance.instance == default_instance.instance
-    assert mapped_instance.description == default_instance.description
-    assert mapped_instance.logistics == default_instance.logistics
+    mapped_instance = mapper.map(instance_dict_with_static_setup_times)
+    assert mapped_instance.machines == instance_with_static_setup_times.machines
 
 
 def test_stochastic_setup_times(
     instance_dict_with_stochastic_setup_times,
     instance_with_stochastic_setup_times,
     config,
-    default_init_state,
 ):
     mapper = DictToInstanceMapper(0, config=config)
-    mapped_instance = mapper.map(minimal_instance_dict)
-    assert mapped_instance.machines == default_instance.machines
-    assert mapped_instance.buffers == default_instance.buffers
-    assert mapped_instance.transports == default_instance.transports
-    assert mapped_instance.instance == default_instance.instance
-    assert mapped_instance.description == default_instance.description
-    assert mapped_instance.logistics == default_instance.logistics
+    mapped_instance = mapper.map(instance_dict_with_stochastic_setup_times)
+    assert mapped_instance.machines == instance_with_stochastic_setup_times.machines

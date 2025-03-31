@@ -70,7 +70,7 @@ instance_config:
       mean: 5
   
   outages:
-    - component: "m-1"
+    - component: "m"
       type: "maintenance"
       duration: 5
       frequency: 

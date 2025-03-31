@@ -172,7 +172,12 @@ class DefaultInstanceLookUpFactory:
             outages=tuple(),
             resources=tuple(),
             buffer=BufferConfig(
-                id=buffer_id, type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=tuple()
+                id=buffer_id,
+                type=BufferTypeConfig.FLEX_BUFFER,
+                capacity=1,
+                resources=tuple(),
+                parent=transport_id,
+                description="AGV buffer",
             ),
         )
 
@@ -613,6 +618,7 @@ class DictToInstanceMapper(AbstractDictMapper):
                 )
                 if tools_per_operation is None:
                     raise ValueError(f"No tool usage found for job {job_id}")
+                tools_per_operation = tools_per_operation["operation_tools"]
             else:
                 tools_per_operation = [self.defaults.get_default_tool()] * len(operation_tuple)
             for operation_id, operation_params in enumerate(operation_tuple):
@@ -697,20 +703,21 @@ class DictToInstanceMapper(AbstractDictMapper):
     def _add_machine_spec(self, default: MachineConfig, spec_dict: Dict) -> MachineConfig:
         machine = default
         if self.has_key(("instance_config", "outages"), spec_dict):
-            component_list = ["m", "machine", "Machine", "MACHINE"]
+            component_list = ["m", "machine", "Machine", "MACHINE", machine.id]
             outages = self._map_spec_dict_to_outage(spec_dict, component_list, default.outages)
             machine = replace(machine, outages=outages)
         if self.has_key(("instance_config", "setup_times"), spec_dict):
-            if self.has_key(("instance_config", "setup_times", "time_behavior"), spec_dict):
-                _time_behavior = spec_dict["instance_config"]["setup_times"]["time_behavior"]
-            else:
-                _time_behavior = "static"
+
             setup_times_str = spec_dict["instance_config"]["setup_times"]
             setup_times_str = next(
                 filter(lambda i: i["machine"] == machine.id, setup_times_str), None
             )
             if setup_times_str is None:
                 raise ValueError(f"No setup times found for machine {machine.id}")
+            if "time_behavior" in setup_times_str.keys():
+                _time_behavior = setup_times_str["time_behavior"]
+            else:
+                _time_behavior = "static"
             setup_times = self._parse_setup_times(setup_times_str["specification"], _time_behavior)
             machine = replace(machine, setup_times=setup_times)
         return machine

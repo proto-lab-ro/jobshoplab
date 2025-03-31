@@ -287,7 +287,12 @@ def default_transports() -> tuple[TransportConfig, ...]:
             outages=tuple(),
             resources=(),
             buffer=BufferConfig(
-                id=f"b-{10 + i}", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=()
+                id=f"b-{10 + i}",
+                type=BufferTypeConfig.FLEX_BUFFER,
+                capacity=1,
+                resources=(),
+                parent=f"t-{i}",
+                description="AGV buffer",
             ),
         )
         for i in range(3)
