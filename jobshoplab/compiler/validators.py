@@ -564,4 +564,4 @@ class SimpleDSLValidator(AbstractValidator):
         Returns:
             str: The string representation.
         """
-        return "InstanceDSLValidator()"
+        return "SimpleDSLValidator()"

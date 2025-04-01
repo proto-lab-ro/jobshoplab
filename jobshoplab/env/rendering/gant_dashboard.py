@@ -92,9 +92,7 @@ class DashboardUtils:
             True if transport data is present and valid, False otherwise.
         """
         try:
-            return any(
-                item.get("duration", 0) > 0 for item in data.get("travel_times", {}).values()
-            )
+            return any(item.get("time", 0) > 0 for item in data.get("travel_times", {}).values())
         except Exception:
             return False
 
@@ -920,7 +918,7 @@ def render_in_dashboard(
     num_machines = (len(history[-1].state.machines),)
     num_jobs = len(history[-1].state.jobs)
     current_time = history[-1].state.time.time
-    has_transports = any(tt.duration > 0 for tt in instance.logistics.travel_times.values())
+    has_transports = any(tt.time > 0 for tt in instance.logistics.travel_times.values())
     dashboard = JobShopDashboard(
         data, num_machines, num_jobs, current_time, has_transports, debug, port
     )
