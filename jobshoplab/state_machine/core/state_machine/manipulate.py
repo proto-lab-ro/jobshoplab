@@ -129,14 +129,16 @@ def begin_next_job_on_machine(
         op_state = job_type_utils.get_next_not_done_operation(job_state)
         op_config = job_type_utils.get_operation_config_by_id(job_configs, op_state.id)
 
-        occupied_time = Time(time.time + possible_transition_utils.get_duration(op_config.duration))
+        occupied_time = Time(
+            time.time + possible_transition_utils.get_duration(op_config.duration)
+        )  #!FELIX add setuptime outages and stochastic times here (simply mod duration)
 
         op_state = OperationState(
             id=op_config.id,
             start_time=time,
             end_time=occupied_time,
             machine_id=machine_state.id,
-            operation_state_state=OperationStateState.PROCESSING,
+            operation_state_state=OperationStateState.PROCESSING,  #!FELIX add setup state throw  mapping
         )
 
         job_state = possible_transition_utils.replace_job_operation_state(job_state, op_state)
@@ -144,7 +146,8 @@ def begin_next_job_on_machine(
         machine_config = machine_type_utils.get_machine_config_by_id(
             instance.machines, machine_state.id
         )
-
+        #!FELIX thise block needs to move to some other state transition function
+        # #################################################
         # put job from prebuffer to machine buffer
         prebuffer = buffer_type_utils.remove_from_buffer(machine_state.prebuffer, job_state.id)
         buffer, job_state = buffer_type_utils.put_in_buffer(
@@ -160,6 +163,7 @@ def begin_next_job_on_machine(
         )
 
         return job_state, machine_state
+        ####################################################
 
     else:
         raise NotImplementedError()

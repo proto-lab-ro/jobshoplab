@@ -1,5 +1,5 @@
 {
-    "python.analysis.typeCheckingMode": "standard",
+    "python.analysis.typeCheckingMode": "strict",
     "python.analysis.autoImportCompletions": false,
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
