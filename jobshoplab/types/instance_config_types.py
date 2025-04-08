@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Literal, Mapping, TypeAlias
 from jobshoplab.utils.utils import hash
+from jobshoplab.types.stochasticy_models import StochasticTimeConfig
 
 
 ResourceConfig = Literal["EnergyConsumption", "Waste", "C02Emission", "FinancialCost"]
@@ -100,26 +101,7 @@ class DeterministicTimeConfig:
     time: int
 
     def asdict(self) -> dict:
-        return {"deterministic_duration": self.time}
-
-
-@dataclass(frozen=True)
-class StochasticTimeConfig:
-    """
-    Represents a stochastic time with a distribution function as arguments.
-
-    Attributes:
-        distribution function (callable): The distribution function used for generating stochastic times.
-    """
-
-    time: Callable
-
-    def asdict(self) -> dict:
-        return {
-            "stochastic_duration": {
-                "duration": self.time,
-            }
-        }
+        return {"deterministic_time": self.time}
 
 
 class OutageTypeConfig(Enum):

@@ -13,7 +13,7 @@ from jobshoplab.types.instance_config_types import InstanceConfig, JobConfig, Ma
 from dataclasses import replace
 from jobshoplab.types.instance_config_types import OutageConfig, OutageTypeConfig
 from jobshoplab.types.instance_config_types import DeterministicTimeConfig, StochasticTimeConfig
-from jobshoplab.utils.stochasticy_models import (
+from jobshoplab.types.stochasticy_models import (
     GammaFunction,
     GaussianFunction,
     PoissonFunction,
@@ -25,7 +25,7 @@ from jobshoplab.types.instance_config_types import (
     StochasticTimeConfig,
     Product,
 )
-from jobshoplab.utils.stochasticy_models import BetaFunction
+from jobshoplab.types.stochasticy_models import BetaFunction
 from tests.conftest import default_instance
 from jobshoplab.types.instance_config_types import StochasticTimeConfig
 
@@ -179,7 +179,7 @@ def instance_with_outages(default_instance, default_machines):
     machine1 = default_machines[1]  # Use m-1
     gamma_func = GammaFunction(10, 2.0, 5.0)
     maintenance_outage = OutageConfig(
-        frequency=StochasticTimeConfig(gamma_func),
+        frequency=gamma_func,
         duration=DeterministicTimeConfig(5),
         type=OutageTypeConfig.MAINTENANCE,
     )
@@ -189,7 +189,7 @@ def instance_with_outages(default_instance, default_machines):
     gaussian_func = GaussianFunction(10, 5.0, 1.0)
     recharge_outage = OutageConfig(
         frequency=DeterministicTimeConfig(10),
-        duration=StochasticTimeConfig(gaussian_func),
+        duration=gaussian_func,
         type=OutageTypeConfig.RECHARGE,
     )
 
@@ -216,7 +216,7 @@ def instance_with_stochastic_machine_times(default_instance):
             beta_func = BetaFunction(
                 base_time=op.duration.time, alpha=2, beta=2  # Use the original time as base
             )
-            modified_op = replace(op, duration=StochasticTimeConfig(beta_func))
+            modified_op = replace(op, duration=beta_func)
             modified_operations.append(modified_op)
 
         modified_job = replace(job, operations=tuple(modified_operations))
@@ -239,7 +239,7 @@ def instance_with_stochastic_transport_times(default_instance_with_intralogistic
     for locations, _time in default_instance.logistics.travel_times.items():
         # Replace deterministic duration with stochastic beta function
         beta_func = PoissonFunction(base_time=_time.time, mean=2.0)
-        tt_time[locations] = StochasticTimeConfig(beta_func)
+        tt_time[locations] = beta_func
     logistics = replace(default_instance.logistics, travel_times=tt_time)
     instance = replace(default_instance, logistics=logistics)
     return instance
@@ -329,7 +329,7 @@ def instance_with_stochastic_setup_times(default_instance, default_products):
             setup_times_m1_m2[key] = DeterministicTimeConfig(0)
         else:
             beta_func = BetaFunction(base_time=value.time, alpha=2, beta=2)
-            setup_times_m1_m2[key] = StochasticTimeConfig(beta_func)
+            setup_times_m1_m2[key] = beta_func
 
     # Apply different setup times to different machines
     for idx, machine in enumerate(default_instance.machines):

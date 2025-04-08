@@ -5,7 +5,11 @@ import jobshoplab.state_machine.core.state_machine.manipulate as manipulate
 import jobshoplab.utils.state_machine_utils.core_utils as core_utils
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.instance_config_types import BufferConfig, TransportTypeConfig
+from jobshoplab.types.instance_config_types import (
+    BufferConfig,
+    TransportTypeConfig,
+    StochasticTimeConfig,
+)
 from jobshoplab.types.state_types import (
     BufferState,
     DeterministicTimeConfig,
@@ -45,7 +49,7 @@ def create_timed_machine_transitions(
     transitions = []
 
     # check machines is available -> if yes -> set to idle -> release job!
-    for machine in state.machines:
+    for machine in state.machines:  # FELIX maby use sieve
         if isinstance(machine.occupied_till, Time) and isinstance(state.time, Time):
             if machine.occupied_till.time <= state.time.time:
                 if len(machine.buffer.store) == 1:
@@ -187,10 +191,12 @@ def handle_machine_idle_to_working_transition(
         instance=instance,
         machine_state=machine,
         time=state.time,
-    )
+    )  # FELIX add setup somewhere here
 
     state = possible_transition_utils.replace_job_state(state, job_state)
-    state = possible_transition_utils.replace_machine_state(state, _machine)
+    state = possible_transition_utils.replace_machine_state(
+        state, _machine
+    )  # add setup somewhere here
     return state
 
 
@@ -276,19 +282,7 @@ def handle_agv_transport_pickup_to_transit_transition(
 
     transport_destination = next_job_operation.machine_id
 
-    if transport_source.startswith("m") or transport_destination.startswith("m"):
-        travel_time = instance.logistics.travel_times.get((transport_source, transport_destination))
-        match travel_time:
-            case DeterministicTimeConfig(duration):
-                travel_time = duration
-            case None:
-                raise ValueError(
-                    "No travel time found between", transport_source, transport_destination
-                )
-            case _:
-                raise NotImplementedError()
-    else:
-        raise NotImplementedError()
+    travel_time = _get_travel_time_from_spec(instance, transport_source, transport_destination)
 
     # TODO: CLEANUP -> bad code
     # This means the job is in a solo buffer with no parent machine
@@ -346,6 +340,26 @@ def handle_agv_transport_pickup_to_transit_transition(
     state = possible_transition_utils.replace_transport_state(state, transport)
 
     return state
+
+
+def _get_travel_time_from_spec(
+    instance: InstanceConfig, transport_source: str, transport_destination: str
+):
+    if transport_source.startswith("m") or transport_destination.startswith("m"):
+        travel_time = instance.logistics.travel_times.get((transport_source, transport_destination))
+        match travel_time:
+            case DeterministicTimeConfig():  # @ FELIX ADD STOCHASTIC TIME and Breakdown
+                return travel_time.time
+            case StochasticTimeConfig():
+                return travel_time.time()
+            case None:
+                raise ValueError(
+                    "No travel time found between", transport_source, transport_destination
+                )
+            case _:
+                raise NotImplementedError()
+    else:
+        raise NotImplementedError()
 
 
 def handle_agv_transport_idle_to_working_transition(

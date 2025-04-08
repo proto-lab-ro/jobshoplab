@@ -91,7 +91,7 @@ def process_state_transitions(
     if not transitions:
         return TransitionResult(state=state, errors=errors)
 
-    transitions = sort(transitions) if sort else transitions
+    transitions = sort(transitions) if sort else transitions  # FELIX use dummy sort func
     for transition in transitions:
         valid, err = validate.is_transition_valid(loglevel, state, transition)
         if valid:
@@ -158,6 +158,7 @@ def step(
         # THEN THE TRANSPORT TRANSITIONS
         # SO THAT A MACHINE CAN FINISH WORKING ON A JOB
         # AND THEN THE JOB CAN BE TRANSPORTED IN THE SAME TIME STEP
+
         transition_result = process_state_transitions(timed_transitions, state, instance, loglevel)
         if transition_result.errors:
             return StateMachineResult(
@@ -225,6 +226,7 @@ def get_possible_transitions(
         state, instance
     )
 
+    # FELIX make dedicated func
     transitions = tuple()
     for job in possible_jobs:
         next_op = job_type_utils.get_next_idle_operation(job)
@@ -240,6 +242,9 @@ def get_possible_transitions(
     return transitions  # ? NEED TO SORT
 
 
+# FELIX
+##################################################################
+# REFACTOR HERE
 def _get_travel_time_for_transport(
     instance: InstanceConfig, jobs: tuple[JobState, ...], job_id: str
 ) -> int:
@@ -278,10 +283,13 @@ def _get_travel_time_for_transport(
 
     duration = instance.logistics.travel_times.get((current_location, next_location))
     match duration:
-        case DeterministicTimeConfig():
+        case DeterministicTimeConfig():  # FELIX add Stochastic
             return duration.time
         case _:
             raise NotImplementedError()
+
+
+############################################################################################
 
 
 def _filter_teleport_transitions(
@@ -311,7 +319,7 @@ def _filter_teleport_transitions(
                 ]
             ),
             possible_transitions,
-        )
+        )  # FELIX could be done easier
     )
     while len(possible_transitions) > 0:
         next_transition = possible_transitions[0]

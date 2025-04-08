@@ -22,10 +22,10 @@ from jobshoplab.utils.exceptions import (
     InvalidToolUsageError,
     InvalidTransportConfig,
     ComponentAssociationError,
-    InvalidOutageTypeError
+    InvalidOutageTypeError,
 )
 from jobshoplab.utils.utils import get_id_int
-from jobshoplab.utils.stochasticy_models import (
+from jobshoplab.types.stochasticy_models import (
     PoissonFunction,
     GammaFunction,
     BetaFunction,
@@ -586,7 +586,7 @@ class DictToInstanceMapper(AbstractDictMapper):
                     func = GaussianFunction(duration, mean, std)
                 case _:
                     raise UnknownDistributionTypeError(dist_type)
-            return StochasticTimeConfig(time=func)
+            return func
         raise InvalidTimeBehaviorError(time_behavior)
 
     def _parse_specification(

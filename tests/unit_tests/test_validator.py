@@ -10,7 +10,7 @@ from jobshoplab.utils.exceptions import (
 
 def test_validator_init(test_config):
     validator = InstanceDSLValidator("debug", test_config)
-    assert str(validator) == "InstanceDSLValidator()"
+    assert str(validator) == "SimpleDSLValidator()"
 
 
 def test_valid_minimal_instance(minimal_instance_dict, test_config):
