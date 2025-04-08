@@ -38,6 +38,7 @@ class ID_Counter:
         self.machine_counter = -1
         self.buffer_counter = 0  # start with 1 to have a buffer_0 reserved for the input
         self.transport_counter = -1
+        self.outage_counter = -1
 
     def get_machine_id(self):
         self.machine_counter += 1
@@ -50,6 +51,10 @@ class ID_Counter:
     def get_transport_id(self):
         self.transport_counter += 1
         return f"t-{self.transport_counter}"
+
+    def get_outage_id(self):
+        self.outage_counter += 1
+        return f"out-{self.outage_counter}"
 
 
 class DefaultInstanceLookUpFactory:
@@ -270,10 +275,17 @@ class DefaultStateLookUpFactory:
                 operation_state_state=OperationStateState.IDLE,
             )
 
-    def get_default_machine(self, machine: MachineConfig) -> MachineState:
+    def _get_outage_state(self, component: MachineConfig | TransportConfig):
+        return tuple(
+            OutageState(id=o.id, active=OutageInactive(last_time_active=NoTime()))
+            for o in component.outages
+        )
 
+    def get_default_machine(self, machine: MachineConfig) -> MachineState:
+        outages = self._get_outage_state(machine)
         return MachineState(
             id=machine.id,
+            outages=outages,
             buffer=BufferState(id=machine.buffer.id, state=BufferStateState.EMPTY, store=tuple()),
             occupied_till=NoTime(),
             prebuffer=BufferState(
@@ -302,10 +314,12 @@ class DefaultStateLookUpFactory:
         location_gen = filter(lambda x: get_id_int(x.id) == machine_index, machines)
         location_gen = map(lambda x: x.id, location_gen)
         location = next(location_gen, None)
+        outages = self._get_outage_state(transport)
         if location is None:
             raise ComponentAssociationError(transport.id, "Transport")
         return TransportState(
             id=transport.id,
+            outages=outages,
             state=TransportStateState.IDLE,
             buffer=BufferState(id=transport.buffer.id, state=BufferStateState.EMPTY, store=tuple()),
             occupied_till=NoTime(),
@@ -756,6 +770,7 @@ class DictToInstanceMapper(AbstractDictMapper):
                 _type = self._match_outage_type(maintance_spec["type"])
                 outages += (
                     OutageConfig(
+                        id=self.counter.get_outage_id(),
                         duration=self._get_time(None, duration_behavior),
                         frequency=self._get_time(None, frequency_behavior),
                         type=_type,
@@ -963,9 +978,10 @@ class DictToInitStateMapper(AbstractDictMapper):
         int_id = get_id_int(transport.id)
         if len(transport_spec) < int_id:
             raise ValueError(f"Transport with id={transport.id} not found in transport_spec")
-
+        outages = self.defaults._get_outage_state(transport)
         return TransportState(
             id=transport.id,
+            outages=outages,
             state=TransportStateState.IDLE,
             buffer=BufferState(id=transport.buffer.id, state=BufferStateState.EMPTY, store=tuple()),
             occupied_till=NoTime(),

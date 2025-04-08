@@ -131,12 +131,14 @@ class OutageConfig:
         duration (DeterministicTimeConfig | StochasticTimeConfig): The duration of the outage.
     """
 
+    id: str
     frequency: DeterministicTimeConfig | StochasticTimeConfig
     duration: DeterministicTimeConfig | StochasticTimeConfig
     type: OutageTypeConfig
 
     def asdict(self) -> dict:
         return {
+            "id": self.id,
             "frequency": self.frequency.asdict(),
             "duration": self.duration.asdict(),
         }
@@ -186,7 +188,7 @@ class TransportConfig:
 
     id: str
     type: TransportTypeConfig
-    outages: tuple[OutageTypeConfig, ...]
+    outages: tuple[OutageConfig, ...]
     resources: tuple[ResourceConfig, ...]
     buffer: BufferConfig
     description: str | None = None
@@ -218,7 +220,7 @@ class MachineConfig:
     """
 
     id: str
-    outages: tuple[OutageTypeConfig, ...]
+    outages: tuple[OutageConfig, ...]
     setup_times: Mapping[tuple[Tool, Tool], DeterministicTimeConfig | StochasticTimeConfig]
     prebuffer: BufferConfig
     postbuffer: BufferConfig

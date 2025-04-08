@@ -16,15 +16,15 @@ def get_expected_value(func_cls, *args, start_seed, base_time, compute_func, **k
     compute the expected time value.
     The function simulates the _update_random_generator behavior.
     """
-    # The property "time" updates the seed: new seed = start_seed + 1
-    seed_for_call = start_seed + 1
+
+    seed_for_call = start_seed
     rng = np.random.default_rng(seed=seed_for_call)
     computed = compute_func(rng, **kwargs)
     return base_time + computed
 
 
 def poisson_sample(rng, mean):
-    return rng.poisson(mean)
+    return int(round(rng.poisson(mean)))
 
 
 def gaussian_sample(rng, mean, std):
@@ -58,24 +58,18 @@ def test_poisson_function_time(base_time, mean, start_seed):
         compute_func=poisson_sample,
         mean=mean,
     )
-    val = func.time  # This call updates the seed and generates a value
+    val = func.time  # This call get a value from a fixed seed random generator.
     assert isinstance(val, int)
     assert val == expected
-
-    # Check that successive calls produce different seeds. Compute second call.
-    expected2 = get_expected_value(
-        PoissonFunction,
-        base_time=base_time,
-        start_seed=start_seed + 1,
-        compute_func=poisson_sample,
-        mean=mean,
-    )
-    val2 = func.time  # Second call: seed now incremented further.
-    assert val2 == expected2
-    # The two sequential values may be equal sometimes, but the generator resets the seed deterministically.
-    # So if expected and expected2 are different, then:
-    if expected != expected2:
-        assert val != val2
+    # assert multiple calls to time then same value
+    for _ in range(10):
+        assert func.time == expected
+    # assert different seed generates different value
+    func.update()
+    new_expected = func.time
+    assert new_expected != expected
+    for _ in range(10):
+        assert func.time == new_expected
 
 
 def test_poisson_function_str_and_eq():

@@ -282,7 +282,12 @@ def handle_agv_transport_pickup_to_transit_transition(
 
     transport_destination = next_job_operation.machine_id
 
-    travel_time = _get_travel_time_from_spec(instance, transport_source, transport_destination)
+    travel_time = _get_travel_time_from_spec(
+        instance, transport_source, transport_destination
+    ) + get_outage_time(
+        transport,
+        instance,
+    )
 
     # TODO: CLEANUP -> bad code
     # This means the job is in a solo buffer with no parent machine
@@ -340,26 +345,6 @@ def handle_agv_transport_pickup_to_transit_transition(
     state = possible_transition_utils.replace_transport_state(state, transport)
 
     return state
-
-
-def _get_travel_time_from_spec(
-    instance: InstanceConfig, transport_source: str, transport_destination: str
-):
-    if transport_source.startswith("m") or transport_destination.startswith("m"):
-        travel_time = instance.logistics.travel_times.get((transport_source, transport_destination))
-        match travel_time:
-            case DeterministicTimeConfig():  # @ FELIX ADD STOCHASTIC TIME and Breakdown
-                return travel_time.time
-            case StochasticTimeConfig():
-                return travel_time.time()
-            case None:
-                raise ValueError(
-                    "No travel time found between", transport_source, transport_destination
-                )
-            case _:
-                raise NotImplementedError()
-    else:
-        raise NotImplementedError()
 
 
 def handle_agv_transport_idle_to_working_transition(

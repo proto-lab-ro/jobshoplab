@@ -179,6 +179,7 @@ def instance_with_outages(default_instance, default_machines):
     machine1 = default_machines[1]  # Use m-1
     gamma_func = GammaFunction(10, 2.0, 5.0)
     maintenance_outage = OutageConfig(
+        id="out-0",
         frequency=gamma_func,
         duration=DeterministicTimeConfig(5),
         type=OutageTypeConfig.MAINTENANCE,
@@ -188,6 +189,7 @@ def instance_with_outages(default_instance, default_machines):
     # Create modified transports with recharge outage
     gaussian_func = GaussianFunction(10, 5.0, 1.0)
     recharge_outage = OutageConfig(
+        id="out-1",
         frequency=DeterministicTimeConfig(10),
         duration=gaussian_func,
         type=OutageTypeConfig.RECHARGE,

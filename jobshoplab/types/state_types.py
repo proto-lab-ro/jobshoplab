@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol, TypeVar, Union
 
-from jobshoplab.types.instance_config_types import (
-    DeterministicTimeConfig,
-)
+from jobshoplab.types.instance_config_types import DeterministicTimeConfig, StochasticTimeConfig
 
 EnergyConsumption = TypeVar("EnergyConsumption")
 Waste = TypeVar("Waste")
@@ -167,6 +165,23 @@ class TransportStateState(Enum):
 
 
 @dataclass(frozen=True)
+class OutageActive:
+    start_time: Time | NoTime
+    end_time: Time | NoTime
+
+
+@dataclass(frozen=True)
+class OutageInactive:
+    last_time_active: Time | NoTime
+
+
+@dataclass(frozen=True)
+class OutageState:
+    id: str
+    active: OutageActive | OutageInactive
+
+
+@dataclass(frozen=True)
 class MachineState:
     id: str
     buffer: BufferState
@@ -174,6 +189,7 @@ class MachineState:
     prebuffer: BufferState
     postbuffer: BufferState
     state: MachineStateState
+    outages: tuple[OutageState, ...]
     resources: tuple[Resources, ...]
 
     def asdict(self) -> dict:
@@ -204,6 +220,7 @@ class TransportState:
     occupied_till: Time | NoTime
     buffer: BufferState
     location: TransportLocation
+    outages: tuple[OutageState, ...]
     transport_job: str | None
 
     def asdict(self) -> dict:

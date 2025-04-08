@@ -21,6 +21,7 @@ from jobshoplab.types import (
 from jobshoplab.types.action_types import Action, ComponentTransition
 from jobshoplab.types.state_types import (
     DeterministicTimeConfig,
+    StochasticTimeConfig,
     MachineState,
     MachineStateState,
     TransportState,
@@ -285,6 +286,8 @@ def _get_travel_time_for_transport(
     match duration:
         case DeterministicTimeConfig():  # FELIX add Stochastic
             return duration.time
+        case StochasticTimeConfig():
+            return duration.base_time
         case _:
             raise NotImplementedError()
 

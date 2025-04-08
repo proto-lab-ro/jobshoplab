@@ -414,6 +414,7 @@ def default_init_state(default_instance: InstanceConfig) -> State:
                 state=BufferStateState.EMPTY,
                 store=(),
             ),
+            outages=(),
             postbuffer=BufferState(
                 id=machine.postbuffer.id,
                 state=BufferStateState.EMPTY,
@@ -428,6 +429,7 @@ def default_init_state(default_instance: InstanceConfig) -> State:
     for i, tele in enumerate(teleporters):
         tele_state = TransportState(
             id=tele.id,
+            outages=(),
             state=TransportStateState.IDLE,
             buffer=BufferState(id=tele.buffer.id, state=BufferStateState.EMPTY, store=()),
             occupied_till=NoTime(),

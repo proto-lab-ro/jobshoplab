@@ -10,21 +10,18 @@ class StochasticTimeConfig(ABC):
         if start_seed is None:
             start_seed = np.random.randint(0, 2**32 - 1)
         self._current_seed = start_seed
-        self.random_generator = np.random.default_rng(seed=start_seed)
+        self._random_generator = np.random.default_rng(seed=start_seed)
+        self.time = self._get_time()
 
     def _update_random_generator(self):
         """Update the random seed."""
         self._current_seed += 1
-        self.random_generator = np.random.default_rng(seed=self._current_seed)
-
-    @property
-    def time(self) -> int:
-        # self._update_random_generator()
-        return self._get_time()
+        self._random_generator = np.random.default_rng(seed=self._current_seed)
 
     def update(self):
         """Update the random seed."""
         self._update_random_generator()
+        self.time = self._get_time()
 
     @abstractmethod
     def _get_time(self) -> int:
@@ -45,11 +42,11 @@ class StochasticTimeConfig(ABC):
 
 class PoissonFunction(StochasticTimeConfig):
     def __init__(self, base_time: int, mean: float, start_seed: int | None = None):
-        super().__init__(base_time, start_seed)
         self.mean = mean
+        super().__init__(base_time, start_seed)
 
     def _get_time(self) -> int:
-        return self.base_time + self.random_generator.poisson(self.mean)
+        return self.base_time + self._random_generator.poisson(self.mean)
 
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, mean={self.mean})"
@@ -65,12 +62,12 @@ class PoissonFunction(StochasticTimeConfig):
 
 class GaussianFunction(StochasticTimeConfig):
     def __init__(self, base_time: int, mean: float, std: float, start_seed: int | None = None):
-        super().__init__(base_time, start_seed)
         self.mean = mean
         self.std = std
+        super().__init__(base_time, start_seed)
 
     def _get_time(self) -> int:
-        return int(round(self.base_time + self.random_generator.normal(self.mean, self.std)))
+        return int(round(self.base_time + self._random_generator.normal(self.mean, self.std)))
 
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, mean={self.mean}, std={self.std})"
@@ -88,12 +85,12 @@ class GaussianFunction(StochasticTimeConfig):
 
 class BetaFunction(StochasticTimeConfig):
     def __init__(self, base_time: int, alpha: float, beta: float, start_seed: int | None = None):
-        super().__init__(base_time, start_seed)
         self.alpha = alpha
         self.beta = beta
+        super().__init__(base_time, start_seed)
 
     def _get_time(self) -> int:
-        return int(round(self.base_time + self.random_generator.beta(self.alpha, self.beta)))
+        return int(round(self.base_time + self._random_generator.beta(self.alpha, self.beta)))
 
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, alpha={self.alpha}, beta={self.beta})"
@@ -113,12 +110,12 @@ class BetaFunction(StochasticTimeConfig):
 
 class GammaFunction(StochasticTimeConfig):
     def __init__(self, base_time: int, shape: float, scale: float, start_seed: int | None = None):
-        super().__init__(base_time, start_seed)
         self.shape = shape
         self.scale = scale
+        super().__init__(base_time, start_seed)
 
     def _get_time(self) -> int:
-        return int(round(self.base_time + self.random_generator.gamma(self.shape, self.scale)))
+        return int(round(self.base_time + self._random_generator.gamma(self.shape, self.scale)))
 
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, shape={self.shape}, scale={self.scale})"
