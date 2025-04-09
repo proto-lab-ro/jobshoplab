@@ -48,11 +48,14 @@ def complete_transport_task(
         )
 
         # remove job from transport
+        outages = outage_utils.get_new_outage_states(transport, instance, time)
+        occupied_time = outage_utils.get_occupied_time_from_outage_iterator(outages)
         transport = replace(
             transport,
             buffer=transport_buffer,
-            state=TransportStateState.IDLE,
-            occupied_till=NoTime(),
+            state=TransportStateState.OUTAGE,
+            outages=outages,
+            occupied_till=occupied_time,
             location=TransportLocation(0, transport.location.location[2]),
             transport_job=None,
         )

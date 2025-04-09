@@ -502,62 +502,71 @@ def handle_agv_transport_idle_to_working_transition(
     return state
 
 
-def handle_agv_transport_working_to_outage_transition():
-    pass
+def handle_agv_transport_working_to_outage_transition(
+    state: State,
+    instance: InstanceConfig,
+    transition: ComponentTransition,
+    transport: TransportState,
+):
+    if transition.job_id is None:
+        raise ValueError("No job_id in transition")
+    else:
+        job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
+        machine_state = machine_type_utils.get_machine_state_by_id(
+            state.machines,
+            transport.location.location[
+                2
+            ],  # TODO: hardcoded index -> assumes that the last index is the destination machine
+        )
+
+        job_state, transport_state, machine_state = manipulate.complete_transport_task(
+            instance, job_state, transport=transport, machine=machine_state, time=state.time
+        )
+
+        state = possible_transition_utils.replace_job_state(state, job_state)
+        state = possible_transition_utils.replace_transport_state(state, transport_state)
+        state = possible_transition_utils.replace_machine_state(state, machine_state)
+        return state
 
 
-# def handle_agv_transport_transit_to_idle_transition(
-#     state: State,
-#     instance: InstanceConfig,
-#     transition: ComponentTransition,
-#     transport: TransportState,
-# ) -> State:
-#     """
-#     Handles the transition from 'transit' to 'idle' state for an AGV transport component.
+def handle_agv_transport_transit_to_outage_transition(
+    state: State,
+    instance: InstanceConfig,
+    transition: ComponentTransition,
+    transport: TransportState,
+):
 
-#     When an AGV completes transport and arrives at the destination, it transitions to idle
-#     and completes the transport task, updating the job location and machine state.
+    if transition.job_id is None:
+        raise ValueError("No job_id in transition")
+    else:
+        job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
+        machine_state = machine_type_utils.get_machine_state_by_id(
+            state.machines,
+            transport.location.location[
+                2
+            ],  # TODO: hardcoded index -> assumes that the last index is the destination machine
+        )
 
-#     Args:
-#         state: Current state of the system
-#         instance: Instance configuration
-#         transition: The transition object containing component and job IDs
-#         transport: The transport state object being transitioned
+        job_state, transport_state, machine_state = manipulate.complete_transport_task(
+            instance, job_state, transport=transport, machine=machine_state, time=state.time
+        )
 
-#     Returns:
-#         State: Updated state after handling the transition
-
-#     Raises:
-#         ValueError: If no job_id is specified in the transition
-#     """
-#     if transition.job_id is None:
-#         raise ValueError("No job_id in transition")
-#     else:
-#         job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
-#         machine_state = machine_type_utils.get_machine_state_by_id(
-#             state.machines,
-#             transport.location.location[
-#                 2
-#             ],  # TODO: hardcoded index -> assumes that the last index is the destination machine
-#         )
-
-#         job_state, transport_state, machine_state = manipulate.complete_transport_task(
-#             instance, job_state, transport=transport, machine=machine_state, time=state.time
-#         )
-
-#         state = possible_transition_utils.replace_job_state(state, job_state)
-#         state = possible_transition_utils.replace_transport_state(state, transport_state)
-#         state = possible_transition_utils.replace_machine_state(state, machine_state)
-#         return state
+        state = possible_transition_utils.replace_job_state(state, job_state)
+        state = possible_transition_utils.replace_transport_state(state, transport_state)
+        state = possible_transition_utils.replace_machine_state(state, machine_state)
+        return state
 
 
-def handle_agv_transport_transit_to_outage_transition():
-
-    pass
-
-
-def handle_agv_transport_outage_to_idle_transition():
-    pass
+def handle_agv_transport_outage_to_idle_transition(
+    state: State,
+    instance: InstanceConfig,
+    transition: ComponentTransition,
+    transport: TransportState,
+):
+    outages = map(outage_utils.release_outage, transport.outages)
+    transport = replace(transport, state=TransportStateState.IDLE, outages=outages)
+    state = possible_transition_utils.replace_transport_state(state, transport)
+    return state
 
 
 def handle_transition(
