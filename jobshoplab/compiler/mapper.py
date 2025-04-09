@@ -300,7 +300,11 @@ class DefaultStateLookUpFactory:
             ),
             state=MachineStateState.IDLE,
             resources=tuple(),
+            mounted_tool=self.get_default_tool(),
         )
+
+    def get_default_tool(self):
+        return "tl-0"
 
     def get_default_transport(
         self, transport: TransportConfig, machines: tuple[MachineState, ...]

@@ -414,6 +414,7 @@ def default_init_state(default_instance: InstanceConfig) -> State:
                 state=BufferStateState.EMPTY,
                 store=(),
             ),
+            mounted_tool="tl-0",
             outages=(),
             postbuffer=BufferState(
                 id=machine.postbuffer.id,
