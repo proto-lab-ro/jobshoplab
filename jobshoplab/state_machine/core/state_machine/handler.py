@@ -27,7 +27,9 @@ from jobshoplab.utils.state_machine_utils import (
     machine_type_utils,
     possible_transition_utils,
     transport_type_utils,
+    outage_utils,
 )
+from jobshoplab.utils.state_machine_utils.time_utils import _get_travel_time_from_spec
 
 
 def create_timed_machine_transitions(
@@ -166,8 +168,86 @@ def create_timed_transitions(loglevel: int | str | str, state: State) -> Tuple[C
     return tuple(transitions)
 
 
-# MARK: Transition Handlers
-def handle_machine_idle_to_working_transition(
+# # MARK: Transition Handlers
+# def handle_machine_idle_to_working_transition(
+#     state: State, instance: InstanceConfig, transition: ComponentTransition, machine: MachineState
+# ) -> State:
+#     """
+#     Handles the transition from machine idle to working state.
+#     -> Moves job from prebuffer to buffer and executes operation.
+#     -> Updates job and machine state.
+#     """
+#     if transition.job_id is None:
+#         raise ValueError("No job_id in transition")
+
+#     # Get the job state
+#     job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
+
+#     # Check if job is in prebuffer
+#     if not buffer_type_utils.is_job_in_buffer(machine.prebuffer, job_state.id):
+#         raise ValueError("Job is not in buffer")
+
+#     # Move job from prebuffer to buffer and execute operation
+#     job_state, _machine = manipulate.begin_next_job_on_machine(
+#         job_state=job_state,
+#         instance=instance,
+#         machine_state=machine,
+#         time=state.time,
+#     )
+
+#     state = possible_transition_utils.replace_job_state(state, job_state)
+#     state = possible_transition_utils.replace_machine_state(
+#         state, _machine
+#     )  # add setup somewhere here
+#     return state
+
+
+# def handle_machine_working_to_idle_transition(
+#     state: State, instance: InstanceConfig, transition: ComponentTransition, machine: MachineState
+# ) -> State:
+#     """
+#     Handles the transition from machine working to idle state.
+#     -> Completes the active operation on the machine.
+#     -> Updates job and machine state.
+#     """
+
+#     # Update job and machine state, but job in postbuffer
+#     job, machine = manipulate.complete_active_operation_on_machine(
+#         instance=instance, jobs=state.jobs, machine_state=machine, time=state.time
+#     )
+
+#     state = possible_transition_utils.replace_job_state(state, job)
+#     state = possible_transition_utils.replace_machine_state(state, machine)
+
+#     return state
+
+
+def handle_machine_idle_to_setup_transition(
+    state: State, instance: InstanceConfig, transition: ComponentTransition, machine: MachineState
+) -> State:
+    if transition.job_id is None:
+        raise ValueError("No job_id in transition")
+
+        # Get the job state
+    job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
+    # Check if job is in prebuffer
+    if not buffer_type_utils.is_job_in_buffer(machine.prebuffer, job_state.id):
+        raise ValueError("Job is not in buffer")
+
+    # Move job from prebuffer to buffer and execute operation
+    job_state, _machine = manipulate.begin_machine_setup(
+        job_state=job_state,
+        instance=instance,
+        machine_state=machine,
+        time=state.time,
+    )
+
+    state = possible_transition_utils.replace_job_state(state, job_state)
+    state = possible_transition_utils.replace_machine_state(state, _machine)
+    return state
+
+
+def handle_machine_setup_to_working_transition(
     state: State, instance: InstanceConfig, transition: ComponentTransition, machine: MachineState
 ) -> State:
     """
@@ -191,7 +271,7 @@ def handle_machine_idle_to_working_transition(
         instance=instance,
         machine_state=machine,
         time=state.time,
-    )  # FELIX add setup somewhere here
+    )
 
     state = possible_transition_utils.replace_job_state(state, job_state)
     state = possible_transition_utils.replace_machine_state(
@@ -200,7 +280,7 @@ def handle_machine_idle_to_working_transition(
     return state
 
 
-def handle_machine_working_to_idle_transition(
+def handle_machine_working_to_outage_transition(
     state: State, instance: InstanceConfig, transition: ComponentTransition, machine: MachineState
 ) -> State:
     """
@@ -215,6 +295,19 @@ def handle_machine_working_to_idle_transition(
     )
 
     state = possible_transition_utils.replace_job_state(state, job)
+    state = possible_transition_utils.replace_machine_state(state, machine)
+
+    return state
+
+
+def handle_machine_outage_to_idle_transition(
+    state: State, _instance: InstanceConfig, _transition: ComponentTransition, machine: MachineState
+) -> State:
+    pass
+
+    outages = map(outage_utils.release_outage, machine.outages)
+    machine = replace(machine, state=MachineStateState.IDLE, outages=tuple(outages))
+
     state = possible_transition_utils.replace_machine_state(state, machine)
 
     return state
@@ -282,12 +375,7 @@ def handle_agv_transport_pickup_to_transit_transition(
 
     transport_destination = next_job_operation.machine_id
 
-    travel_time = _get_travel_time_from_spec(
-        instance, transport_source, transport_destination
-    ) + get_outage_time(
-        transport,
-        instance,
-    )
+    travel_time = _get_travel_time_from_spec(instance, transport_source, transport_destination)
 
     # TODO: CLEANUP -> bad code
     # This means the job is in a solo buffer with no parent machine
@@ -414,49 +502,62 @@ def handle_agv_transport_idle_to_working_transition(
     return state
 
 
-def handle_agv_transport_transit_to_idle_transition(
-    state: State,
-    instance: InstanceConfig,
-    transition: ComponentTransition,
-    transport: TransportState,
-) -> State:
-    """
-    Handles the transition from 'transit' to 'idle' state for an AGV transport component.
+def handle_agv_transport_working_to_outage_transition():
+    pass
 
-    When an AGV completes transport and arrives at the destination, it transitions to idle
-    and completes the transport task, updating the job location and machine state.
 
-    Args:
-        state: Current state of the system
-        instance: Instance configuration
-        transition: The transition object containing component and job IDs
-        transport: The transport state object being transitioned
+# def handle_agv_transport_transit_to_idle_transition(
+#     state: State,
+#     instance: InstanceConfig,
+#     transition: ComponentTransition,
+#     transport: TransportState,
+# ) -> State:
+#     """
+#     Handles the transition from 'transit' to 'idle' state for an AGV transport component.
 
-    Returns:
-        State: Updated state after handling the transition
+#     When an AGV completes transport and arrives at the destination, it transitions to idle
+#     and completes the transport task, updating the job location and machine state.
 
-    Raises:
-        ValueError: If no job_id is specified in the transition
-    """
-    if transition.job_id is None:
-        raise ValueError("No job_id in transition")
-    else:
-        job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
-        machine_state = machine_type_utils.get_machine_state_by_id(
-            state.machines,
-            transport.location.location[
-                2
-            ],  # TODO: hardcoded index -> assumes that the last index is the destination machine
-        )
+#     Args:
+#         state: Current state of the system
+#         instance: Instance configuration
+#         transition: The transition object containing component and job IDs
+#         transport: The transport state object being transitioned
 
-        job_state, transport_state, machine_state = manipulate.complete_transport_task(
-            instance, job_state, transport=transport, machine=machine_state, time=state.time
-        )
+#     Returns:
+#         State: Updated state after handling the transition
 
-        state = possible_transition_utils.replace_job_state(state, job_state)
-        state = possible_transition_utils.replace_transport_state(state, transport_state)
-        state = possible_transition_utils.replace_machine_state(state, machine_state)
-        return state
+#     Raises:
+#         ValueError: If no job_id is specified in the transition
+#     """
+#     if transition.job_id is None:
+#         raise ValueError("No job_id in transition")
+#     else:
+#         job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
+#         machine_state = machine_type_utils.get_machine_state_by_id(
+#             state.machines,
+#             transport.location.location[
+#                 2
+#             ],  # TODO: hardcoded index -> assumes that the last index is the destination machine
+#         )
+
+#         job_state, transport_state, machine_state = manipulate.complete_transport_task(
+#             instance, job_state, transport=transport, machine=machine_state, time=state.time
+#         )
+
+#         state = possible_transition_utils.replace_job_state(state, job_state)
+#         state = possible_transition_utils.replace_transport_state(state, transport_state)
+#         state = possible_transition_utils.replace_machine_state(state, machine_state)
+#         return state
+
+
+def handle_agv_transport_transit_to_outage_transition():
+
+    pass
+
+
+def handle_agv_transport_outage_to_idle_transition():
+    pass
 
 
 def handle_transition(
@@ -530,8 +631,9 @@ def handle_transport_transition(
                 core_utils.is_transport_transition_from_pickup_to_waitingpickup: handle_agv_transport_pickup_to_waitingpickup_transition,
                 core_utils.is_transport_transition_from_waitingpickup_to_transit: handle_agv_transport_pickup_to_transit_transition,
                 core_utils.is_transport_transition_from_pickup_to_transit: handle_agv_transport_pickup_to_transit_transition,
-                core_utils.is_transport_transition_from_working_to_idle: handle_agv_transport_transit_to_idle_transition,
-                core_utils.is_transport_transition_from_transit_to_idle: handle_agv_transport_transit_to_idle_transition,
+                core_utils.is_transport_transition_from_working_to_outage: handle_agv_transport_working_to_outage_transition,
+                core_utils.is_transport_transition_from_transit_to_outage: handle_agv_transport_transit_to_outage_transition,
+                core_utils.is_transport_transition_from_outage_to_idle: handle_agv_transport_outage_to_idle_transition,
             }
         case _:
             raise NotImplementedError()
@@ -567,8 +669,10 @@ def handle_machine_transition(
     machine = machine_type_utils.get_machine_state_by_id(state.machines, transition.component_id)
 
     transition_handlers = {
-        core_utils.is_machine_transition_from_idle_to_working: handle_machine_idle_to_working_transition,
-        core_utils.is_machine_transition_from_working_to_idle: handle_machine_working_to_idle_transition,
+        core_utils.is_machine_transition_from_idle_to_setup: handle_machine_idle_to_setup_transition,
+        core_utils.is_machine_transition_from_setup_to_working: handle_machine_setup_to_working_transition,
+        core_utils.is_machine_transition_from_working_to_outage: handle_machine_working_to_outage_transition,
+        core_utils.is_machine_transition_from_outage_to_idle: handle_machine_outage_to_idle_transition,
     }
 
     return handle_transition(state, instance, transition, machine, transition_handlers)

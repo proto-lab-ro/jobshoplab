@@ -14,6 +14,7 @@ from jobshoplab.types.state_types import (
 from jobshoplab.utils.state_machine_utils.transport_type_utils import get_transport_config_by_id
 from jobshoplab.utils.state_machine_utils.machine_type_utils import get_machine_config_by_id
 from jobshoplab.utils.exceptions import InvalidType
+from typing import Iterable
 
 
 def _get_duration(current_time, outage_state):
@@ -21,7 +22,11 @@ def _get_duration(current_time, outage_state):
         case OutageActive():
             raise ValueError("Outage is active")
         case OutageInactive():
-            return current_time.time - outage_state.last_time_active
+            if isinstance(outage_state.last_time_active, NoTime):
+                last_time_active = 0
+            else:
+                last_time_active = outage_state.last_time_active.time
+            return current_time.time - last_time_active
         case _:
             raise ValueError("Outage state is not active or inactive")
 
@@ -59,7 +64,7 @@ def _sample_from_outage_obj(
     duration_since_last_occ = _get_duration(current_time, outage_state)
     should_apply = _should_apply_based_on_frequency(outage, duration_since_last_occ)
     if not should_apply:
-        return outage
+        return outage_state
     # its time for a outage now.. lets get the duration
     match outage.duration:
         case DeterministicTimeConfig():
@@ -84,7 +89,7 @@ def _sample_from_outage_obj(
 
 
 def get_new_outage_states(
-    component: TransportState | MachineState, instance: InstanceConfig, state: State
+    component: TransportState | MachineState, instance: InstanceConfig, current_time: Time | NoTime
 ) -> tuple[OutageState, ...]:
     """
     Get the time until the transport is available again.
@@ -97,5 +102,27 @@ def get_new_outage_states(
         case _:
             raise InvalidType("component", component, "TransportState or MachineState")
     return tuple(
-        (_sample_from_outage_obj(outage, component, state.time) for outage in conf_obj.outages)
+        (_sample_from_outage_obj(outage, component, current_time) for outage in conf_obj.outages)
     )
+
+
+def get_occupied_time_from_outage_iterator(outage_states: Iterable) -> int:
+    """
+    Get the occupied time from the outage iterator.
+    """
+    active_outages = filter(lambda x: isinstance(x.active, OutageActive), outage_states)
+    if not active_outages:
+        return 0
+    return max(map(lambda x: x.active.end_time.time, active_outages))
+
+
+def release_outage(outage):
+    """
+    Release the outage.
+    """
+    if isinstance(outage.active, OutageActive):
+        return OutageState(
+            id=outage.id,
+            active=OutageInactive(last_time_active=outage.active.end_time),
+        )
+    return outage

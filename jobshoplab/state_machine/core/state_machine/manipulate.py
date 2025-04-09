@@ -13,13 +13,18 @@ from jobshoplab.types.state_types import (
     TransportLocation,
     TransportState,
     TransportStateState,
+    DeterministicTimeConfig,
+    StochasticTimeConfig,
 )
+
+from jobshoplab.types.instance_config_types import MachineConfig, OperationConfig
 from jobshoplab.utils.exceptions import InvalidValue, NotImplementedError
 from jobshoplab.utils.state_machine_utils import (
     buffer_type_utils,
     job_type_utils,
     machine_type_utils,
     possible_transition_utils,
+    outage_utils,
 )
 
 
@@ -100,15 +105,37 @@ def complete_active_operation_on_machine(
         machine_state.postbuffer, machine_config.postbuffer, job_state
     )
 
+    outages = outage_utils.get_new_outage_states(machine_state, instance, time)
+
     machine_state = replace(
         machine_state,
         buffer=buffer,
         postbuffer=postbuffer,
-        state=MachineStateState.IDLE,
-        occupied_till=NoTime(),
+        state=MachineStateState.OUTAGE,
+        occupied_till=outage_utils.get_occupied_time_from_outage_iterator(outages),
+        outages=outages,
     )
-
     return job_state, machine_state
+
+
+def _get_duration(time: DeterministicTimeConfig | StochasticTimeConfig) -> int:
+    """
+    Get the duration of a time object.
+    Args:
+        time (Time): The time object to get the duration of.
+    Returns:
+        Time: The duration of the time object.
+    """
+    match time:
+        case DeterministicTimeConfig():
+            return time.time
+        case StochasticTimeConfig():
+            time.update()
+            return time.time
+        case _:
+            raise TypeError(
+                f"Invalid time type: {type(time)}. Expected DeterministicTimeConfig or StochasticTimeConfig."
+            )
 
 
 def begin_next_job_on_machine(
@@ -123,47 +150,111 @@ def begin_next_job_on_machine(
     -> sets the operation state to processing
     -> sets the machine state to working
     """
-    if isinstance(time, Time):
-        # set next operation as active
-        job_configs = instance.instance.specification
-        op_state = job_type_utils.get_next_not_done_operation(job_state)
-        op_config = job_type_utils.get_operation_config_by_id(job_configs, op_state.id)
 
-        occupied_time = Time(
-            time.time + possible_transition_utils.get_duration(op_config.duration)
-        )  #!FELIX add setuptime outages and stochastic times here (simply mod duration)
+    # set next operation as active
+    job_configs = instance.instance.specification
+    op_state = job_type_utils.get_next_not_done_operation(job_state)
+    op_config = job_type_utils.get_operation_config_by_id(job_configs, op_state.id)
 
-        op_state = OperationState(
-            id=op_config.id,
-            start_time=time,
-            end_time=occupied_time,
-            machine_id=machine_state.id,
-            operation_state_state=OperationStateState.PROCESSING,  #!FELIX add setup state throw  mapping
-        )
+    occupied_time = Time(time.time + _get_duration(op_config.duration))
 
-        job_state = possible_transition_utils.replace_job_operation_state(job_state, op_state)
+    op_state = OperationState(
+        id=op_config.id,
+        start_time=time,
+        end_time=occupied_time,
+        machine_id=machine_state.id,
+        operation_state_state=OperationStateState.PROCESSING,
+    )
 
-        machine_config = machine_type_utils.get_machine_config_by_id(
-            instance.machines, machine_state.id
-        )
-        #!FELIX thise block needs to move to some other state transition function
-        # #################################################
-        # put job from prebuffer to machine buffer
-        prebuffer = buffer_type_utils.remove_from_buffer(machine_state.prebuffer, job_state.id)
-        buffer, job_state = buffer_type_utils.put_in_buffer(
-            machine_state.buffer, machine_config.buffer, job_state
-        )
+    job_state = possible_transition_utils.replace_job_operation_state(job_state, op_state)
 
-        machine_state = replace(
-            machine_state,
-            prebuffer=prebuffer,
-            buffer=buffer,
-            state=MachineStateState.WORKING,
-            occupied_till=occupied_time,
-        )
+    machine_state = replace(
+        machine_state,
+        state=MachineStateState.WORKING,
+        occupied_till=occupied_time,
+    )
 
-        return job_state, machine_state
-        ####################################################
+    return job_state, machine_state
 
-    else:
-        raise NotImplementedError()
+
+def _get_setup_duration(
+    machine_state: MachineState, machine_config: MachineConfig, operation_config: OperationConfig
+) -> int:
+    """
+    Get the setup time for a machine and operation.
+    Args:
+        machine_config (MachineConfig): The machine configuration.
+        operation_config (OperationConfig): The operation configuration.
+    Returns:
+        Time: The setup time.
+    """
+    #!FELIX add setuptime outages and stochastic times here (simply mod duration)
+    new_tool = operation_config.tool
+    old_tool = machine_state.mounted_tool
+    s_time = machine_config.setup_times.get((old_tool, new_tool))
+    match s_time:
+        case DeterministicTimeConfig():
+            return s_time.time
+        case StochasticTimeConfig():
+            setup_time = s_time.time
+            s_time.update()
+            return setup_time
+        case _:
+            raise TypeError(
+                f"Invalid setup time type: {type(s_time)}. Expected DeterministicTimeConfig or StochasticTimeConfig."
+            )
+
+
+def begin_machine_setup(
+    instance: InstanceConfig,
+    job_state: JobState,
+    machine_state: MachineState,
+    time: Time | NoTime,
+) -> Tuple[JobState, MachineState]:
+    """
+    Sets the machine to setup state.
+    -> sets the machine state to setup
+    -> sets the operation state to setup
+    -> sets the setup time
+    -> puts the job from prebuffer to machine buffer
+    -> sets the machine_tool to the new tool
+    """
+
+    job_configs = instance.instance.specification
+    op_state = job_type_utils.get_next_not_done_operation(job_state)
+    op_config = job_type_utils.get_operation_config_by_id(job_configs, op_state.id)
+    machine_config = machine_type_utils.get_machine_config_by_id(
+        instance.machines, machine_state.id
+    )
+
+    current_time = time.time
+    setup_duration = _get_setup_duration(machine_config, operation_config=op_config)
+
+    op_state = OperationState(
+        id=op_config.id,
+        start_time=time,
+        end_time=Time(current_time + setup_duration),
+        machine_id=machine_state.id,
+        operation_state_state=OperationStateState.SETUP,
+    )
+
+    job_state = possible_transition_utils.replace_job_operation_state(job_state, op_state)
+
+    #!FELIX thise block needs to move to some other state transition function
+    # #################################################
+    # put job from prebuffer to machine buffer
+    prebuffer = buffer_type_utils.remove_from_buffer(machine_state.prebuffer, job_state.id)
+    buffer, job_state = buffer_type_utils.put_in_buffer(
+        machine_state.buffer, machine_config.buffer, job_state
+    )
+
+    machine_state = replace(
+        machine_state,
+        prebuffer=prebuffer,
+        buffer=buffer,
+        state=MachineStateState.WORKING,
+        occupied_till=Time(current_time + setup_duration),
+        mounted_tool=op_config.tool,
+    )
+
+    return job_state, machine_state

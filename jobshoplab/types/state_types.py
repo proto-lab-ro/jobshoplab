@@ -147,6 +147,7 @@ class MachineStateState(Enum):
     IDLE = "Idle"
     SETUP = "Setup"
     WORKING = "Working"
+    OUTAGE = "Outage"
 
     def asdict(self) -> str:
         return self.value
@@ -189,6 +190,7 @@ class MachineState:
     prebuffer: BufferState
     postbuffer: BufferState
     state: MachineStateState
+    mounted_tool: str
     outages: tuple[OutageState, ...]
     resources: tuple[Resources, ...]
 

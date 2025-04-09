@@ -344,17 +344,3 @@ def replace_components(state, updated_components):
     ):
         state = replace(state, transports=updated_components)
     return state
-
-
-def get_duration(time: DeterministicTimeConfig | StochasticTimeConfig) -> int:
-    """
-    Get the duration of a time object.
-    Args:
-        time (Time): The time object to get the duration of.
-    Returns:
-        Time: The duration of the time object.
-    """
-    if isinstance(time, DeterministicTimeConfig):
-        return time.time
-    else:
-        raise NotImplementedError()
