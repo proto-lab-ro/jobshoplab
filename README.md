@@ -56,8 +56,9 @@ Replace `<desired_dir>` with your target directory and `<repo_dir>` with the pat
 After installation, you can initialize and interact with JobShopLab in your Python scripts as follows:
 
 ```python
-from jobshoplab import JobShopLabEnv, load_config
 from pathlib import Path
+
+from jobshoplab import JobShopLabEnv, load_config
 
 # Load a pre-defined configuration
 config = load_config(config_path=Path("./data/config/getting_started_config.yaml"))

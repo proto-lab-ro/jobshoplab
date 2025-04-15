@@ -1,8 +1,8 @@
 from functools import partial
 
 from jobshoplab.state_machine.core.state_machine.state import step
-from jobshoplab.state_machine.time_machines import jump_to_event, jump_by_one
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
+from jobshoplab.state_machine.time_machines import jump_by_one, jump_to_event
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
 from jobshoplab.types.instance_config_types import InstanceConfig
 from jobshoplab.types.state_types import (
     BufferStateState,

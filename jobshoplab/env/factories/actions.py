@@ -5,7 +5,7 @@ from gymnasium import spaces
 
 from jobshoplab.state_machine.time_machines import jump_to_event
 from jobshoplab.types import Config, InstanceConfig, State
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
 from jobshoplab.types.state_types import (
     JobState,
     MachineStateState,

@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 
 from jobshoplab.types.stochasticy_models import (
-    PoissonFunction,
-    GaussianFunction,
     BetaFunction,
     GammaFunction,
+    GaussianFunction,
+    PoissonFunction,
 )
 
 

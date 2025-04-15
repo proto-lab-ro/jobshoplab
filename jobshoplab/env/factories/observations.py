@@ -7,12 +7,7 @@ from typing import Callable
 import gymnasium as gym
 import numpy as np
 
-from jobshoplab.types import (
-    ComponentTransition,
-    Config,
-    InstanceConfig,
-    State,
-)
+from jobshoplab.types import ComponentTransition, Config, InstanceConfig, State
 from jobshoplab.types.state_types import (
     JobState,
     MachineState,

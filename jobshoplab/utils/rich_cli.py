@@ -1,28 +1,21 @@
 import os
 import pickle
 import sys
+import threading
 import time
 from functools import partial
 
 import keyboard
+import readchar
+from readchar import key
 from rich.columns import Columns
 from rich.console import Group
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-import threading
-import time
 
-import readchar
-from readchar import key
-
-
-from jobshoplab.types.state_types import (
-    JobState,
-    State,
-    StateMachineResult,
-)
+from jobshoplab.types.state_types import JobState, State, StateMachineResult
 
 
 def load_history_from_pickle(file_path: str) -> tuple[StateMachineResult, ...]:

@@ -9,25 +9,23 @@ from jobshoplab.compiler import Compiler
 from jobshoplab.env.factories import observations, rewards
 from jobshoplab.env.factories.actions import ActionFactory
 from jobshoplab.types import Config, State
-from jobshoplab.types.instance_config_types import InstanceConfig, JobConfig, MachineConfig
-from dataclasses import replace
-from jobshoplab.types.instance_config_types import OutageConfig, OutageTypeConfig
-from jobshoplab.types.instance_config_types import DeterministicTimeConfig, StochasticTimeConfig
+from jobshoplab.types.instance_config_types import (
+    DeterministicTimeConfig,
+    InstanceConfig,
+    JobConfig,
+    MachineConfig,
+    OutageConfig,
+    OutageTypeConfig,
+    Product,
+    StochasticTimeConfig,
+)
 from jobshoplab.types.stochasticy_models import (
+    BetaFunction,
     GammaFunction,
     GaussianFunction,
     PoissonFunction,
-    BetaFunction,
 )
-
-from jobshoplab.types.instance_config_types import (
-    DeterministicTimeConfig,
-    StochasticTimeConfig,
-    Product,
-)
-from jobshoplab.types.stochasticy_models import BetaFunction
 from tests.conftest import default_instance
-from jobshoplab.types.instance_config_types import StochasticTimeConfig
 
 
 @pytest.fixture
@@ -250,6 +248,7 @@ def instance_with_stochastic_transport_times(default_instance_with_intralogistic
 @pytest.fixture
 def instance_with_static_setup_times(default_instance, default_products):
     from dataclasses import replace
+
     from jobshoplab.types.instance_config_types import DeterministicTimeConfig, Product
 
     # Create tool-based setup times for each machine

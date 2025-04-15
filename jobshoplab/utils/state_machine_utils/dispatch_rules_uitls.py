@@ -24,7 +24,9 @@ def get_prebuffer_operations_for_machine(instance: InstanceConfig, state: State,
         next_operation = job_type_utils.get_next_not_done_operation(job_state)
 
         if next_operation.machine_id != machine_id:
-            raise OperationMachineMatchError(next_operation.id, machine_id, next_operation.machine_id)
+            raise OperationMachineMatchError(
+                next_operation.id, machine_id, next_operation.machine_id
+            )
 
         operations.append(
             job_type_utils.get_operation_config_by_id(

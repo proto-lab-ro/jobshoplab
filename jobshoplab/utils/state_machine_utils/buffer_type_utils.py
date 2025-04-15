@@ -3,7 +3,7 @@ from dataclasses import replace
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.instance_config_types import BufferConfig
 from jobshoplab.types.state_types import BufferState, BufferStateState, JobState
-from jobshoplab.utils.exceptions import InvalidValue, BufferFullError, JobNotInBufferError
+from jobshoplab.utils.exceptions import BufferFullError, InvalidValue, JobNotInBufferError
 
 
 def replace_buffer_state(state: State, buffer_state) -> State:

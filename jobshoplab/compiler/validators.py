@@ -1,16 +1,16 @@
-from abc import ABC, abstractmethod
 import re
+from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from jobshoplab.types import Config
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import (
-    NotImplementedError,
     InstanceSchemaError,
-    MissingRequiredFieldError,
     InvalidFieldValueError,
     JobSpecificationSyntaxError,
+    MissingRequiredFieldError,
+    NotImplementedError,
 )
 
 

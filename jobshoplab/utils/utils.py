@@ -2,11 +2,7 @@ import hashlib
 import logging
 import re
 from dataclasses import asdict
-from typing import (
-    Any,
-    Hashable,
-    Protocol,
-)
+from typing import Any, Hashable, Protocol
 
 import numpy as np
 from heracless.utils.cfg_tree import as_lowercase

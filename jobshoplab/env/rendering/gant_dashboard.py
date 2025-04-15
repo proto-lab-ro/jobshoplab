@@ -5,13 +5,13 @@ import time
 import uuid
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Optional, Union, Set, Iterator
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union
 
+import dash_ag_grid as dag
 import dash_daq as daq
 import pandas as pd
 import plotly.graph_objects as go
 from dash import Dash, Input, Output, dcc, html
-import dash_ag_grid as dag
 from plotly import colors as plotly_colors
 
 from jobshoplab.types.instance_config_types import InstanceConfig
@@ -23,7 +23,6 @@ from jobshoplab.types.state_types import (
 )
 from jobshoplab.utils.exceptions import FileNotFound
 from jobshoplab.utils.logger import get_logger
-
 
 # -------------------------------------------------------------------
 # Utility Classes

@@ -12,9 +12,9 @@ from heracless import load_config
 from jobshoplab.state_machine.time_machines import force_jump_to_event, jump_by_one, jump_to_event
 from jobshoplab.types.action_types import (
     Action,
+    ActionFactoryInfo,
     ComponentState,
     ComponentTransition,
-    ActionFactoryInfo,
 )
 from jobshoplab.types.instance_config_types import (
     BufferConfig,
@@ -144,17 +144,25 @@ def default_products() -> tuple[Product, Product, Product]:
 
 
 @pytest.fixture
+def default_tools() -> tuple[str, str, str]:
+    return "tl-0", "tl-1", "tl-2"
+
+
+@pytest.fixture
 def default_setup_times(
-    default_products,
+    default_tools,
 ) -> dict[tuple[Product, Product], DeterministicTimeConfig]:
-    product0, product1, product2 = default_products
+    tool0, tool1, tool2 = default_tools
     return {
-        (product0, product1): DeterministicTimeConfig(0),
-        (product1, product0): DeterministicTimeConfig(0),
-        (product0, product2): DeterministicTimeConfig(0),
-        (product2, product0): DeterministicTimeConfig(0),
-        (product1, product2): DeterministicTimeConfig(0),
-        (product2, product1): DeterministicTimeConfig(0),
+        (tool0, tool0): DeterministicTimeConfig(0),
+        (tool1, tool1): DeterministicTimeConfig(0),
+        (tool2, tool2): DeterministicTimeConfig(0),
+        (tool0, tool1): DeterministicTimeConfig(0),
+        (tool1, tool0): DeterministicTimeConfig(0),
+        (tool0, tool2): DeterministicTimeConfig(0),
+        (tool2, tool0): DeterministicTimeConfig(0),
+        (tool1, tool2): DeterministicTimeConfig(0),
+        (tool2, tool1): DeterministicTimeConfig(0),
     }
 
 

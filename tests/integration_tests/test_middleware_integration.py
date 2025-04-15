@@ -7,7 +7,7 @@ from jobshoplab.state_machine.core.state_machine import step
 from jobshoplab.state_machine.middleware.middleware import EventBasedBinaryActionMiddleware
 from jobshoplab.state_machine.time_machines import force_jump_to_event, jump_to_event
 from jobshoplab.types import Time
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
 from jobshoplab.types.state_types import BufferStateState, MachineStateState, StateMachineResult
 
 

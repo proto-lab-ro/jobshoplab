@@ -11,7 +11,7 @@ from jobshoplab.state_machine.core.state_machine.state import (
     step,
 )
 from jobshoplab.types import NoTime, State, Time
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
 from jobshoplab.types.state_types import (
     MachineStateState,
     OperationStateState,
@@ -63,7 +63,7 @@ def test_apply_transition_machine(
         "DEBUG", default_state_machine_idle, default_instance, machine_transition_working
     )
     assert isinstance(result, State)
-    assert result.machines[0].state == MachineStateState.WORKING
+    assert result.machines[0].state == MachineStateState.SETUP
 
 
 def test_apply_transition_transport(

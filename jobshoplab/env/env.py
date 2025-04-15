@@ -11,7 +11,7 @@ from heracless.utils.cfg_tree import as_lowercase
 
 from jobshoplab.compiler import Compiler
 from jobshoplab.env import rendering
-from jobshoplab.env.factories import observations, rewards, actions
+from jobshoplab.env.factories import actions, observations, rewards
 from jobshoplab.state_machine.core.state_machine import is_done
 from jobshoplab.state_machine.middleware import middleware as middleware_collection
 from jobshoplab.types import Config, InstanceConfig, StateMachineResult
@@ -604,4 +604,4 @@ if __name__ == "__main__":
     while not done:
         obs, reward, termianted, truncated, inf = env.step(1)
         done = termianted or truncated
-    # env.render()
+    env.render()

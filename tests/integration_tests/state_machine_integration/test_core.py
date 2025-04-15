@@ -1,10 +1,11 @@
 from dataclasses import replace
+from functools import partial
 
 import pytest
 
 from jobshoplab.state_machine.core.state_machine import step
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import Action, ComponentTransition, ActionFactoryInfo
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
 from jobshoplab.types.instance_config_types import (
     DeterministicTimeConfig,
     JobConfig,
@@ -22,7 +23,6 @@ from jobshoplab.types.state_types import (
     Time,
     TransportStateState,
 )
-from functools import partial
 
 
 def test_start_teleport_job0_to_machine0(

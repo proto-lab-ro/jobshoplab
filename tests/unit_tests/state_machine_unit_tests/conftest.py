@@ -7,10 +7,10 @@ from jobshoplab.types.action_types import ComponentTransition
 from jobshoplab.types.instance_config_types import (
     BufferConfig,
     BufferTypeConfig,
+    DeterministicTimeConfig,
     InstanceConfig,
     Product,
     TransportTypeConfig,
-    DeterministicTimeConfig,
 )
 from jobshoplab.types.state_types import (
     BufferState,
@@ -91,6 +91,8 @@ def machine_state_idle_empty(create_buffer_state):
         postbuffer=create_buffer_state("b-3"),
         state=MachineStateState.IDLE,
         resources=(),
+        outages=(),
+        mounted_tool="tl-0",
     )
 
 
@@ -104,6 +106,8 @@ def machine_state_idle(create_buffer_state):
         postbuffer=create_buffer_state("b-3"),
         state=MachineStateState.IDLE,
         resources=(),
+        outages=(),
+        mounted_tool="tl-0",
     )
 
 
@@ -117,6 +121,8 @@ def machine_state_working(create_buffer_state):
         postbuffer=create_buffer_state("b-5", BufferStateState.NOT_EMPTY, ("j-1",)),
         state=MachineStateState.WORKING,
         resources=(),
+        outages=(),
+        mounted_tool="tl-0",
     )
 
 
@@ -130,6 +136,8 @@ def machine_state_working_on_j1(create_buffer_state):
         postbuffer=create_buffer_state("b-5"),
         state=MachineStateState.WORKING,
         resources=(),
+        outages=(),
+        mounted_tool="tl-0",
     )
 
 
@@ -142,6 +150,7 @@ def transport_state_idle(create_buffer_state):
         buffer=create_buffer_state("b-11"),
         location=TransportLocation(progress=0.0, location="m-1"),
         transport_job=None,
+        outages=(),
     )
 
 
@@ -154,6 +163,7 @@ def transport_state_working(create_buffer_state):
         buffer=create_buffer_state("b-11", BufferStateState.NOT_EMPTY, ("j-1",)),
         location=TransportLocation(progress=0.0, location=("m-1",)),
         transport_job=None,
+        outages=(),
     )
 
 
@@ -178,6 +188,7 @@ def transport_state_pickup(create_buffer_state):
         buffer=create_buffer_state("b-11"),
         location=TransportLocation(progress=0.0, location=("m-1")),
         transport_job="j-1",
+        outages=(),
     )
 
 
@@ -190,6 +201,7 @@ def transport_state_waitingpickup(create_buffer_state):
         buffer=create_buffer_state(),
         location=TransportLocation(progress=0.0, location=("m-1")),
         transport_job=None,
+        outages=(),
     )
 
 
@@ -202,6 +214,7 @@ def transport_state_transit(create_buffer_state):
         buffer=create_buffer_state("b-11", BufferStateState.NOT_EMPTY, ("j-1",)),
         location=TransportLocation(progress=0.5, location=("m-1", "m-2", "m-1")),
         transport_job=None,
+        outages=(),
     )
 
 
@@ -277,9 +290,7 @@ def job_state_done_end_time_5():
 
 @pytest.fixture
 def machine_transition_working():
-    return ComponentTransition(
-        component_id="m-1", new_state=MachineStateState.WORKING, job_id="j-1"
-    )
+    return ComponentTransition(component_id="m-1", new_state=MachineStateState.SETUP, job_id="j-1")
 
 
 @pytest.fixture

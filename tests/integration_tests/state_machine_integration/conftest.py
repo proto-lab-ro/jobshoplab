@@ -4,10 +4,11 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
+from jobshoplab.state_machine.time_machines import jump_to_event
 from jobshoplab.types.action_types import (
     Action,
-    ComponentTransition,
     ActionFactoryInfo,
+    ComponentTransition,
     TransportStateState,
 )
 from jobshoplab.types.instance_config_types import (
@@ -17,7 +18,6 @@ from jobshoplab.types.instance_config_types import (
     InstanceConfig,
 )
 from jobshoplab.types.state_types import BufferState, BufferStateState, State
-from jobshoplab.state_machine.time_machines import jump_to_event
 
 
 @pytest.fixture

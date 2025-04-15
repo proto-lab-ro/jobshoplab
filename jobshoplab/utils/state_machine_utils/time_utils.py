@@ -1,8 +1,5 @@
 from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.types.state_types import (
-    DeterministicTimeConfig,
-    StochasticTimeConfig,
-)
+from jobshoplab.types.state_types import DeterministicTimeConfig, StochasticTimeConfig
 
 
 def _get_travel_time_from_spec(

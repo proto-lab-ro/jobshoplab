@@ -2,29 +2,28 @@ from dataclasses import replace
 from typing import Tuple
 
 from jobshoplab.types import InstanceConfig
+from jobshoplab.types.instance_config_types import MachineConfig, OperationConfig
 from jobshoplab.types.state_types import (
+    DeterministicTimeConfig,
     JobState,
     MachineState,
     MachineStateState,
     NoTime,
     OperationState,
     OperationStateState,
+    StochasticTimeConfig,
     Time,
     TransportLocation,
     TransportState,
     TransportStateState,
-    DeterministicTimeConfig,
-    StochasticTimeConfig,
 )
-
-from jobshoplab.types.instance_config_types import MachineConfig, OperationConfig
 from jobshoplab.utils.exceptions import InvalidValue, NotImplementedError
 from jobshoplab.utils.state_machine_utils import (
     buffer_type_utils,
     job_type_utils,
     machine_type_utils,
-    possible_transition_utils,
     outage_utils,
+    possible_transition_utils,
 )
 
 
@@ -202,6 +201,13 @@ def _get_setup_duration(
             s_time.update()
             return setup_time
         case _:
+            if s_time is None:
+                raise InvalidValue(
+                    key=(old_tool, new_tool),
+                    value=None,
+                    message="setup time not found in mapping (check instance mapping)",
+                )
+
             raise TypeError(
                 f"Invalid setup time type: {type(s_time)}. Expected DeterministicTimeConfig or StochasticTimeConfig."
             )

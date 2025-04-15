@@ -12,13 +12,12 @@ from jobshoplab.types.instance_config_types import (
     OperationConfig,
     Product,
 )
-from jobshoplab.utils.exceptions import InvalidValue
+from jobshoplab.utils.exceptions import InvalidValue, JobNotInBufferError
 from jobshoplab.utils.state_machine_utils import (
     buffer_type_utils,
     job_type_utils,
     machine_type_utils,
 )
-from jobshoplab.utils.exceptions import JobNotInBufferError
 
 
 def test_get_job_state_by_id(default_init_state: state_types.State):

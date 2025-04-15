@@ -2,10 +2,10 @@ import tempfile
 from functools import partial
 from pathlib import Path
 
+import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 from heracless import load_config
-import gymnasium as gym
 
 from jobshoplab.env.env import JobShopLabEnv
 from jobshoplab.env.factories.observations import (

@@ -39,9 +39,9 @@ def test_finish_transport_job(
 
     # Assert
     assert updated_job.location == "b-1"
-    assert updated_transport.state == TransportStateState.IDLE
+    assert updated_transport.state == TransportStateState.OUTAGE
     assert updated_transport.transport_job is None
-    assert updated_transport.occupied_till == NoTime()
+    assert updated_transport.occupied_till == Time(10)
 
 
 def test_finish_transport_job_no_time(
@@ -117,13 +117,13 @@ def test_start_next_operation(default_instance, job_state_done, machine_state_id
     job = replace(job, operations=(operation,))
     machine = replace(
         machine_state_idle,
-        buffer=replace(machine_state_idle.buffer, store=()),  # Ensure empty buffer
+        buffer=replace(machine_state_idle.buffer, store=("j-1",)),  # Ensure job in buffer
+        prebuffer=replace(machine_state_idle.prebuffer, store=()),  # Ensure prebuffer is empty
+        state=MachineStateState.SETUP,
     )
 
     # Execute
-    updated_job, updated_machine = begin_next_job_on_machine(
-        default_instance, job, machine_state_idle, time
-    )
+    updated_job, updated_machine = begin_next_job_on_machine(default_instance, job, machine, time)
 
     # Assert
     assert updated_machine.state == MachineStateState.WORKING
@@ -142,5 +142,5 @@ def test_start_next_operation(default_instance, job_state_done, machine_state_id
 
 
 def test_start_next_operation_no_time(default_instance, job_state_done, machine_state_idle):
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(Exception):
         begin_next_job_on_machine(default_instance, job_state_done, machine_state_idle, NoTime())

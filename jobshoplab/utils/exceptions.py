@@ -160,7 +160,9 @@ class InvalidTransportConfig(JobShopException):
 
 class ComponentAssociationError(JobShopException):
     def __init__(self, component_id, component_type):
-        self.message = f"{component_type} with id={component_id} cannot be associated with a machine"
+        self.message = (
+            f"{component_type} with id={component_id} cannot be associated with a machine"
+        )
         super().__init__(self.message)
 
 

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Literal, Mapping, TypeAlias
-from jobshoplab.utils.utils import hash
-from jobshoplab.types.stochasticy_models import StochasticTimeConfig
 
+from jobshoplab.types.stochasticy_models import StochasticTimeConfig
+from jobshoplab.utils.utils import hash
 
 ResourceConfig = Literal["EnergyConsumption", "Waste", "C02Emission", "FinancialCost"]
 EnergyConsumptionConfig = "Consumption"
