@@ -85,8 +85,8 @@ class DefaultInstanceLookUpFactory:
         return "tl-0"
 
     def _get_setup_times(
-        self, products: List[Product]
-    ) -> Dict[tuple[Product, Product], DeterministicTimeConfig]:
+        self, tools: tuple[Tool, ...]
+    ) -> Dict[tuple[Tool, Tool], DeterministicTimeConfig]:
         """
         Get the setup times between products.
 
@@ -97,9 +97,9 @@ class DefaultInstanceLookUpFactory:
             Dict[tuple[Product, Product], DeterministicTimeConfig]: The setup times.
         """
         setup_times = {}
-        for product in products:
-            for other_product in products:
-                setup_times[(product, other_product)] = DeterministicTimeConfig(0)
+        for tool in tools:
+            for other_tool in tools:
+                setup_times[(tool, other_tool)] = DeterministicTimeConfig(0)
         return setup_times
 
     def get_default_products(self) -> List[Product]:
@@ -113,6 +113,15 @@ class DefaultInstanceLookUpFactory:
             Product(id=f"p-{product_id}", name=f"product_{product_id}")
             for product_id in range(self.num_jobs)
         ]
+
+    def get_default_tools(self) -> tuple[Tool, ...]:
+        """
+        Get the default list of tools.
+
+        Returns:
+            List[ToolConfig]: The default tools.
+        """
+        return tuple((f"tl-{tool_id}" for tool_id in range(self.num_machines)))
 
     def get_default_machine(
         self,
@@ -133,8 +142,9 @@ class DefaultInstanceLookUpFactory:
         Returns:
             MachineConfig: The default machine configuration
         """
-        products = self.get_default_products()
-        setup_times = self._get_setup_times(products)
+        # products = self.get_default_products()
+        tools = self.get_default_tools()
+        setup_times = self._get_setup_times(tools)
         return MachineConfig(
             id=machine_id,
             outages=tuple(),

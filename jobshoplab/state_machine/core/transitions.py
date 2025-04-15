@@ -19,6 +19,8 @@ class Transition:
         match state.value.lower():
             case "idle":
                 return StateEnum.IDLE
+            case "setup":
+                return StateEnum.SETUP
             case "running" | "working" | "pickup" | "transit" | "waitingpickup":
                 return StateEnum.RUNNING
             case "outage" | "maintenance":
@@ -48,16 +50,16 @@ class MachineTransition(Transition):
     def __init__(self):
         states = [StateEnum.IDLE, StateEnum.RUNNING, StateEnum.OUTAGE, StateEnum.SETUP]
         transitions = {
-            StateEnum.IDLE: (StateEnum.RUNNING, StateEnum.OUTAGE),
+            StateEnum.IDLE: (StateEnum.SETUP,),
+            StateEnum.SETUP: (StateEnum.RUNNING),
             StateEnum.RUNNING: (
-                StateEnum.IDLE,
+                # StateEnum.IDLE,
                 # No transitions from IDEL to OUTAGE, SETUP and RUNNING
-                # StateEnum.OUTAGE,
+                StateEnum.OUTAGE,
                 # StateEnum.SETUP,
-                # StateEnum.RUNNING,
+                StateEnum.RUNNING,
             ),
             StateEnum.OUTAGE: (StateEnum.IDLE),
-            StateEnum.SETUP: (StateEnum.IDLE, StateEnum.RUNNING),
         }
 
         super().__init__(states, transitions)
@@ -67,9 +69,9 @@ class TransportTransition(Transition):
     def __init__(self) -> None:
         states = [StateEnum.IDLE, StateEnum.RUNNING, StateEnum.OUTAGE]
         transitions = {
-            StateEnum.IDLE: (StateEnum.RUNNING, StateEnum.OUTAGE),
-            StateEnum.RUNNING: (StateEnum.IDLE, StateEnum.OUTAGE, StateEnum.RUNNING),
-            StateEnum.OUTAGE: (StateEnum.IDLE, StateEnum.RUNNING, StateEnum.OUTAGE),
+            StateEnum.IDLE: (StateEnum.RUNNING,),
+            StateEnum.RUNNING: (StateEnum.OUTAGE, StateEnum.RUNNING),
+            StateEnum.OUTAGE: (StateEnum.IDLE,),
         }
 
         super().__init__(states, transitions)

@@ -250,12 +250,12 @@ class EventBasedBinaryActionMiddleware(Middleware):
 
         match len(state.possible_transitions):
             case 0:
-                raise UnsuccessfulStateMachineResult("No possible transitions")
+                raise UnsuccessfulStateMachineResult()
             case 1:
                 action = replace(action, time_machine=force_jump_to_event)
                 state = self.state_machine_step(state=state.state, action=action)
                 if len(state.possible_transitions) == 0:
-                    raise UnsuccessfulStateMachineResult("No possible transitions")
+                    raise UnsuccessfulStateMachineResult()
                 if self.stepper.should_truncate():
                     self.truncation_joker -= 1
                 self.stepper.reset(action)

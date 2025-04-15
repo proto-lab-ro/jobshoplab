@@ -234,7 +234,7 @@ def get_possible_transitions(
         transitions += (
             ComponentTransition(
                 component_id=next_op.machine_id,
-                new_state=MachineStateState.WORKING,
+                new_state=MachineStateState.SETUP,
                 job_id=job.id,
             ),
         )

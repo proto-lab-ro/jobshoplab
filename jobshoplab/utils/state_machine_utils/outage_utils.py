@@ -110,8 +110,9 @@ def get_occupied_time_from_outage_iterator(outage_states: Iterable) -> int:
     """
     Get the occupied time from the outage iterator.
     """
-    active_outages = filter(lambda x: isinstance(x.active, OutageActive), outage_states)
-    if not active_outages:
+    active_outages = tuple(filter(lambda x: isinstance(x.active, OutageActive), outage_states))
+    if active_outages == ():
+        # no active outages
         return 0
     return max(map(lambda x: x.active.end_time.time, active_outages))
 

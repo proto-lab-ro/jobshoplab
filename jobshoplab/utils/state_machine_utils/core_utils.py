@@ -67,6 +67,8 @@ def no_processing_operations(job: JobState) -> bool:
     """
     for op in job.operations:
         if op.operation_state_state == OperationStateState.PROCESSING:
+            # if machine_state != MachineStateState.SETUP:
+            # return False
             return False
     return True
 
@@ -85,7 +87,7 @@ def no_processing_operations(job: JobState) -> bool:
 #         and transition.new_state == MachineStateState.IDLE
 # )
 
-## Machione transitions checker
+## Machine transitions checker
 
 
 def is_machine_transition_from_idle_to_setup(machine: MachineState, transition):
@@ -104,13 +106,13 @@ def is_machine_transition_from_setup_to_working(machine: MachineState, transitio
 def is_machine_transition_from_working_to_outage(machine: MachineState, transition):
     return (
         machine.state == MachineStateState.WORKING
-        and transition.new_state == MachineStateState.SETUP
+        and transition.new_state == MachineStateState.OUTAGE
     )
 
 
 def is_machine_transition_from_outage_to_idle(machine: MachineState, transition):
     return (
-        machine.state == MachineStateState.SETUP and transition.new_state == MachineStateState.IDLE
+        machine.state == MachineStateState.OUTAGE and transition.new_state == MachineStateState.IDLE
     )
 
 

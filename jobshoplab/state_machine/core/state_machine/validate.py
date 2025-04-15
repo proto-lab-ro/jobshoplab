@@ -34,14 +34,17 @@ def is_machine_transition_valid(
             f"Invalid transition from {from_state} to {to_state} for machine {machine}",
         )
 
-    if core_utils.is_machine_transition_from_working_to_idle(machine, transition):
+    if core_utils.is_machine_transition_from_outage_to_idle(machine, transition):
+        return True, ""
+
+    if core_utils.is_machine_transition_from_working_to_outage(machine, transition):
         return True, ""
 
     if transition.job_id is not None:
         job_from_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
         no_processing_ops = core_utils.no_processing_operations(job_from_state)
-        if not no_processing_ops:
-            return False, "There are processing operations that prevent the transition."
+        # if not no_processing_ops:
+        #     return False, "There are processing operations that prevent the transition."
         next_operation = job_type_utils.get_next_not_done_operation(job_from_state)
         if next_operation.machine_id != machine.id:
             return False, "Next operation is not on this machine."

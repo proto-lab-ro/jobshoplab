@@ -84,7 +84,6 @@ class BufferStateState(Enum):
 
 class OperationStateState(Enum):
     IDLE = "Idle"
-    SETUP = "Setup"  #!FELIX state here
     PROCESSING = "Processing"
     DONE = "Done"
     TRANSPORT = "Transport"

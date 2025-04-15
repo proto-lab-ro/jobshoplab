@@ -604,4 +604,4 @@ if __name__ == "__main__":
     while not done:
         obs, reward, termianted, truncated, inf = env.step(1)
         done = termianted or truncated
-    env.render()
+    # env.render()

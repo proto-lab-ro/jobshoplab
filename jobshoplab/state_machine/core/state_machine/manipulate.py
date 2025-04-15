@@ -49,13 +49,13 @@ def complete_transport_task(
 
         # remove job from transport
         outages = outage_utils.get_new_outage_states(transport, instance, time)
-        occupied_time = outage_utils.get_occupied_time_from_outage_iterator(outages)
+        occupied_for = outage_utils.get_occupied_time_from_outage_iterator(outages)
         transport = replace(
             transport,
             buffer=transport_buffer,
             state=TransportStateState.OUTAGE,
             outages=outages,
-            occupied_till=occupied_time,
+            occupied_till=Time(time.time + occupied_for),
             location=TransportLocation(0, transport.location.location[2]),
             transport_job=None,
         )
@@ -108,14 +108,13 @@ def complete_active_operation_on_machine(
         machine_state.postbuffer, machine_config.postbuffer, job_state
     )
 
-    outages = outage_utils.get_new_outage_states(machine_state, instance, time)
+    outages = tuple(map(outage_utils.release_outage, machine_state.outages))
 
     machine_state = replace(
         machine_state,
         buffer=buffer,
         postbuffer=postbuffer,
-        state=MachineStateState.OUTAGE,
-        occupied_till=outage_utils.get_occupied_time_from_outage_iterator(outages),
+        state=MachineStateState.IDLE,
         outages=outages,
     )
     return job_state, machine_state
@@ -231,14 +230,14 @@ def begin_machine_setup(
     )
 
     current_time = time.time
-    setup_duration = _get_setup_duration(machine_config, operation_config=op_config)
+    setup_duration = _get_setup_duration(machine_state, machine_config, operation_config=op_config)
 
     op_state = OperationState(
         id=op_config.id,
         start_time=time,
         end_time=Time(current_time + setup_duration),
         machine_id=machine_state.id,
-        operation_state_state=OperationStateState.SETUP,
+        operation_state_state=OperationStateState.PROCESSING,
     )
 
     job_state = possible_transition_utils.replace_job_operation_state(job_state, op_state)
@@ -255,7 +254,7 @@ def begin_machine_setup(
         machine_state,
         prebuffer=prebuffer,
         buffer=buffer,
-        state=MachineStateState.WORKING,
+        state=MachineStateState.SETUP,
         occupied_till=Time(current_time + setup_duration),
         mounted_tool=op_config.tool,
     )
