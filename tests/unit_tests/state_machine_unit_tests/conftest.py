@@ -577,6 +577,32 @@ def default_state_machine_working(machine_state_working):
 
 
 @pytest.fixture
+def default_state_machine_setup(machine_state_working):
+    state = State(
+        time=Time(0),
+        machines=(machine_state_working,),
+        transports=(),
+        jobs=(
+            JobState(
+                id="j-1",
+                operations=(
+                    OperationState(
+                        id="o-1",
+                        operation_state_state=OperationStateState.PROCESSING,
+                        start_time=Time(0),
+                        end_time=Time(0),
+                        machine_id="m-1",
+                    ),
+                ),
+                location="b-3",
+            ),
+        ),
+        buffers=(),
+    )
+    return state
+
+
+@pytest.fixture
 def simple_job_config():
     from jobshoplab.types.instance_config_types import JobConfig, OperationConfig
 

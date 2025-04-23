@@ -2,22 +2,8 @@ from dataclasses import replace
 
 import pytest
 
-from jobshoplab.state_machine.core.state_machine.handler import (
-    create_avg_idle_to_pick_transition,
-    create_avg_pickup_to_drop_transition,
-    create_timed_machine_transitions,
-    create_timed_transitions,
-    create_timed_transport_transitions,
-    handle_agv_transport_idle_to_working_transition,
-    handle_agv_transport_pickup_to_transit_transition,
-    handle_agv_transport_pickup_to_waitingpickup_transition,
-    handle_agv_transport_transit_to_idle_transition,
-    handle_machine_idle_to_working_transition,
-    handle_machine_transition,
-    handle_machine_working_to_idle_transition,
-    handle_transition,
-    handle_transport_transition,
-)
+from jobshoplab.state_machine.core.state_machine.handler import *
+
 from jobshoplab.types import NoTime, Time
 from jobshoplab.types.action_types import ComponentTransition
 from jobshoplab.types.instance_config_types import TransportTypeConfig
@@ -35,7 +21,7 @@ def test_create_timed_machine_transitions(default_state_with_machine_occupied):
     assert len(transitions) == 1
     transition = transitions[0]
     assert transition.component_id == "m-1"
-    assert transition.new_state == MachineStateState.IDLE
+    assert transition.new_state == MachineStateState.OUTAGE
     assert transition.job_id == "j-2"
 
 
@@ -43,7 +29,7 @@ def test_create_transit_to_dropoff_transition(default_state_transport_transit):
     transport = default_state_transport_transit.transports[0]
     transition = create_avg_pickup_to_drop_transition(default_state_transport_transit, transport)
     assert transition.component_id == transport.id
-    assert transition.new_state == TransportStateState.IDLE
+    assert transition.new_state == TransportStateState.OUTAGE
     assert transition.job_id == transport.buffer.store[0]
 
 
@@ -64,6 +50,7 @@ def test_create_timed_transport_transitions(default_state_with_transport_occupie
         TransportStateState.TRANSIT,
         TransportStateState.IDLE,
         TransportStateState.WAITINGPICKUP,
+        TransportStateState.OUTAGE,
     ]
     assert transition.job_id == "j-1"
 
@@ -79,23 +66,42 @@ def test_create_timed_transitions(default_state_with_machine_and_transport_occup
     assert transport_transition is not None
 
 
-def test_handle_machine_idle_to_working_transition(
+def test_handle_machine_idle_to_setup_transition(
     default_state_machine_idle, default_instance, machine_transition_working
 ):
-    new_state = handle_machine_idle_to_working_transition(
+    new_state = handle_machine_idle_to_setup_transition(
         default_state_machine_idle,
         default_instance,
         machine_transition_working,
         default_state_machine_idle.machines[0],
     )
     machine = machine_type_utils.get_machine_state_by_id(new_state.machines, "m-1")
+    assert machine.state == MachineStateState.SETUP
+    assert machine.occupied_till != NoTime()
+    job = new_state.jobs[0]
+    assert job.operations[0].operation_state_state == OperationStateState.PROCESSING
+
+
+def test_machine_setup_to_working_transition(
+    default_state_machine_setup,
+    default_instance,
+    machine_transition_working,
+    machine_state_working_on_j1,
+):
+    new_state = handle_machine_setup_to_working_transition(
+        default_state_machine_setup,
+        default_instance,
+        machine_transition_working,
+        default_state_machine_setup.machines[0],
+    )
+    machine = new_state.machines[0]
     assert machine.state == MachineStateState.WORKING
     assert machine.occupied_till != NoTime()
     job = new_state.jobs[0]
     assert job.operations[0].operation_state_state == OperationStateState.PROCESSING
 
 
-def test_handle_machine_working_to_idle_transition(
+def test_handle_machine_working_to_outage_transition(
     default_state_machine_working,
     default_instance,
     machine_transition_working_to_idle,
@@ -106,17 +112,26 @@ def test_handle_machine_working_to_idle_transition(
         default_state_machine_working, machines=(machine_state_working_on_j1,)
     )
 
-    new_state = handle_machine_working_to_idle_transition(
+    new_state = handle_machine_working_to_outage_transition(
         default_state_machine_working,
         default_instance,
         machine_transition_working_to_idle,
         default_state_machine_working.machines[0],
     )
     machine = new_state.machines[0]
-    assert machine.state == MachineStateState.IDLE
-    assert machine.occupied_till == NoTime()
+    assert machine.state == MachineStateState.OUTAGE
+    assert machine.occupied_till == Time(10)
     job = new_state.jobs[0]
-    assert job.operations[0].operation_state_state == OperationStateState.DONE
+    assert job.operations[0].operation_state_state == OperationStateState.PROCESSING
+
+
+def test_machine_outage_to_idle_transition(
+    default_state_machine_outage,
+    default_instance,
+    machine_transition_outage_to_idle,
+    machine_state_working_on_j1,
+):
+    assert False
 
 
 def test_handle_agv_transport_pickup_to_waitingpickup_transition(
@@ -179,14 +194,14 @@ def test_handle_agv_transport_transit_to_idle_transition(
         default_state_transport_transit, machines=(machine_state_idle_empty,)
     )
 
-    new_state = handle_agv_transport_transit_to_idle_transition(
+    new_state = handle_agv_transport_transit_to_outage_transition(
         default_state_transport_transit,
         default_instance,
         transport_transition_idle,
         default_state_transport_transit.transports[0],
     )
     transport = new_state.transports[0]
-    assert transport.state == TransportStateState.IDLE
+    assert transport.state == TransportStateState.OUTAGE
     assert transport.buffer.store == ()
     job = new_state.jobs[0]
     assert job.location == "b-1"
@@ -202,12 +217,12 @@ def test_handle_transition(
         default_state_machine_idle.machines[0],
         {
             lambda comp, trans: comp.state == MachineStateState.IDLE
-            and trans.new_state
-            == MachineStateState.WORKING: handle_machine_idle_to_working_transition
+            and trans.new_state == MachineStateState.SETUP: handle_machine_idle_to_setup_transition,
         },
     )
     machine = new_state.machines[0]
-    assert machine.state == MachineStateState.WORKING
+
+    assert machine.state == MachineStateState.SETUP
 
 
 def test_handle_transport_transition(
@@ -229,4 +244,4 @@ def test_handle_machine_transition(
         default_state_machine_idle, default_instance, machine_transition_working
     )
     machine = new_state.machines[0]
-    assert machine.state == MachineStateState.WORKING
+    assert machine.state == MachineStateState.SETUP

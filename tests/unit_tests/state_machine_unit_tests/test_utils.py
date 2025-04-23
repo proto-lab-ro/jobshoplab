@@ -4,14 +4,10 @@ from jobshoplab.types.state_types import State, Time, TransportLocation
 from jobshoplab.utils.state_machine_utils.core_utils import (
     create_transport_location_from_job,
     is_done,
-    is_machine_transition_from_idle_to_working,
-    is_machine_transition_from_working_to_idle,
     is_transport_transition_from_idle_to_working,
     is_transport_transition_from_pickup_to_transit,
     is_transport_transition_from_pickup_to_waitingpickup,
-    is_transport_transition_from_transit_to_idle,
     is_transport_transition_from_waitingpickup_to_transit,
-    is_transport_transition_from_working_to_idle,
     no_processing_operations,
     sorted_by_transport,
     sorted_done_operations,
@@ -33,18 +29,18 @@ def test_no_processing_operations(job_state_processing):
     assert no_processing_operations(job_state_processing) == False
 
 
-def test_is_machine_transition_from_idle_to_working(machine_state_idle, machine_transition_working):
-    assert is_machine_transition_from_idle_to_working(
-        machine_state_idle, machine_transition_working
-    )
+# def test_is_machine_transition_from_idle_to_working(machine_state_idle, machine_transition_working):
+#     assert is_machine_transition_from_idle_to_working(
+#         machine_state_idle, machine_transition_working
+#     )
 
 
-def test_is_machine_transition_from_working_to_idle(
-    machine_state_working, machine_transition_working_to_idle
-):
-    assert is_machine_transition_from_working_to_idle(
-        machine_state_working, machine_transition_working_to_idle
-    )
+# def test_is_machine_transition_from_working_to_idle(
+#     machine_state_working, machine_transition_working_to_idle
+# ):
+#     assert is_machine_transition_from_working_to_idle(
+#         machine_state_working, machine_transition_working_to_idle
+#     )
 
 
 def test_is_transport_transition_from_idle_to_working(
@@ -55,12 +51,12 @@ def test_is_transport_transition_from_idle_to_working(
     )
 
 
-def test_is_transport_transition_from_working_to_idle(
-    transport_state_working, transport_transition_idle
-):
-    assert is_transport_transition_from_working_to_idle(
-        transport_state_working, transport_transition_idle
-    )
+# def test_is_transport_transition_from_working_to_idle(
+#     transport_state_working, transport_transition_idle
+# ):
+#     assert is_transport_transition_from_working_to_idle(
+#         transport_state_working, transport_transition_idle
+#     )
 
 
 def test_is_transport_transition_from_pickup_to_transit(
@@ -87,12 +83,12 @@ def test_is_transport_transition_from_waitingpickup_to_transit(
     )
 
 
-def test_is_transport_transition_from_transit_to_idle(
-    transport_state_transit, transport_transition_idle
-):
-    assert is_transport_transition_from_transit_to_idle(
-        transport_state_transit, transport_transition_idle
-    )
+# def test_is_transport_transition_from_transit_to_idle(
+#     transport_state_transit, transport_transition_idle
+# ):
+#     assert is_transport_transition_from_transit_to_idle(
+#         transport_state_transit, transport_transition_idle
+#     )
 
 
 def test_sorted_by_transport(transport_transition_working, machine_transition_working):
