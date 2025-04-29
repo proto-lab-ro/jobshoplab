@@ -11,27 +11,55 @@ from jobshoplab.types.state_types import MachineStateState, TransportStateState
 from jobshoplab.utils.exceptions import InvalidValue
 
 
-def test_is_machine_transition_valid_idle_to_working(
+def test_is_machine_transition_valid_idle_to_setup(
     default_state_machine_idle,
     machine_state_idle,
-    machine_transition_working,
+    machine_transition_setup,
 ):
     valid, message = is_machine_transition_valid(
-        default_state_machine_idle, machine_state_idle, machine_transition_working
+        default_state_machine_idle, machine_state_idle, machine_transition_setup
     )
     assert valid is True
     assert message == ""
 
 
-def test_is_machine_transition_valid_working_to_idle(
+def test_is_machine_transition_valid_setup_to_working(
+    default_state_machine_setup,
+    machine_state_setup,
+    machine_transition_working,
+):
+    valid, message = is_machine_transition_valid(
+        default_state_machine_setup,
+        machine_state_setup,
+        machine_transition_working,
+    )
+    assert valid is True
+    assert message == ""
+
+
+def test_is_machine_transition_valid_working_to_outage(
     default_state_machine_working,
     machine_state_working,
-    machine_transition_working_to_idle,
+    machine_transition_outage,
 ):
     valid, message = is_machine_transition_valid(
         default_state_machine_working,
         machine_state_working,
-        machine_transition_working_to_idle,
+        machine_transition_outage,
+    )
+    assert valid is True
+    assert message == ""
+
+
+def test_is_machine_transition_valid_outage_to_idle(
+    default_state_machine_outage,
+    machine_state_outage,
+    machine_transition_outage_to_idle,
+):
+    valid, message = is_machine_transition_valid(
+        default_state_machine_outage,
+        machine_state_outage,
+        machine_transition_outage_to_idle,
     )
     assert valid is True
     assert message == ""
@@ -40,10 +68,10 @@ def test_is_machine_transition_valid_working_to_idle(
 def test_is_machine_transition_invalid_state(
     default_state_machine_idle,
     machine_state_idle,
-    machine_transition_working_to_idle,
+    machine_transition_working,
 ):
     valid, message = is_machine_transition_valid(
-        default_state_machine_idle, machine_state_idle, machine_transition_working_to_idle
+        default_state_machine_idle, machine_state_idle, machine_transition_working
     )
     assert valid is False
     assert "Invalid transition" in message
@@ -93,10 +121,10 @@ def test_is_transport_transition_invalid_state(
 
 def test_is_transition_valid_machine(
     default_state_machine_idle,
-    machine_transition_working,
+    machine_transition_setup,
 ):
     valid, message = is_transition_valid(
-        "INFO", default_state_machine_idle, machine_transition_working
+        "INFO", default_state_machine_idle, machine_transition_setup
     )
     assert valid is True
     assert message == ""
