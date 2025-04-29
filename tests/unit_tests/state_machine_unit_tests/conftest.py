@@ -9,8 +9,14 @@ from jobshoplab.types.instance_config_types import (
     BufferTypeConfig,
     DeterministicTimeConfig,
     InstanceConfig,
+    JobConfig,
+    MachineConfig,
+    OperationConfig,
     Product,
     TransportTypeConfig,
+)
+from jobshoplab.types.stochasticy_models import (
+    GaussianFunction,
 )
 from jobshoplab.types.state_types import (
     BufferState,
@@ -708,4 +714,257 @@ def simple_machine_config():
         resources=(),
         setup_times=(),
         batches=1,
+    )
+
+
+@pytest.fixture
+def deterministic_setup_times():
+    """
+    Creates a dictionary of deterministic setup times between different tools.
+    The setup time when changing from tool_i to tool_j is i*j
+    """
+    tool0, tool1, tool2 = "tl-0", "tl-1", "tl-2"
+    return {
+        (tool0, tool0): DeterministicTimeConfig(0),  # No setup time when using same tool
+        (tool0, tool1): DeterministicTimeConfig(1),  # Setup time from tool0 to tool1 is 1
+        (tool0, tool2): DeterministicTimeConfig(2),  # Setup time from tool0 to tool2 is 2
+        (tool1, tool0): DeterministicTimeConfig(1),  # Setup time from tool1 to tool0 is 1
+        (tool1, tool1): DeterministicTimeConfig(0),  # No setup time when using same tool
+        (tool1, tool2): DeterministicTimeConfig(3),  # Setup time from tool1 to tool2 is 3
+        (tool2, tool0): DeterministicTimeConfig(2),  # Setup time from tool2 to tool0 is 2
+        (tool2, tool1): DeterministicTimeConfig(3),  # Setup time from tool2 to tool1 is 3
+        (tool2, tool2): DeterministicTimeConfig(0),  # No setup time when using same tool
+    }
+
+
+@pytest.fixture
+def stochastic_setup_times():
+    """
+    Creates a dictionary of stochastic setup times between different tools.
+    """
+    tool0, tool1, tool2 = "tl-0", "tl-1", "tl-2"
+    return {
+        (tool0, tool0): GaussianFunction(base_time=0, mean=0, std=0),
+        (tool0, tool1): GaussianFunction(base_time=1, mean=0, std=1),
+        (tool0, tool2): GaussianFunction(base_time=2, mean=0, std=1),
+        (tool1, tool0): GaussianFunction(base_time=1, mean=0, std=1),
+        (tool1, tool1): GaussianFunction(base_time=0, mean=0, std=0),
+        (tool1, tool2): GaussianFunction(base_time=3, mean=0, std=2),
+        (tool2, tool0): GaussianFunction(base_time=2, mean=0, std=1),
+        (tool2, tool1): GaussianFunction(base_time=3, mean=0, std=2),
+        (tool2, tool2): GaussianFunction(base_time=0, mean=0, std=0),
+    }
+
+
+@pytest.fixture
+def machine_with_deterministic_setup_times(deterministic_setup_times):
+    """
+    Creates a machine configuration with deterministic setup times.
+    """
+    _inf = 999999
+    return MachineConfig(
+        id="m-setup",
+        outages=(),
+        setup_times=deterministic_setup_times,
+        prebuffer=BufferConfig(
+            id="b-setup-1", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-setup"
+        ),
+        postbuffer=BufferConfig(
+            id="b-setup-2", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-setup"
+        ),
+        batches=1,
+        resources=(),
+        buffer=BufferConfig(
+            id="b-setup-3", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-setup"
+        )
+    )
+
+
+@pytest.fixture
+def machine_with_stochastic_setup_times(stochastic_setup_times):
+    """
+    Creates a machine configuration with stochastic setup times.
+    """
+    _inf = 999999
+    return MachineConfig(
+        id="m-stoch-setup",
+        outages=(),
+        setup_times=stochastic_setup_times,
+        prebuffer=BufferConfig(
+            id="b-stoch-1", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-stoch-setup"
+        ),
+        postbuffer=BufferConfig(
+            id="b-stoch-2", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-stoch-setup"
+        ),
+        batches=1,
+        resources=(),
+        buffer=BufferConfig(
+            id="b-stoch-3", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-stoch-setup"
+        )
+    )
+
+
+@pytest.fixture
+def machine_state_with_tool0(create_buffer_state):
+    """
+    Creates a machine state with tool0 mounted.
+    """
+    return MachineState(
+        id="m-setup",
+        buffer=create_buffer_state("b-setup-3"),
+        occupied_till=NoTime(),
+        prebuffer=create_buffer_state("b-setup-1", BufferStateState.NOT_EMPTY, ("j-setup",)),
+        postbuffer=create_buffer_state("b-setup-2"),
+        state=MachineStateState.IDLE,
+        resources=(),
+        outages=(),
+        mounted_tool="tl-0",  # Tool0 is mounted
+    )
+
+
+@pytest.fixture
+def machine_state_with_tool1(create_buffer_state):
+    """
+    Creates a machine state with tool1 mounted.
+    """
+    return MachineState(
+        id="m-setup",
+        buffer=create_buffer_state("b-setup-3"),
+        occupied_till=NoTime(),
+        prebuffer=create_buffer_state("b-setup-1", BufferStateState.NOT_EMPTY, ("j-setup",)),
+        postbuffer=create_buffer_state("b-setup-2"),
+        state=MachineStateState.IDLE,
+        resources=(),
+        outages=(),
+        mounted_tool="tl-1",  # Tool1 is mounted
+    )
+
+
+@pytest.fixture
+def operation_with_tool0():
+    """
+    Creates an operation that requires tool0.
+    """
+    return OperationState(
+        id="o-setup-0",
+        operation_state_state=OperationStateState.IDLE,
+        start_time=NoTime(),
+        end_time=NoTime(),
+        machine_id="m-setup",
+    )
+
+
+@pytest.fixture
+def operation_with_tool1():
+    """
+    Creates an operation that requires tool1.
+    """
+    return OperationState(
+        id="o-setup-1",
+        operation_state_state=OperationStateState.IDLE,
+        start_time=NoTime(),
+        end_time=NoTime(),
+        machine_id="m-setup",
+    )
+
+
+@pytest.fixture
+def operation_with_tool2():
+    """
+    Creates an operation that requires tool2.
+    """
+    return OperationState(
+        id="o-setup-2",
+        operation_state_state=OperationStateState.IDLE,
+        start_time=NoTime(),
+        end_time=NoTime(),
+        machine_id="m-setup",
+    )
+
+
+@pytest.fixture
+def job_with_tool0_operation(operation_with_tool0):
+    """
+    Creates a job that requires tool0 for its next operation.
+    """
+    return JobState(
+        id="j-setup",
+        operations=(operation_with_tool0,),
+        location="b-setup-1"
+    )
+
+
+@pytest.fixture
+def job_with_tool1_operation(operation_with_tool1):
+    """
+    Creates a job that requires tool1 for its next operation.
+    """
+    return JobState(
+        id="j-setup",
+        operations=(operation_with_tool1,),
+        location="b-setup-1"
+    )
+
+
+@pytest.fixture
+def job_with_tool2_operation(operation_with_tool2):
+    """
+    Creates a job that requires tool2 for its next operation.
+    """
+    return JobState(
+        id="j-setup",
+        operations=(operation_with_tool2,),
+        location="b-setup-1"
+    )
+
+
+@pytest.fixture
+def simple_op_config_with_tool0():
+    """
+    Creates a simple operation config that requires tool0.
+    """
+    return OperationConfig(
+        id="o-setup-0",
+        machine="m-setup",
+        duration=DeterministicTimeConfig(time=10),
+        tool="tl-0",
+    )
+
+
+@pytest.fixture
+def simple_op_config_with_tool1():
+    """
+    Creates a simple operation config that requires tool1.
+    """
+    return OperationConfig(
+        id="o-setup-1",
+        machine="m-setup",
+        duration=DeterministicTimeConfig(time=10),
+        tool="tl-1",
+    )
+
+
+@pytest.fixture
+def simple_op_config_with_tool2():
+    """
+    Creates a simple operation config that requires tool2.
+    """
+    return OperationConfig(
+        id="o-setup-2",
+        machine="m-setup",
+        duration=DeterministicTimeConfig(time=10),
+        tool="tl-2",
+    )
+
+
+@pytest.fixture
+def job_config_with_tool_operations(simple_op_config_with_tool0, simple_op_config_with_tool1, simple_op_config_with_tool2):
+    """
+    Creates a job config with operations requiring different tools.
+    """
+    return JobConfig(
+        id="j-setup",
+        operations=(simple_op_config_with_tool0, simple_op_config_with_tool1, simple_op_config_with_tool2),
+        product=Product(id="p-setup", name="product-setup"),
+        priority=1,
     )

@@ -2,6 +2,10 @@ from dataclasses import replace
 
 import pytest
 
+from dataclasses import replace
+from jobshoplab.types.instance_config_types import ProblemInstanceConfig, ProblemInstanceTypeConfig
+from jobshoplab.utils.state_machine_utils import machine_type_utils
+
 from jobshoplab.state_machine.core.state_machine.handler import *
 
 from jobshoplab.types import NoTime, Time
@@ -99,6 +103,91 @@ def test_machine_setup_to_working_transition(
     assert machine.occupied_till != NoTime()
     job = new_state.jobs[0]
     assert job.operations[0].operation_state_state == OperationStateState.PROCESSING
+
+
+def test_machine_setup_to_working_transition_with_setup_time(
+    default_state_machine_setup,
+    default_instance,
+    machine_transition_working,
+    machine_state_with_tool0,
+    machine_with_deterministic_setup_times,
+    job_with_tool1_operation,
+    simple_op_config_with_tool1,
+    job_config_with_tool_operations,
+):
+
+    # Arrange - set up initial state with machine in SETUP state
+    current_time = Time(10)
+    expected_setup_duration = 1  # For tool0 to tool1, the fixture returns 1
+
+    # Create a machine state that's in SETUP with tool1 mounted and appropriate occupied_till time
+    machine_in_setup = replace(
+        machine_state_with_tool0,
+        state=MachineStateState.SETUP,
+        mounted_tool="tl-1",  # Tool changed during setup
+        occupied_till=Time(current_time.time + expected_setup_duration),
+        buffer=replace(machine_state_with_tool0.buffer, store=("j-setup",)),
+    )
+
+    # Create a state with the machine in setup
+    setup_state = replace(
+        default_state_machine_setup,
+        time=current_time,
+        machines=(machine_in_setup,),
+        jobs=(job_with_tool1_operation,),
+    )
+
+    # Create a custom instance with the necessary job and machine configurations
+    # We need this to ensure that the operation ID 'o-setup-1' is found in the job configs
+    instance = replace(
+        default_instance,
+        machines=(machine_with_deterministic_setup_times,) + default_instance.machines[1:],
+        instance=replace(
+            default_instance.instance,
+            specification=(job_config_with_tool_operations,)
+            + default_instance.instance.specification,
+        ),
+    )
+
+    # Check for transitions before setup time has elapsed - should be none
+    before_completion_time = Time(current_time.time + expected_setup_duration - 0.1)
+    before_completion_state = replace(setup_state, time=before_completion_time)
+
+    transitions_before = create_timed_machine_transitions("debug", before_completion_state)
+    assert len(transitions_before) == 0  # No transitions should occur before setup is done
+
+    # Check for transitions at exactly the setup completion time
+    at_completion_time = Time(current_time.time + expected_setup_duration)
+    at_completion_state = replace(setup_state, time=at_completion_time)
+
+    transitions_at = create_timed_machine_transitions("debug", at_completion_state)
+    assert len(transitions_at) == 1  # Should have one transition
+    assert transitions_at[0].new_state == MachineStateState.WORKING
+    assert transitions_at[0].component_id == machine_in_setup.id
+
+    # Now execute the transition from SETUP to WORKING
+    final_state = handle_machine_setup_to_working_transition(
+        at_completion_state, instance, transitions_at[0], machine_in_setup
+    )
+
+    # Get the machine after transition
+    final_machine = machine_type_utils.get_machine_state_by_id(
+        final_state.machines, machine_in_setup.id
+    )
+
+    # Verify transition completed as expected
+    assert final_machine.state == MachineStateState.WORKING
+    # Machine should be occupied until end of operation (setup_time + operation_time)
+    # The operation time for tool1 is 10 based on simple_op_config_with_tool1
+    assert final_machine.occupied_till.time > current_time.time + expected_setup_duration
+
+    # Get the job after transition and verify its operation state
+    final_job = next((j for j in final_state.jobs if j.id == job_with_tool1_operation.id), None)
+    assert final_job is not None
+
+    # The operation should be in PROCESSING state
+    op = final_job.operations[0]
+    assert op.operation_state_state == OperationStateState.PROCESSING
 
 
 def test_handle_machine_working_to_outage_transition(
