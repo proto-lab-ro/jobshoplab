@@ -10,6 +10,7 @@ from jobshoplab.utils.exceptions import (
     FileNotFound,
     InvalidValue,
     NotImplementedError,
+    InstanceSchemaError,
 )
 from jobshoplab.utils.load_config import load_config
 
@@ -70,7 +71,7 @@ def test_compiler_invalid_dir_dls(config):
 
 def test_compiler_invalid_dls(config):
 
-    with pytest.raises(DslSyntaxError):
+    with pytest.raises(InstanceSchemaError):
         compiler = Compiler(
             repo=repos.DslRepository(Path("tests/data/invalid_dsl.yaml"), "info", config),
             config=config,
