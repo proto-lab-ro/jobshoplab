@@ -37,7 +37,7 @@ def test_create_pickup_to_transit_transition(default_state_transport_pickup):
     transport = default_state_transport_pickup.transports[0]
     transition = create_avg_idle_to_pick_transition(default_state_transport_pickup, transport)
     assert transition.component_id == transport.id
-    assert transition.new_state == TransportStateState.TRANSIT
+    assert transition.new_state == TransportStateState.WAITINGPICKUP
     assert transition.job_id == transport.transport_job
 
 
@@ -104,7 +104,7 @@ def test_machine_setup_to_working_transition(
 def test_handle_machine_working_to_outage_transition(
     default_state_machine_working,
     default_instance,
-    machine_transition_working_to_idle,
+    machine_transition_outage,
     machine_state_working_on_j1,
 ):
     # TODO: Check if due time is greater or equal to the current time -> needs to be implemented
@@ -115,7 +115,7 @@ def test_handle_machine_working_to_outage_transition(
     new_state = handle_machine_working_to_outage_transition(
         default_state_machine_working,
         default_instance,
-        machine_transition_working_to_idle,
+        machine_transition_outage,
         default_state_machine_working.machines[0],
     )
     machine = new_state.machines[0]
@@ -131,7 +131,17 @@ def test_machine_outage_to_idle_transition(
     machine_transition_outage_to_idle,
     machine_state_working_on_j1,
 ):
-    assert False
+    new_state = handle_machine_outage_to_idle_transition(
+        default_state_machine_outage,
+        default_instance,
+        machine_transition_outage_to_idle,
+        default_state_machine_outage.machines[0],
+    )
+    machine = new_state.machines[0]
+    assert machine.state == MachineStateState.IDLE
+    assert machine.occupied_till == NoTime()
+    job = new_state.jobs[0]
+    assert job.operations[0].operation_state_state == OperationStateState.DONE
 
 
 def test_handle_agv_transport_pickup_to_waitingpickup_transition(
@@ -207,13 +217,11 @@ def test_handle_agv_transport_transit_to_idle_transition(
     assert job.location == "b-1"
 
 
-def test_handle_transition(
-    default_state_machine_idle, default_instance, machine_transition_working
-):
+def test_handle_transition(default_state_machine_idle, default_instance, machine_transition_setup):
     new_state = handle_transition(
         default_state_machine_idle,
         default_instance,
-        machine_transition_working,
+        machine_transition_setup,
         default_state_machine_idle.machines[0],
         {
             lambda comp, trans: comp.state == MachineStateState.IDLE
@@ -238,10 +246,10 @@ def test_handle_transport_transition(
 
 
 def test_handle_machine_transition(
-    default_state_machine_idle, default_instance, machine_transition_working
+    default_state_machine_idle, default_instance, machine_transition_setup
 ):
     new_state = handle_machine_transition(
-        default_state_machine_idle, default_instance, machine_transition_working
+        default_state_machine_idle, default_instance, machine_transition_setup
     )
     machine = new_state.machines[0]
     assert machine.state == MachineStateState.SETUP

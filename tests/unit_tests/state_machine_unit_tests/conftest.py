@@ -112,6 +112,21 @@ def machine_state_idle(create_buffer_state):
 
 
 @pytest.fixture
+def machine_state_setup(create_buffer_state):
+    return MachineState(
+        id="m-1",
+        buffer=create_buffer_state("b-2", BufferStateState.FULL, ("j-1",)),
+        occupied_till=NoTime(),
+        prebuffer=create_buffer_state("b-1"),
+        postbuffer=create_buffer_state("b-3"),
+        state=MachineStateState.SETUP,
+        resources=(),
+        outages=(),
+        mounted_tool="tl-0",
+    )
+
+
+@pytest.fixture
 def machine_state_working(create_buffer_state):
     return MachineState(
         id="m-1",
@@ -120,6 +135,21 @@ def machine_state_working(create_buffer_state):
         prebuffer=create_buffer_state("b-4"),
         postbuffer=create_buffer_state("b-5", BufferStateState.NOT_EMPTY, ("j-1",)),
         state=MachineStateState.WORKING,
+        resources=(),
+        outages=(),
+        mounted_tool="tl-0",
+    )
+
+
+@pytest.fixture
+def machine_state_outage(create_buffer_state):
+    return MachineState(
+        id="m-1",
+        buffer=create_buffer_state("b-6", BufferStateState.FULL, ("j-1",)),
+        occupied_till=NoTime(),
+        prebuffer=create_buffer_state("b-4"),
+        postbuffer=create_buffer_state("b-5"),
+        state=MachineStateState.OUTAGE,
         resources=(),
         outages=(),
         mounted_tool="tl-0",
@@ -174,8 +204,13 @@ def machine_transition_idle_to_working():
     )
 
 
+# @pytest.fixture
+# def machine_transition_working_to_idle():
+#     return ComponentTransition(component_id="m-1", new_state=MachineStateState.IDLE, job_id="j-1")
+
+
 @pytest.fixture
-def machine_transition_working_to_idle():
+def machine_transition_outage_to_idle():
     return ComponentTransition(component_id="m-1", new_state=MachineStateState.IDLE, job_id="j-1")
 
 
@@ -290,6 +325,18 @@ def job_state_done_end_time_5():
 
 @pytest.fixture
 def machine_transition_working():
+    return ComponentTransition(
+        component_id="m-1", new_state=MachineStateState.WORKING, job_id="j-1"
+    )
+
+
+@pytest.fixture
+def machine_transition_outage():
+    return ComponentTransition(component_id="m-1", new_state=MachineStateState.OUTAGE, job_id="j-1")
+
+
+@pytest.fixture
+def machine_transition_setup():
     return ComponentTransition(component_id="m-1", new_state=MachineStateState.SETUP, job_id="j-1")
 
 
@@ -561,7 +608,7 @@ def default_state_machine_working(machine_state_working):
                 id="j-1",
                 operations=(
                     OperationState(
-                        id="o-1",
+                        id="o-0-1",
                         operation_state_state=OperationStateState.PROCESSING,
                         start_time=Time(0),
                         end_time=Time(10),
@@ -576,25 +623,52 @@ def default_state_machine_working(machine_state_working):
     return state
 
 
+#
 @pytest.fixture
-def default_state_machine_setup(machine_state_working):
+def default_state_machine_setup(machine_state_setup):
     state = State(
         time=Time(0),
-        machines=(machine_state_working,),
+        machines=(machine_state_setup,),
         transports=(),
         jobs=(
             JobState(
                 id="j-1",
                 operations=(
                     OperationState(
-                        id="o-1",
+                        id="o-0-1",
                         operation_state_state=OperationStateState.PROCESSING,
                         start_time=Time(0),
                         end_time=Time(0),
                         machine_id="m-1",
                     ),
                 ),
-                location="b-3",
+                location="b-2",
+            ),
+        ),
+        buffers=(),
+    )
+    return state
+
+
+@pytest.fixture
+def default_state_machine_outage(machine_state_outage):
+    state = State(
+        time=Time(0),
+        machines=(machine_state_outage,),
+        transports=(),
+        jobs=(
+            JobState(
+                id="j-1",
+                operations=(
+                    OperationState(
+                        id="o-0-1",
+                        operation_state_state=OperationStateState.PROCESSING,
+                        start_time=Time(2),
+                        end_time=Time(2),
+                        machine_id="m-1",
+                    ),
+                ),
+                location="b-6",
             ),
         ),
         buffers=(),
@@ -610,7 +684,7 @@ def simple_job_config():
         id="j-1",
         operations=(
             OperationConfig(
-                id="op-1",
+                id="o-0-1",
                 machine="m-1",
                 duration=DeterministicTimeConfig(time=10),
                 tool="tl-0",  # Changed from machine_id to machine
