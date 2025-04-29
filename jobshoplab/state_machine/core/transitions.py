@@ -29,6 +29,8 @@ class Transition:
                 raise NotImplementedError()
 
     def is_valid_transition(self, state, new_state):
+        if state == new_state:
+            return False
         _state = self._match_state(state)
         _new_state = self._match_state(new_state)
         return _new_state in self.transitions[_state]

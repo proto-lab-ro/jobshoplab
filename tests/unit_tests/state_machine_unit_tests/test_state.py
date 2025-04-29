@@ -23,6 +23,7 @@ from jobshoplab.utils.exceptions import (
     NotImplementedError,
     UnsuccessfulStateMachineResult,
 )
+from jobshoplab.state_machine.time_machines import jump_to_event
 
 
 def test_is_done_with_done_job(job_state_done):
@@ -57,10 +58,10 @@ def test_is_done_with_processing_job(job_state_processing):
 
 
 def test_apply_transition_machine(
-    default_state_machine_idle, default_instance, machine_transition_working
+    default_state_machine_idle, default_instance, machine_transition_setup
 ):
     result = apply_transition(
-        "DEBUG", default_state_machine_idle, default_instance, machine_transition_working
+        "DEBUG", default_state_machine_idle, default_instance, machine_transition_setup
     )
     assert isinstance(result, State)
     assert result.machines[0].state == MachineStateState.SETUP
@@ -97,14 +98,14 @@ def test_process_state_transitions_empty():
 
 
 def test_process_state_transitions_valid(
-    default_state_machine_idle, default_instance, machine_transition_working
+    default_state_machine_idle, default_instance, machine_transition_setup
 ):
-    transitions = (machine_transition_working,)
+    transitions = (machine_transition_setup,)
     result = process_state_transitions(
         transitions, default_state_machine_idle, default_instance, "DEBUG"
     )
     assert not result.errors
-    assert result.state.machines[0].state == MachineStateState.WORKING
+    assert result.state.machines[0].state == MachineStateState.SETUP
 
 
 def test_process_state_transitions_invalid(
@@ -119,20 +120,20 @@ def test_process_state_transitions_invalid(
     assert "Transition error" in result.errors[0]
 
 
-def test_step_successful(default_state_machine_idle, default_instance, machine_transition_working):
-    def mock_time_machine(*args, **kwargs):
-        return Time(2)
+def test_step_successful(default_state_machine_idle, default_instance, machine_transition_setup):
 
     action = Action(
-        transitions=(machine_transition_working,),
+        transitions=(machine_transition_setup,),
         action_factory_info=ActionFactoryInfo.Valid,
-        time_machine=mock_time_machine,
+        time_machine=jump_to_event,
     )
     config = None  # Add config if needed
 
     result = step("DEBUG", default_instance, config, default_state_machine_idle, action)
     assert result.success
-    assert result.state.machines[0].state == MachineStateState.WORKING
+    assert len(result.sub_states) == 3  # progresses setup working and outage
+    assert result.state.machines[0].state == MachineStateState.IDLE
+    assert result.state.time == Time(3)
 
 
 def test_step_transition_error(

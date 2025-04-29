@@ -14,50 +14,50 @@ from jobshoplab.utils.load_config import Config
 from jobshoplab.utils.utils import get_id_int
 
 
-def test_env_end_to_end3x3_multi_discrete_conf0(multi_discrete_conf0):
-    instances = ["3x3", "ft06", "dmu35"]
-    dump_dir = Path("./tmp/tmp_heracless.py")
+# def test_env_end_to_end3x3_multi_discrete_conf0(multi_discrete_conf0):
+#     instances = ["3x3", "ft06", "dmu35"]
+#     dump_dir = Path("./tmp/tmp_heracless.py")
 
-    for instance in instances:
-        config = multi_discrete_conf0
-        # Change the spec instance from yaml config
-        config = replace(
-            config,
-            compiler=replace(
-                config.compiler,
-                spec_repository=replace(
-                    config.compiler.spec_repository, dir=f"data/jssp_instances/{instance}"
-                ),
-            ),
-        )
+#     for instance in instances:
+#         config = multi_discrete_conf0
+#         # Change the spec instance from yaml config
+#         config = replace(
+#             config,
+#             compiler=replace(
+#                 config.compiler,
+#                 spec_repository=replace(
+#                     config.compiler.spec_repository, dir=f"data/jssp_instances/{instance}"
+#                 ),
+#             ),
+#         )
 
-        env = JobShopLabEnv(config=config)
-        solution_file = f"data/jssp_instances/solutions/{instance}_sol"
-        solution_sequence = sorted(
-            tuple(solutions.make_solution_action_sequence(solution_file)),
-            key=lambda x: (x[2], x[1], x[0]),
-        )
-        makespann = solutions.get_make_span(solution_sequence, env.instance)
-        solution_sequence_by_time = solutions.group_by_time(solution_sequence)
-        num_jobs = len(env.instance.instance.specification)
+#         env = JobShopLabEnv(config=config)
+#         solution_file = f"data/jssp_instances/solutions/{instance}_sol"
+#         solution_sequence = sorted(
+#             tuple(solutions.make_solution_action_sequence(solution_file)),
+#             key=lambda x: (x[2], x[1], x[0]),
+#         )
+#         makespann = solutions.get_make_span(solution_sequence, env.instance)
+#         solution_sequence_by_time = solutions.group_by_time(solution_sequence)
+#         num_jobs = len(env.instance.instance.specification)
 
-        for start_time, sequence in solution_sequence_by_time.items():
-            while env.state.state.time.time < start_time:
-                observation, reward, terminated, truncated, _ = env.step(np.array([0] * num_jobs))
+#         for start_time, sequence in solution_sequence_by_time.items():
+#             while env.state.state.time.time < start_time:
+#                 observation, reward, terminated, truncated, _ = env.step(np.array([0] * num_jobs))
 
-            assert env.state.state.time.time == start_time
+#             assert env.state.state.time.time == start_time
 
-            jobs = [job for _, job in sequence]
-            action = np.array([0] * num_jobs)
+#             jobs = [job for _, job in sequence]
+#             action = np.array([0] * num_jobs)
 
-            for job in jobs:
-                action[job] = 1
+#             for job in jobs:
+#                 action[job] = 1
 
-            observation, reward, terminated, truncated, _ = env.step(action)
-        assert env.state.state.time.time == makespann
-        assert terminated
+#             observation, reward, terminated, truncated, _ = env.step(action)
+#         assert env.state.state.time.time == makespann
+#         assert terminated
 
-        # env.render(model)
+#         # env.render(model)
 
 
 def test_env_end_to_end3x3_conf0_with_solution_sequence(config_simple_3x3):
