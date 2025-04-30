@@ -12,7 +12,10 @@ from jobshoplab.types.instance_config_types import (
     JobConfig,
     MachineConfig,
     OperationConfig,
+    OutageConfig,
+    OutageTypeConfig,
     Product,
+    TransportConfig,
     TransportTypeConfig,
 )
 from jobshoplab.types.stochasticy_models import (
@@ -27,6 +30,9 @@ from jobshoplab.types.state_types import (
     NoTime,
     OperationState,
     OperationStateState,
+    OutageActive,
+    OutageInactive,
+    OutageState,
     Time,
     TransportLocation,
     TransportState,
@@ -767,16 +773,28 @@ def machine_with_deterministic_setup_times(deterministic_setup_times):
         outages=(),
         setup_times=deterministic_setup_times,
         prebuffer=BufferConfig(
-            id="b-setup-1", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-setup"
+            id="b-setup-1",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-setup",
         ),
         postbuffer=BufferConfig(
-            id="b-setup-2", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-setup"
+            id="b-setup-2",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-setup",
         ),
         batches=1,
         resources=(),
         buffer=BufferConfig(
-            id="b-setup-3", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-setup"
-        )
+            id="b-setup-3",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            parent="m-setup",
+        ),
     )
 
 
@@ -791,16 +809,28 @@ def machine_with_stochastic_setup_times(stochastic_setup_times):
         outages=(),
         setup_times=stochastic_setup_times,
         prebuffer=BufferConfig(
-            id="b-stoch-1", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-stoch-setup"
+            id="b-stoch-1",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-stoch-setup",
         ),
         postbuffer=BufferConfig(
-            id="b-stoch-2", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-stoch-setup"
+            id="b-stoch-2",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-stoch-setup",
         ),
         batches=1,
         resources=(),
         buffer=BufferConfig(
-            id="b-stoch-3", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-stoch-setup"
-        )
+            id="b-stoch-3",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            parent="m-stoch-setup",
+        ),
     )
 
 
@@ -887,11 +917,7 @@ def job_with_tool0_operation(operation_with_tool0):
     """
     Creates a job that requires tool0 for its next operation.
     """
-    return JobState(
-        id="j-setup",
-        operations=(operation_with_tool0,),
-        location="b-setup-1"
-    )
+    return JobState(id="j-setup", operations=(operation_with_tool0,), location="b-setup-1")
 
 
 @pytest.fixture
@@ -899,11 +925,7 @@ def job_with_tool1_operation(operation_with_tool1):
     """
     Creates a job that requires tool1 for its next operation.
     """
-    return JobState(
-        id="j-setup",
-        operations=(operation_with_tool1,),
-        location="b-setup-1"
-    )
+    return JobState(id="j-setup", operations=(operation_with_tool1,), location="b-setup-1")
 
 
 @pytest.fixture
@@ -911,11 +933,7 @@ def job_with_tool2_operation(operation_with_tool2):
     """
     Creates a job that requires tool2 for its next operation.
     """
-    return JobState(
-        id="j-setup",
-        operations=(operation_with_tool2,),
-        location="b-setup-1"
-    )
+    return JobState(id="j-setup", operations=(operation_with_tool2,), location="b-setup-1")
 
 
 @pytest.fixture
@@ -958,13 +976,373 @@ def simple_op_config_with_tool2():
 
 
 @pytest.fixture
-def job_config_with_tool_operations(simple_op_config_with_tool0, simple_op_config_with_tool1, simple_op_config_with_tool2):
+def job_config_with_tool_operations(
+    simple_op_config_with_tool0, simple_op_config_with_tool1, simple_op_config_with_tool2
+):
     """
     Creates a job config with operations requiring different tools.
     """
     return JobConfig(
         id="j-setup",
-        operations=(simple_op_config_with_tool0, simple_op_config_with_tool1, simple_op_config_with_tool2),
+        operations=(
+            simple_op_config_with_tool0,
+            simple_op_config_with_tool1,
+            simple_op_config_with_tool2,
+        ),
         product=Product(id="p-setup", name="product-setup"),
         priority=1,
+    )
+
+
+# Outage related fixtures
+
+
+@pytest.fixture
+def deterministic_outage_config_fail():
+    """
+    Creates a deterministic outage configuration for a machine failure (FAIL type).
+    """
+    return OutageConfig(
+        id="o-fail-1",
+        frequency=DeterministicTimeConfig(time=100),  # Occurs every 100 time units
+        duration=DeterministicTimeConfig(time=20),  # Lasts for 20 time units
+        type=OutageTypeConfig.FAIL,
+    )
+
+
+@pytest.fixture
+def deterministic_outage_config_maintenance():
+    """
+    Creates a deterministic outage configuration for scheduled maintenance (MAINTENANCE type).
+    """
+    return OutageConfig(
+        id="o-maint-1",
+        frequency=DeterministicTimeConfig(time=200),  # Occurs every 200 time units
+        duration=DeterministicTimeConfig(time=30),  # Lasts for 30 time units
+        type=OutageTypeConfig.MAINTENANCE,
+    )
+
+
+@pytest.fixture
+def deterministic_outage_config_recharge():
+    """
+    Creates a deterministic outage configuration for recharging (RECHARGE type).
+    """
+    return OutageConfig(
+        id="o-recharge-1",
+        frequency=DeterministicTimeConfig(time=150),  # Occurs every 150 time units
+        duration=DeterministicTimeConfig(time=15),  # Lasts for 15 time units
+        type=OutageTypeConfig.RECHARGE,
+    )
+
+
+@pytest.fixture
+def stochastic_outage_config_fail():
+    """
+    Creates a stochastic outage configuration for a machine failure (FAIL type).
+    """
+    return OutageConfig(
+        id="o-fail-stoch-1",
+        frequency=GaussianFunction(base_time=100, mean=0, std=10),  # Around every 100 time units
+        duration=GaussianFunction(base_time=20, mean=0, std=5),  # Around 20 time units
+        type=OutageTypeConfig.FAIL,
+    )
+
+
+@pytest.fixture
+def stochastic_outage_config_maintenance():
+    """
+    Creates a stochastic outage configuration for scheduled maintenance (MAINTENANCE type).
+    """
+    return OutageConfig(
+        id="o-maint-stoch-1",
+        frequency=GaussianFunction(base_time=200, mean=0, std=20),  # Around every 200 time units
+        duration=GaussianFunction(base_time=30, mean=0, std=5),  # Around 30 time units
+        type=OutageTypeConfig.MAINTENANCE,
+    )
+
+
+@pytest.fixture
+def stochastic_outage_config_recharge():
+    """
+    Creates a stochastic outage configuration for recharging (RECHARGE type).
+    """
+    return OutageConfig(
+        id="o-recharge-stoch-1",
+        frequency=GaussianFunction(base_time=150, mean=0, std=15),  # Around every 150 time units
+        duration=GaussianFunction(base_time=15, mean=0, std=3),  # Around 15 time units
+        type=OutageTypeConfig.RECHARGE,
+    )
+
+
+@pytest.fixture
+def outage_state_active():
+    """
+    Creates an active outage state.
+    """
+    return OutageState(id="o-fail-1", active=OutageActive(start_time=Time(10), end_time=Time(30)))
+
+
+@pytest.fixture
+def outage_state_inactive():
+    """
+    Creates an inactive outage state.
+    """
+    return OutageState(id="o-fail-1", active=OutageInactive(last_time_active=Time(5)))
+
+
+@pytest.fixture
+def machine_config_with_deterministic_outages(
+    deterministic_outage_config_fail, deterministic_outage_config_maintenance
+):
+    """
+    Creates a machine configuration with deterministic outages.
+    """
+    _inf = 999999
+    return MachineConfig(
+        id="m-outage",
+        outages=(deterministic_outage_config_fail, deterministic_outage_config_maintenance),
+        setup_times={},
+        prebuffer=BufferConfig(
+            id="b-outage-1",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-outage",
+        ),
+        postbuffer=BufferConfig(
+            id="b-outage-2",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-outage",
+        ),
+        batches=1,
+        resources=(),
+        buffer=BufferConfig(
+            id="b-outage-3",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            parent="m-outage",
+        ),
+    )
+
+
+@pytest.fixture
+def machine_state_with_deterministic_outages(
+    create_buffer_state, deterministic_outage_config_fail, deterministic_outage_config_maintenance
+):
+    """
+    Creates a machine state with deterministic outages.
+    """
+    return MachineState(
+        id="m-outage",
+        buffer=create_buffer_state("b-outage-3"),
+        occupied_till=NoTime(),
+        prebuffer=create_buffer_state("b-outage-1", BufferStateState.NOT_EMPTY, ("j-outage",)),
+        postbuffer=create_buffer_state("b-outage-2"),
+        state=MachineStateState.IDLE,
+        resources=(),
+        outages=(
+            OutageState(
+                id=deterministic_outage_config_fail.id,
+                active=OutageInactive(last_time_active=NoTime()),
+            ),
+            OutageState(
+                id=deterministic_outage_config_maintenance.id,
+                active=OutageInactive(last_time_active=NoTime()),
+            ),
+        ),
+        mounted_tool="tl-0",
+    )
+
+
+@pytest.fixture
+def machine_with_stochastic_outages(
+    stochastic_outage_config_fail, stochastic_outage_config_maintenance
+):
+    """
+    Creates a machine configuration with stochastic outages.
+    """
+    _inf = 999999
+    return MachineConfig(
+        id="m-stoch-outage",
+        outages=(stochastic_outage_config_fail, stochastic_outage_config_maintenance),
+        setup_times={},
+        prebuffer=BufferConfig(
+            id="b-stoch-outage-1",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-stoch-outage",
+        ),
+        postbuffer=BufferConfig(
+            id="b-stoch-outage-2",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-stoch-outage",
+        ),
+        batches=1,
+        resources=(),
+        buffer=BufferConfig(
+            id="b-stoch-outage-3",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            parent="m-stoch-outage",
+        ),
+    )
+
+
+@pytest.fixture
+def transport_with_deterministic_outages(
+    deterministic_outage_config_fail, deterministic_outage_config_recharge
+):
+    """
+    Creates a transport configuration with deterministic outages.
+    """
+    return TransportConfig(
+        id="t-outage",
+        type=TransportTypeConfig.AGV,
+        outages=(deterministic_outage_config_fail, deterministic_outage_config_recharge),
+        resources=(),
+        buffer=BufferConfig(
+            id="b-t-outage", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=()
+        ),
+    )
+
+
+@pytest.fixture
+def transport_with_stochastic_outages(
+    stochastic_outage_config_fail, stochastic_outage_config_recharge
+):
+    """
+    Creates a transport configuration with stochastic outages.
+    """
+    return TransportConfig(
+        id="t-stoch-outage",
+        type=TransportTypeConfig.AGV,
+        outages=(stochastic_outage_config_fail, stochastic_outage_config_recharge),
+        resources=(),
+        buffer=BufferConfig(
+            id="b-t-stoch-outage", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=()
+        ),
+    )
+
+
+@pytest.fixture
+def machine_state_with_active_outage(create_buffer_state, outage_state_active):
+    """
+    Creates a machine state with an active outage.
+    """
+    return MachineState(
+        id="m-outage",
+        buffer=create_buffer_state("b-outage-3", BufferStateState.FULL, ("j-outage",)),
+        occupied_till=Time(30),  # Occupied until outage ends
+        prebuffer=create_buffer_state("b-outage-1"),
+        postbuffer=create_buffer_state("b-outage-2"),
+        state=MachineStateState.OUTAGE,
+        resources=(),
+        outages=(outage_state_active,),
+        mounted_tool="tl-0",
+    )
+
+
+@pytest.fixture
+def machine_state_with_inactive_outage(create_buffer_state, outage_state_inactive):
+    """
+    Creates a machine state with an inactive outage.
+    """
+    return MachineState(
+        id="m-outage",
+        buffer=create_buffer_state("b-outage-3"),
+        occupied_till=NoTime(),
+        prebuffer=create_buffer_state("b-outage-1", BufferStateState.NOT_EMPTY, ("j-outage",)),
+        postbuffer=create_buffer_state("b-outage-2"),
+        state=MachineStateState.IDLE,
+        resources=(),
+        outages=(outage_state_inactive,),
+        mounted_tool="tl-0",
+    )
+
+
+@pytest.fixture
+def transport_state_with_active_outage(create_buffer_state, outage_state_active):
+    """
+    Creates a transport state with an active outage.
+    """
+    return TransportState(
+        id="t-outage",
+        state=TransportStateState.OUTAGE,
+        occupied_till=Time(30),  # Occupied until outage ends
+        buffer=create_buffer_state("b-t-outage"),
+        location=TransportLocation(progress=0.0, location="m-1"),
+        transport_job=None,
+        outages=(outage_state_active,),
+    )
+
+
+@pytest.fixture
+def transport_state_with_inactive_outage(create_buffer_state, outage_state_inactive):
+    """
+    Creates a transport state with an inactive outage.
+    """
+    return TransportState(
+        id="t-outage",
+        state=TransportStateState.IDLE,
+        occupied_till=NoTime(),
+        buffer=create_buffer_state("b-t-outage"),
+        location=TransportLocation(progress=0.0, location="m-1"),
+        transport_job=None,
+        outages=(outage_state_inactive,),
+    )
+
+
+@pytest.fixture
+def default_state_machine_with_active_outage(machine_state_with_active_outage):
+    """
+    Creates a state with a machine that has an active outage.
+    """
+    return State(
+        time=Time(15),  # During outage
+        machines=(machine_state_with_active_outage,),
+        transports=(),
+        jobs=(
+            JobState(
+                id="j-outage",
+                operations=(
+                    OperationState(
+                        id="o-outage-1",
+                        operation_state_state=OperationStateState.PROCESSING,
+                        start_time=Time(5),
+                        end_time=Time(40),  # Would end after outage
+                        machine_id="m-outage",
+                    ),
+                ),
+                location="b-outage-3",
+            ),
+        ),
+        buffers=(),
+    )
+
+
+@pytest.fixture
+def default_state_transport_with_active_outage(transport_state_with_active_outage):
+    """
+    Creates a state with a transport that has an active outage.
+    """
+    return State(
+        time=Time(15),  # During outage
+        machines=(),
+        transports=(transport_state_with_active_outage,),
+        jobs=(
+            JobState(
+                id="j-transport-outage",
+                operations=(),
+                location="t-outage",
+            ),
+        ),
+        buffers=(),
     )

@@ -1,20 +1,10 @@
 from dataclasses import replace
-
-import pytest
-
-from dataclasses import replace
-from jobshoplab.types.instance_config_types import ProblemInstanceConfig, ProblemInstanceTypeConfig
 from jobshoplab.utils.state_machine_utils import machine_type_utils
-
 from jobshoplab.state_machine.core.state_machine.handler import *
-
 from jobshoplab.types import NoTime, Time
-from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.instance_config_types import TransportTypeConfig
 from jobshoplab.types.state_types import (
     MachineStateState,
     OperationStateState,
-    TransportLocation,
     TransportStateState,
 )
 from jobshoplab.utils.state_machine_utils import machine_type_utils

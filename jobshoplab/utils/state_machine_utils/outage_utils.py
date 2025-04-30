@@ -18,15 +18,15 @@ from jobshoplab.utils.state_machine_utils.machine_type_utils import get_machine_
 from jobshoplab.utils.state_machine_utils.transport_type_utils import get_transport_config_by_id
 
 
-def _get_duration(current_time, outage_state):
+def _get_duration(current_time, outage_state: OutageState):
     match outage_state.active:
         case OutageActive():
             raise ValueError("Outage is active")
         case OutageInactive():
-            if isinstance(outage_state.last_time_active, NoTime):
+            if isinstance(outage_state.active.last_time_active, NoTime):
                 last_time_active = 0
             else:
-                last_time_active = outage_state.last_time_active.time
+                last_time_active = outage_state.active.last_time_active.time
             return current_time.time - last_time_active
         case _:
             raise ValueError("Outage state is not active or inactive")
