@@ -213,6 +213,30 @@ def _get_setup_duration(
             )
 
 
+def begin_machine_outage(
+    instance: InstanceConfig,
+    job_state: JobState,
+    machine_state: MachineState,
+    time: Time | NoTime,
+    occupied_for: int,
+    outages,
+) -> Tuple[JobState, MachineState]:
+
+    if time == NoTime():
+        raise NotImplementedError()
+    machine = replace(
+        machine_state,
+        state=MachineStateState.OUTAGE,
+        outages=outages,
+        occupied_till=Time(time.time + occupied_for),
+    )
+
+    current_operation = job_type_utils.get_processing_operation(job_state)
+    current_operation = replace(current_operation, end_time=Time(time.time + occupied_for))
+    job_state = possible_transition_utils.replace_job_operation_state(job_state, current_operation)
+    return job_state, machine
+
+
 def begin_machine_setup(
     instance: InstanceConfig,
     job_state: JobState,

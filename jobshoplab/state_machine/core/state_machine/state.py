@@ -261,13 +261,14 @@ def step(
         )
 
     logger.debug(f"_all_transitions: {_all_transitions}")
+    possible_transitions = get_possible_transitions(state, instance)
     return StateMachineResult(
         state=state,
         sub_states=sub_states[:-1],
         action=action,
         success=True,
         message="Success",
-        possible_transitions=get_possible_transitions(state, instance),
+        possible_transitions=possible_transitions,
     )
 
 

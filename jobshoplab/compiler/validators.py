@@ -416,9 +416,9 @@ class SimpleDSLValidator(AbstractValidator):
                 )
 
             times = parts[1].split()
-            if len(times) != num_tools - 1:
+            if len(times) != num_tools:
                 raise InstanceSchemaError(
-                    f"Setup time line {i+1} has {len(times)} times, but there are {num_tools-1} destination tools",
+                    f"Setup time line {i+1} has {len(times)} times, but there are {num_tools} destination tools",
                     f"setup_times[{index}].specification",
                 )
 

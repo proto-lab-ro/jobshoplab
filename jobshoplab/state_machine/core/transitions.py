@@ -1,4 +1,5 @@
 from jobshoplab.utils.exceptions import NotImplementedError
+from jobshoplab.types.state_types import TransportStateState
 
 
 class StateEnum:
@@ -29,7 +30,7 @@ class Transition:
                 raise NotImplementedError()
 
     def is_valid_transition(self, state, new_state):
-        if state == new_state:
+        if state == new_state and state != TransportStateState.WAITINGPICKUP:
             return False
         _state = self._match_state(state)
         _new_state = self._match_state(new_state)

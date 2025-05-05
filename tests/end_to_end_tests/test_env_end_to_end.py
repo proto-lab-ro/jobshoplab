@@ -6,7 +6,7 @@ import numpy as np
 
 from jobshoplab import JobShopLabEnv
 from jobshoplab.compiler import Compiler
-from jobshoplab.compiler.repos import SpecRepository
+from jobshoplab.compiler.repos import SpecRepository, DslRepository
 from jobshoplab.types.instance_config_types import InstanceConfig
 from jobshoplab.types.state_types import JobState, OperationStateState
 from jobshoplab.utils import solutions
@@ -157,3 +157,16 @@ def test_env_end_to_end(config: Config):
         assert terminated
 
         # env.render()
+
+
+def test_full_feature_3x3(config):
+    for i in range(100):
+        instance_dir = Path("tests/data/full_feature_3x3_instance.yaml")
+        repo = DslRepository(instance_dir, loglevel="warning", config=config)
+        compiler = Compiler(config, loglevel="warning", repo=repo)
+        env = JobShopLabEnv(config=config, compiler=compiler)
+        done = False
+        while not done:
+            observation, reward, terminated, truncated, _ = env.step(1)
+            done = terminated or truncated
+        assert terminated != truncated

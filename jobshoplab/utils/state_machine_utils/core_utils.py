@@ -168,6 +168,15 @@ def is_transport_transition_from_outage_to_idle(transport: TransportState, trans
     )
 
 
+def is_transport_transition_from_waiting_pickup_waiting_pickup(
+    transport: TransportState, transition
+):
+    return (
+        transport.state == TransportStateState.WAITINGPICKUP
+        and transition.new_state == TransportStateState.WAITINGPICKUP
+    )
+
+
 def sorted_by_transport(
     transitions: tuple[ComponentTransition, ...],
 ) -> tuple[ComponentTransition, ...]:
