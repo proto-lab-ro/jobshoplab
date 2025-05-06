@@ -159,6 +159,9 @@ Contents
 
    user_guide/getting_started
    user_guide/framework_config
+   user_guide/setup_times
+   user_guide/outages
+   user_guide/stochastic_time_behavior
    user_guide/custom_instances
    user_guide/custom_rewards
    user_guide/custom_observations

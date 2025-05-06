@@ -560,6 +560,9 @@ For more detailed information, check out these additional resources:
 - :doc:`Custom Observations <user_guide/custom_observations>` - Customize observation spaces
 - :doc:`Visualization Options <user_guide/visualisation>` - Explore visualization options
 - :doc:`Testing <user_guide/testing>` - Learn how to test your components
+- :doc:`Setup Times <user_guide/setup_times>` - Model sequence-dependent changeover times
+- :doc:`Outages <user_guide/outages>` - Implement equipment failures and maintenance events
+- :doc:`Stochastic Time Behavior <user_guide/stochastic_time_behavior>` - Add randomness to processing times
 - :doc:`Contributing <additional_resources/contributing>` - Contribute to the JobShopLab project
 
 .. note::
