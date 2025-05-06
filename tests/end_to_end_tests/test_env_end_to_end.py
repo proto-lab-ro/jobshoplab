@@ -8,7 +8,12 @@ from jobshoplab import JobShopLabEnv
 from jobshoplab.compiler import Compiler
 from jobshoplab.compiler.repos import SpecRepository, DslRepository
 from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.types.state_types import JobState, OperationStateState
+from jobshoplab.types.state_types import (
+    JobState,
+    OperationStateState,
+    MachineStateState,
+    OutageActive,
+)
 from jobshoplab.utils import solutions
 from jobshoplab.utils.load_config import Config
 from jobshoplab.utils.utils import get_id_int
@@ -156,7 +161,36 @@ def test_env_end_to_end(config: Config):
         assert env.state.state.time.time == makespan
         assert terminated
 
-        # env.render()
+
+def _get_machine_job_tuples_for_machine_state(results, machine_state):
+    for r in results:
+        for s in r.sub_states + (r.state,):
+            for m in s.machines:
+                if m.state == machine_state:
+                    yield m
+
+
+def _get_setup_times_as_list(history, state):
+    return list(
+        set(
+            (m.id, m.buffer.store)
+            for m in _get_machine_job_tuples_for_machine_state(
+                history + (state,), MachineStateState.SETUP
+            )
+        )
+    )
+
+
+def _get_outage_events(history, state):
+    outage_states = _get_machine_job_tuples_for_machine_state(
+        history + (state,), MachineStateState.OUTAGE
+    )
+    # .. gets the outage id and the machine id of every active outage event
+    outage_states_tuples = map(
+        lambda x: (x.id, x.outages[0].id),
+        outage_states,
+    )
+    return list(set(outage_states_tuples))
 
 
 def test_full_feature_3x3(config):
@@ -170,3 +204,13 @@ def test_full_feature_3x3(config):
             observation, reward, terminated, truncated, _ = env.step(1)
             done = terminated or truncated
         assert terminated != truncated
+        # its impossible to check the solution because the instance is random
+        # but evaluating some aspects of the env sould give us some confidence
+
+        # assert setup_times
+        setup_events = _get_setup_times_as_list(env.history, env.state)
+        assert len(setup_events) == 9
+
+        # assert a outage occured at least once on evert machine
+        outage_events = _get_outage_events(env.history, env.state)
+        assert len(outage_events) == 3
