@@ -17,7 +17,7 @@ from jobshoplab.state_machine.middleware import \
     middleware as middleware_collection
 from jobshoplab.types import Config, InstanceConfig, StateMachineResult
 from jobshoplab.utils import calculate_lower_bound, get_max_allowed_time
-from jobshoplab.utils.exceptions import EnvDone
+from jobshoplab.utils.exceptions import ConfigurationError, EnvDone
 from jobshoplab.utils.load_config import load_config
 from jobshoplab.utils.logger import get_logger
 from jobshoplab.utils.rich_cli import render
@@ -178,7 +178,7 @@ class DependencyBuilder:
 
     def _get_instance_from_config(self, conf_obj: str) -> str:
         if not hasattr(self._config.env, conf_obj):
-            raise ValueError(f"No {conf_obj} defined in config")
+            raise ConfigurationError(conf_obj)
         return getattr(self._config.env, conf_obj)
 
     def _build_factory(
@@ -202,7 +202,7 @@ class DependencyBuilder:
             return env_arg(**args)
 
         if not isinstance(env_arg, object):
-            raise ValueError(f"Invalid {config_name} argument")
+            raise ConfigurationError(config_name, env_arg)
 
         _obj = getattr(module, _factory_name)
         if isinstance(_obj, type(lambda: None)):  # checks if its a function
@@ -590,7 +590,7 @@ class JobShopLabEnv(gym.Env):
                 render(history=self.history, instance=self.instance)
 
             case _:
-                raise ValueError(mode)
+                raise ConfigurationError("render_mode", mode)
 
 
 if __name__ == "__main__":

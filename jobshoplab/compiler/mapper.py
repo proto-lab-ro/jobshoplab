@@ -18,6 +18,7 @@ from jobshoplab.utils.exceptions import (ComponentAssociationError,
                                          InvalidDurationError,
                                          InvalidOutageTypeError,
                                          InvalidSetupTimesError,
+                                         TransportConfigError,
                                          InvalidTimeBehaviorError,
                                          InvalidToolUsageError,
                                          InvalidTransportConfig,
@@ -986,7 +987,7 @@ class DictToInitStateMapper(AbstractDictMapper):
         transport_spec = spec_dict["init_state"]["transport"]
         int_id = get_id_int(transport.id)
         if len(transport_spec) < int_id:
-            raise ValueError(f"Transport with id={transport.id} not found in transport_spec")
+            raise TransportConfigError(f"Transport with id={transport.id} not found in transport_spec")
         outages = self.defaults._get_outage_state(transport)
         return TransportState(
             id=transport.id,

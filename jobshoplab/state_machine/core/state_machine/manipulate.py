@@ -11,7 +11,10 @@ from jobshoplab.types.state_types import (DeterministicTimeConfig, JobState,
                                           StochasticTimeConfig, Time,
                                           TransportLocation, TransportState,
                                           TransportStateState)
-from jobshoplab.utils.exceptions import InvalidValue, NotImplementedError
+from jobshoplab.utils.exceptions import (
+    InvalidValue, NotImplementedError, InvalidTimeTypeError, 
+    InvalidSetupTimeTypeError
+)
 from jobshoplab.utils.state_machine_utils import (buffer_type_utils,
                                                   job_type_utils,
                                                   machine_type_utils,
@@ -126,8 +129,8 @@ def _get_duration(time: DeterministicTimeConfig | StochasticTimeConfig) -> int:
             time.update()
             return time.time
         case _:
-            raise TypeError(
-                f"Invalid time type: {type(time)}. Expected DeterministicTimeConfig or StochasticTimeConfig."
+            raise InvalidTimeTypeError(
+                type(time), "DeterministicTimeConfig or StochasticTimeConfig"
             )
 
 
@@ -200,8 +203,8 @@ def _get_setup_duration(
                     message="setup time not found in mapping (check instance mapping)",
                 )
 
-            raise TypeError(
-                f"Invalid setup time type: {type(s_time)}. Expected DeterministicTimeConfig or StochasticTimeConfig."
+            raise InvalidSetupTimeTypeError(
+                type(s_time), "DeterministicTimeConfig or StochasticTimeConfig"
             )
 
 

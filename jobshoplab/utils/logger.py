@@ -63,5 +63,7 @@ def get_logger(
         case 4:
             logger.setLevel(logging.CRITICAL)
         case _:
-            raise ValueError(f"Invalid loglevel: {loglevel}")
+            raise ValueError(
+                f"Invalid loglevel: {loglevel}. Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL, or their numeric equivalents."
+            )  # not raising custom exception to avoid circular import issues
     return logger

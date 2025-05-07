@@ -1,5 +1,6 @@
 # Import Exception from the built-in module
 from builtins import Exception
+from typing import Any, Optional, Type
 
 from jobshoplab.utils import get_logger
 
@@ -202,6 +203,44 @@ class OperationMachineMatchError(JobShopException):
         super().__init__(self.message)
 
 
+class MissingJobIdError(JobShopException):
+    def __init__(self, transition_type=None):
+        transition_info = f" in {transition_type} transition" if transition_type else ""
+        self.message = f"No job_id{transition_info}"
+        super().__init__(self.message)
+
+
+class TransportJobError(JobShopException):
+    def __init__(self, transport_id, transport_job=None):
+        if transport_job is None:
+            self.message = f"Transport {transport_id} has no transport_job assigned"
+        else:
+            self.message = f"Invalid transport_job for transport {transport_id}: {transport_job}"
+        super().__init__(self.message)
+
+
+class MissingProcessingOperationError(JobShopException):
+    def __init__(self, job_id=None):
+        job_info = f" for job {job_id}" if job_id else ""
+        self.message = f"No processing operation found{job_info} -> AGV cannot wait for pickup!"
+        super().__init__(self.message)
+
+
+class TransportConfigError(JobShopException):
+    def __init__(self, config_field, value=None):
+        if value is None:
+            self.message = f"Invalid transport configuration: {config_field}"
+        else:
+            self.message = f"Invalid transport configuration: {config_field}={value}"
+        super().__init__(self.message)
+
+
+class TravelTimeError(JobShopException):
+    def __init__(self, source, destination):
+        self.message = f"No travel time found between {source} and {destination}"
+        super().__init__(self.message)
+
+
 class InstanceSchemaError(JobShopException):
     def __init__(self, message, field=None):
         if field:
@@ -239,3 +278,63 @@ class JobSpecificationSyntaxError(InstanceSchemaError):
         if details:
             message += f" - {details}"
         super().__init__(message, "instance.specification")
+
+
+class KeyError(JobShopException):
+    def __init__(self, key):
+        self.message = f"Key not found: {key}"
+        super().__init__(self.message)
+
+
+class IndexError(JobShopException):
+    def __init__(self, index, sequence_length=None):
+        if sequence_length is not None:
+            self.message = f"Index {index} out of bounds for sequence of length {sequence_length}"
+        else:
+            self.message = f"Index {index} out of range"
+        super().__init__(self.message)
+
+
+class ValueError(JobShopException):
+    def __init__(self, value, message=""):
+        self.message = f"Invalid value: {value} {message}"
+        super().__init__(self.message)
+
+
+class AttributeError(JobShopException):
+    def __init__(self, obj, attr):
+        self.message = f"'{type(obj).__name__}' object has no attribute '{attr}'"
+        super().__init__(self.message)
+
+
+class ImportError(JobShopException):
+    def __init__(self, module):
+        self.message = f"Failed to import module: {module}"
+        super().__init__(self.message)
+
+
+class ConfigurationError(JobShopException):
+    def __init__(self, config_name, value=None, details=None):
+        if value is not None:
+            self.message = f"Invalid {config_name} configuration: {value}"
+        else:
+            self.message = f"Missing or invalid {config_name} configuration"
+        
+        if details:
+            self.message += f" - {details}"
+        
+        super().__init__(self.message)
+
+
+class InvalidTimeTypeError(JobShopException):
+    def __init__(self, actual_type, expected_types=None):
+        type_info = f"Expected {expected_types}" if expected_types else ""
+        self.message = f"Invalid time type: {actual_type}. {type_info}"
+        super().__init__(self.message)
+
+
+class InvalidSetupTimeTypeError(JobShopException):
+    def __init__(self, actual_type, expected_types=None):
+        type_info = f"Expected {expected_types}" if expected_types else ""
+        self.message = f"Invalid setup time type: {actual_type}. {type_info}"
+        super().__init__(self.message)

@@ -2,6 +2,7 @@ try:
     from jobshoplab.utils.load_config import Config
 except:
     from typing import TypeVar
+    from dataclasses import dataclass
 
     @dataclass
     class Config:

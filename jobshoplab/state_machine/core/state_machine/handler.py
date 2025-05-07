@@ -19,7 +19,11 @@ from jobshoplab.types.state_types import (BufferState, DeterministicTimeConfig,
                                           MachineState, MachineStateState,
                                           NoTime, Time, TransportState,
                                           TransportStateState)
-from jobshoplab.utils.exceptions import InvalidValue, NotImplementedError
+from jobshoplab.utils.exceptions import (
+    InvalidValue, NotImplementedError, MissingJobIdError,
+    TransportJobError, MissingProcessingOperationError,
+    TransportConfigError, TravelTimeError
+)
 from jobshoplab.utils.state_machine_utils import (buffer_type_utils,
                                                   job_type_utils,
                                                   machine_type_utils,
@@ -162,7 +166,7 @@ def create_avg_idle_to_pick_transition(
     if transport.transport_job is not None:
         job = job_type_utils.get_job_state_by_id(state.jobs, transport.transport_job)
     else:
-        raise ValueError("transport_job", transport.transport_job, "No transport_job")
+        raise TransportJobError(transport.id)
 
     running_op = job_type_utils.get_processing_operation(job)
     running_op_will_be_done = False
@@ -466,13 +470,13 @@ def handle_agv_transport_pickup_to_waitingpickup_transition(
     """
 
     if transition.job_id is None:
-        raise ValueError("No job_id in transition")
+        raise MissingJobIdError("pickup_to_waitingpickup")
 
     job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
     processing_op = job_type_utils.get_processing_operation(job_state)
 
     if processing_op is None:
-        raise ValueError("No processing operation found -> AGV can not wait for pickup!")
+        raise MissingProcessingOperationError(transition.job_id)
 
     # update transport
     transport = replace(
@@ -497,7 +501,7 @@ def handle_agv_transport_pickup_to_transit_transition(
     If the job is not ready we will wait for the job to be ready.
     """
     if transition.job_id is None:
-        raise ValueError("No job_id in transition")
+        raise MissingJobIdError("pickup_to_transit")
 
     job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
 
@@ -624,14 +628,14 @@ def handle_agv_transport_idle_to_working_transition(
     elif source_buffer_config.parent.startswith("m"):
         source_id: str = source_buffer_config.parent
     else:
-        raise ValueError("source_buffer_config.parent", source_buffer_config.parent)
+        raise TransportConfigError("parent", source_buffer_config.parent)
 
     time_to_pickup = instance.logistics.travel_times.get(
         (transport_state.location.location, source_id)
     )
 
     if not isinstance(time_to_pickup, (DeterministicTimeConfig, StochasticTimeConfig)):
-        raise ValueError("time_to_pickup", time_to_pickup)
+        raise TransportConfigError("time_to_pickup", time_to_pickup)
 
     time_to_pickup = time_to_pickup.time
 
@@ -663,7 +667,7 @@ def handle_agv_transport_transit_to_outage_transition(
 ):
 
     if transition.job_id is None:
-        raise ValueError("No job_id in transition")
+        raise MissingJobIdError("transit_to_outage")
     else:
         job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
         machine_state = machine_type_utils.get_machine_state_by_id(
@@ -717,13 +721,13 @@ def handle_agv_waiting_pickup_to_waiting_pickup_transition(
         State: Updated state after handling the transition
     """
     if transition.job_id is None:
-        raise ValueError("No job_id in transition")
+        raise MissingJobIdError("waitingpickup_to_waitingpickup")
 
     job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
     processing_op = job_type_utils.get_processing_operation(job_state)
 
     if processing_op is None:
-        raise ValueError("No processing operation found -> AGV can not wait for pickup!")
+        raise MissingProcessingOperationError(transition.job_id)
 
     # update transport
     transport = replace(

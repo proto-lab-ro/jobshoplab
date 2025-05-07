@@ -1,6 +1,7 @@
 from jobshoplab.types.instance_config_types import InstanceConfig
 from jobshoplab.types.state_types import (DeterministicTimeConfig,
                                           StochasticTimeConfig)
+from jobshoplab.utils.exceptions import NotImplementedError, TravelTimeError
 
 
 def _get_travel_time_from_spec(
@@ -15,9 +16,7 @@ def _get_travel_time_from_spec(
                 travel_time.update()
                 return travel_time.time
             case None:
-                raise ValueError(
-                    "No travel time found between", transport_source, transport_destination
-                )
+                raise TravelTimeError(transport_source, transport_destination)
             case _:
                 raise NotImplementedError()
     else:
