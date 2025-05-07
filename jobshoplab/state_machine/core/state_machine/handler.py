@@ -2,7 +2,9 @@
 Handler module for state machine transitions.
 
 This module contains functions for handling transitions between different states
-for machines and transports in the JobShopLab simulation.
+for machines and transports in the JobShopLab simulation. Each handler function is
+responsible for updating the state of the system based on the specific transition
+being processed.
 """
 
 from dataclasses import replace
@@ -34,7 +36,7 @@ from jobshoplab.utils.state_machine_utils.time_utils import \
     _get_travel_time_from_spec
 
 
-def _waiting_time_and_op_time_differ(state, transport) -> bool:
+def _waiting_time_and_op_time_differ(state: State, transport: TransportState) -> bool:
     """
     Check if the waiting time and operation time differ.
 
@@ -60,38 +62,42 @@ def create_timed_machine_transitions(
     """
     Create timed machine transitions based on the given state.
 
-    Checks if any machine's occupied_till time has passed and creates ComponentTransitions
-    to set those machines to idle state.
+    This function checks all machines in the system to determine if any have reached 
+    their occupied_till time and need to transition to their next state. It creates 
+    appropriate ComponentTransitions based on the current state of each machine.
 
     Args:
         loglevel: Log level for the function
         state: Current state of the system
 
     Returns:
-        A tuple of ComponentTransition objects for machines that need to transition to idle
+        tuple[ComponentTransition, ...]: A tuple of ComponentTransition objects for machines 
+            that need to transition to their next state
     """
     transitions = []
 
-    # check machines is available -> if yes -> set to idle -> release job!
-    for machine in state.machines:  #
+    # Check each machine to see if it's time to change its state
+    for machine in state.machines:
         if isinstance(machine.occupied_till, Time) and isinstance(state.time, Time):
             if machine.occupied_till.time <= state.time.time:
-                # Set machine to idle
+                # Create appropriate transition based on current machine state
                 match machine.state:
                     case MachineStateState.SETUP:
+                        # From SETUP -> WORKING when setup time is complete
                         transition = ComponentTransition(
                             component_id=machine.id,
                             new_state=MachineStateState.WORKING,
                             job_id=machine.buffer.store[0],
                         )
                     case MachineStateState.WORKING:
+                        # From WORKING -> OUTAGE when processing is complete
                         transition = ComponentTransition(
                             component_id=machine.id,
                             new_state=MachineStateState.OUTAGE,
                             job_id=machine.buffer.store[0],
                         )
-
                     case MachineStateState.OUTAGE:
+                        # From OUTAGE -> IDLE when outage is complete
                         transition = ComponentTransition(
                             component_id=machine.id,
                             new_state=MachineStateState.IDLE,
@@ -99,6 +105,7 @@ def create_timed_machine_transitions(
                         )
                     case _:
                         transition = None
+                
                 if transition is not None:
                     transitions.append(transition)
 
@@ -125,12 +132,13 @@ def create_avg_pickup_to_drop_transition(
     Raises:
         NotImplementedError: If the transport buffer contains more than one job
     """
-
+    # Currently only supports one job per transport buffer
     if len(transport.buffer.store) == 1:
         _job = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transport.buffer.store[0])
     else:
         raise NotImplementedError()
 
+    # Create the transition to OUTAGE state (representing drop-off process)
     transition = ComponentTransition(
         component_id=transport.id,
         new_state=TransportStateState.OUTAGE,
@@ -145,10 +153,11 @@ def create_avg_idle_to_pick_transition(
     """
     Creates transition from IDLE to PICKUP or WAITINGPICKUP.
 
-    This function determines the appropriate next transition for an AGV in the IDLE state.
-    If the job is ready to be transported (has no processing operations), it creates a
-    transition to TRANSIT state. If the AGV is in PICKUP state and the job is not ready,
-    it creates a transition to WAITINGPICKUP state.
+    This function determines the appropriate next transition for an AGV based on 
+    the job's readiness state. It has three possible outcomes:
+    1. If job has no processing operations pending: return TRANSIT transition
+    2. If AGV is in PICKUP state and job is not ready: return WAITINGPICKUP transition
+    3. If job has waiting time and operation time differ: return WAITINGPICKUP transition
 
     Args:
         state: Current state of the system
@@ -159,33 +168,34 @@ def create_avg_idle_to_pick_transition(
             or None if no appropriate transition is found
 
     Raises:
-        InvalidValue: If the transport has no assigned job (transport_job is None)
+        TransportJobError: If the transport has no assigned job (transport_job is None)
     """
-
-    # check if job is free
+    # Check if transport has an assigned job
     if transport.transport_job is not None:
         job = job_type_utils.get_job_state_by_id(state.jobs, transport.transport_job)
     else:
         raise TransportJobError(transport.id)
 
+    # Get the job's current running operation if any
     running_op = job_type_utils.get_processing_operation(job)
     running_op_will_be_done = False
+    
     if running_op is not None:
         running_op_end_time = extract_time(
             running_op.end_time if running_op is not None else NoTime()
         )
         running_op_will_be_done = running_op_end_time <= extract_time(state.time)
 
-    # check if job is ready or gets ready in the same timestep
+    # CASE 1: Job is ready to be transported (no processing operations)
     if core_utils.no_processing_operations(job):
         transit_transition = ComponentTransition(
             component_id=transport.id,
             new_state=TransportStateState.TRANSIT,
             job_id=job.id,
         )
-
         return transit_transition
 
+    # CASE 2: AGV is at pickup location but job is not ready yet
     elif transport.state == TransportStateState.PICKUP:
         waiting_transition = ComponentTransition(
             component_id=transport.id,
@@ -193,17 +203,19 @@ def create_avg_idle_to_pick_transition(
             job_id=job.id,
         )
         return waiting_transition
+    
+    # CASE 3: Extend waiting time for stochastic outages
     elif (
         transport.state == TransportStateState.WAITINGPICKUP
-    ) and _waiting_time_and_op_time_differ(
-        state, transport
-    ):  # extend the waiting time in case of a stochastic outage
+    ) and _waiting_time_and_op_time_differ(state, transport):
         waiting_transition = ComponentTransition(
             component_id=transport.id,
             new_state=TransportStateState.WAITINGPICKUP,
             job_id=job.id,
         )
         return waiting_transition
+    
+    # No appropriate transition found
     else:
         return None
 
@@ -224,11 +236,10 @@ def create_agv_drop_to_idle_transition(
     Returns:
         ComponentTransition: A transition for the transport to return to IDLE state
     """
-
     return ComponentTransition(
         component_id=transport.id,
         new_state=TransportStateState.IDLE,
-        job_id=None,
+        job_id=None,  # No job is associated with an idle transport
     )
 
 
@@ -238,9 +249,9 @@ def create_timed_transport_transitions(
     """
     Creates timed transport transitions based on the given state.
 
-    Checks if any transport's occupied_till time has been reached and creates appropriate
-    transitions based on the transport's current state. This function is responsible for
-    advancing transport components to their next states when their current tasks finish.
+    This function examines all transports to determine if any have reached their
+    occupied_till time and need to transition to a new state. It creates appropriate
+    transitions based on each transport's current state and context.
 
     Args:
         loglevel: The log level to use
@@ -252,13 +263,15 @@ def create_timed_transport_transitions(
 
     Raises:
         NotImplementedError: If a transport is in the WORKING state and needs a transition
+            (this state is not yet implemented)
     """
     transitions = []
-    # Check if transport is available -> if yes -> set to idle -> update job location
+    
+    # Check each transport to see if it's time to change its state
     for transport in state.transports:
-        # Set transport to idle
         if isinstance(transport.occupied_till, Time) and isinstance(state.time, Time):
             if transport.occupied_till.time <= state.time.time:
+                # Create appropriate transition based on current transport state
                 match transport.state:
                     case TransportStateState.PICKUP | TransportStateState.WAITINGPICKUP:
                         transition = create_avg_idle_to_pick_transition(state, transport)
@@ -267,11 +280,14 @@ def create_timed_transport_transitions(
                     case TransportStateState.OUTAGE:
                         transition = create_agv_drop_to_idle_transition(state, transport)
                     case TransportStateState.WORKING:
+                        # This state is not yet implemented
                         raise NotImplementedError()
                     case _:
                         transition = None
+                        
                 if transition is not None:
                     transitions.extend([transition])
+                    
     return tuple(transitions)
 
 
@@ -283,8 +299,11 @@ def create_timed_transitions(
 
     This function combines machine and transport timed transitions into a single list.
     It checks if occupation time of components is over and creates transitions to
-    advance them to their next state. The order of transitions is important to ensure
-    proper sequencing of events.
+    advance them to their next state.
+
+    The order of transitions is important to ensure proper sequencing of events:
+    1. Machine transitions are processed first
+    2. Transport transitions are processed second
 
     Args:
         loglevel: The log level to use
@@ -294,10 +313,13 @@ def create_timed_transitions(
         Tuple[ComponentTransition, ...]: A tuple of all timed transitions for the current state
     """
     transitions = []
+    
     # ORDER IS IMPORTANT
-    # https://3.basecamp.com/4286581/buckets/38177464/card_tables/cards/7988333079
+    # First handle machine transitions, then transport transitions
+    # This ordering ensures machines complete their work before transports try to move jobs
     transitions.extend(create_timed_machine_transitions(loglevel, state))
     transitions.extend(create_timed_transport_transitions(loglevel, state))
+    
     return tuple(transitions)
 
 
@@ -308,7 +330,8 @@ def handle_machine_idle_to_setup_transition(
     Handles the transition from machine IDLE to SETUP state.
 
     This function moves a job from the machine's prebuffer to its buffer
-    and sets up the machine to start processing the job.
+    and sets up the machine to start processing the job. It calculates setup times
+    based on the tools needed for the operation.
 
     Args:
         state: Current state of the system
@@ -325,13 +348,14 @@ def handle_machine_idle_to_setup_transition(
     if transition.job_id is None:
         raise InvalidValue("job_id", None, "No job_id in transition")
 
-        # Get the job state
+    # Get the job state
     job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
+    
     # Check if job is in prebuffer
     if not buffer_type_utils.is_job_in_buffer(machine.prebuffer, job_state.id):
         raise InvalidValue("job_location", job_state.location, "Job is not in machine's prebuffer")
 
-    # Move job from prebuffer to buffer and execute operation
+    # Move job from prebuffer to buffer and start setup for operation
     job_state, _machine = manipulate.begin_machine_setup(
         job_state=job_state,
         instance=instance,
@@ -339,6 +363,7 @@ def handle_machine_idle_to_setup_transition(
         time=state.time,
     )
 
+    # Update the state with new job and machine states
     state = possible_transition_utils.replace_job_state(state, job_state)
     state = possible_transition_utils.replace_machine_state(state, _machine)
     return state
@@ -351,7 +376,8 @@ def handle_machine_setup_to_working_transition(
     Handles the transition from machine SETUP to WORKING state.
 
     This function moves a job from setup phase to active processing.
-    It updates both job and machine state to reflect the new status.
+    It updates both job and machine state to reflect the new processing status
+    and calculates the operation duration.
 
     Args:
         state: Current state of the system
@@ -375,7 +401,7 @@ def handle_machine_setup_to_working_transition(
     if not buffer_type_utils.is_job_in_buffer(machine.buffer, job_state.id):
         raise InvalidValue("job_location", job_state.location, "Job is not in machine's buffer")
 
-    # Move job from prebuffer to buffer and execute operation
+    # Begin processing the job on the machine
     job_state, _machine = manipulate.begin_next_job_on_machine(
         job_state=job_state,
         instance=instance,
@@ -383,10 +409,9 @@ def handle_machine_setup_to_working_transition(
         time=state.time,
     )
 
+    # Update the state with new job and machine states
     state = possible_transition_utils.replace_job_state(state, job_state)
-    state = possible_transition_utils.replace_machine_state(
-        state, _machine
-    )  # add setup somewhere here
+    state = possible_transition_utils.replace_machine_state(state, _machine)
     return state
 
 
@@ -398,7 +423,8 @@ def handle_machine_working_to_outage_transition(
 
     This function places the machine in an outage state, which may represent
     planned maintenance, a breakdown, or other non-operational period.
-    It calculates the duration of the outage and updates the machine's state.
+    It calculates the duration of the outage and updates both the machine
+    and job states accordingly.
 
     Args:
         state: Current state of the system
@@ -409,11 +435,11 @@ def handle_machine_working_to_outage_transition(
     Returns:
         State: Updated state after handling the transition
     """
-
-    # Update job and machine state, but job in postbuffer
+    # Get outage data and calculate duration
     outages = outage_utils.get_new_outage_states(machine, instance, state.time)
     occupied_for = outage_utils.get_occupied_time_from_outage_iterator(outages)
 
+    # Update job and machine state for outage
     job_state, machine = manipulate.begin_machine_outage(
         instance=instance,
         job_state=job_type_utils.get_job_state_by_id(state.jobs, transition.job_id),
@@ -422,6 +448,8 @@ def handle_machine_working_to_outage_transition(
         occupied_for=occupied_for,
         outages=outages,
     )
+    
+    # Update the state with new machine and job states
     state = possible_transition_utils.replace_machine_state(state, machine)
     state = possible_transition_utils.replace_job_state(state, job_state=job_state)
     return state
@@ -434,7 +462,8 @@ def handle_machine_outage_to_idle_transition(
     Handles the transition from machine OUTAGE to IDLE state.
 
     This function completes the current outage period and finishes the job operation.
-    It moves the job to the machine's postbuffer and updates both the job and machine states.
+    It moves the job to the machine's postbuffer, marks the operation as complete,
+    and resets the machine to idle state.
 
     Args:
         state: Current state of the system
@@ -445,9 +474,12 @@ def handle_machine_outage_to_idle_transition(
     Returns:
         State: Updated state after handling the transition
     """
+    # Complete operation and move job to postbuffer
     job, machine = manipulate.complete_active_operation_on_machine(
         instance=instance, jobs=state.jobs, machine_state=machine, time=state.time
     )
+    
+    # Update the state with new job and machine states
     state = possible_transition_utils.replace_job_state(state, job)
     state = possible_transition_utils.replace_machine_state(state, machine)
 
@@ -461,24 +493,36 @@ def handle_agv_transport_pickup_to_waitingpickup_transition(
     transport: TransportState,
 ) -> State:
     """
-    AGV is at the pickup location and waits for the job to be ready.
+    Handles when an AGV is at the pickup location and waits for the job to be ready.
 
-    Functionality:
-        - Get time until job is ready
-        - Set occupied_till to time until job is ready
-        - Update transport state to waitingpickup
+    This function updates the transport to wait at the pickup location until the job
+    completes its current processing operation. It sets the transport's occupied_till
+    time to match the job's operation end time.
+
+    Args:
+        state: Current state of the system
+        instance: The instance configuration
+        transition: The transition object containing component and job IDs
+        transport: The transport state being transitioned
+
+    Returns:
+        State: Updated state after handling the transition
+        
+    Raises:
+        MissingJobIdError: If transition has no job_id
+        MissingProcessingOperationError: If the job has no processing operation
     """
-
     if transition.job_id is None:
         raise MissingJobIdError("pickup_to_waitingpickup")
 
+    # Get job and its current processing operation
     job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
     processing_op = job_type_utils.get_processing_operation(job_state)
 
     if processing_op is None:
         raise MissingProcessingOperationError(transition.job_id)
 
-    # update transport
+    # Update transport to wait until job's operation is complete
     transport = replace(
         transport,
         state=TransportStateState.WAITINGPICKUP,
@@ -497,17 +541,33 @@ def handle_agv_transport_pickup_to_transit_transition(
     transport: TransportState,
 ) -> State:
     """
-    Try to pickup the job and move it to the next operation location.
-    If the job is not ready we will wait for the job to be ready.
+    Handles picking up a job and moving it to the next operation location.
+    
+    This function picks up a job from its current location (either a standalone buffer
+    or a machine's buffer), transfers it to the transport's buffer, and sets up the
+    transport to move the job to its next destination.
+
+    Args:
+        state: Current state of the system
+        instance: The instance configuration
+        transition: The transition object containing component and job IDs
+        transport: The transport state being transitioned
+
+    Returns:
+        State: Updated state after handling the transition
+        
+    Raises:
+        MissingJobIdError: If transition has no job_id
     """
     if transition.job_id is None:
         raise MissingJobIdError("pickup_to_transit")
 
+    # Get job and determine source and destination locations
     job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
-
     next_job_operation = job_type_utils.get_next_not_done_operation(job_state)
     transport_source = job_state.location
 
+    # Get the actual machine ID from the buffer if applicable
     transport_source = machine_type_utils.get_machine_id_from_buffer(
         instance.machines, job_state.location
     )
@@ -515,16 +575,16 @@ def handle_agv_transport_pickup_to_transit_transition(
         transport_source = job_state.location
 
     transport_destination = next_job_operation.machine_id
-
     travel_time = _get_travel_time_from_spec(instance, transport_source, transport_destination)
 
-    # TODO: CLEANUP -> bad code
-    # This means the job is in a solo buffer with no parent machine
+    # Handle job transfer from different source types
     if transport_source.startswith("b"):
+        # Job is in a standalone buffer (not part of a machine)
         from_buffer_state: BufferState = buffer_type_utils.get_buffer_state_by_id(
             state.buffers, transport_source
         )
 
+        # Move job from buffer to transport
         from_buffer_state, transport_buffer, job_state = buffer_type_utils.switch_buffer(
             instance=instance,
             buffer_to_state=transport.buffer,
@@ -533,35 +593,31 @@ def handle_agv_transport_pickup_to_transit_transition(
         )
 
         state = buffer_type_utils.replace_buffer_state(state, from_buffer_state)
-
     else:
-
-        # get the machine where the job is currently located an get the job from the postbuffer
+        # Job is in a machine's buffer
         machine_state = machine_type_utils.get_machine_state_by_id(state.machines, transport_source)
         buffer_id = job_state.location
-
         buffer_state = machine_type_utils.get_buffer_state_from_machine(machine_state, buffer_id)
 
-        # get job from buffer
+        # Move job from machine buffer to transport
         buffer_from_state, transport_buffer, job_state = buffer_type_utils.switch_buffer(
             instance=instance,
             buffer_to_state=transport.buffer,
             buffer_from_state=buffer_state,
             job_state=job_state,
         )
-        # update machine buffer
+        
+        # Update machine buffer and state
         machine_state = machine_type_utils.replace_buffer_state_in_machine(
             machine_state, buffer_from_state
         )
         state = possible_transition_utils.replace_machine_state(state, machine_state)
 
+    # Update transport for transit
     current_time = extract_time(state.time)
-
-    # update transport progress and occupied_till
     occupied_till = Time(current_time + travel_time)
     transport_location = replace(transport.location, progress=0.5)  # TODO: hardcoded progress...
 
-    # update transport
     transport = replace(
         transport,
         state=TransportStateState.TRANSIT,
@@ -570,6 +626,7 @@ def handle_agv_transport_pickup_to_transit_transition(
         buffer=transport_buffer,
     )
 
+    # Update state with new job and transport states
     state = possible_transition_utils.replace_job_state(state, job_state)
     state = possible_transition_utils.replace_transport_state(state, transport)
 
@@ -600,11 +657,12 @@ def handle_agv_transport_idle_to_working_transition(
 
     Raises:
         InvalidValue: If transition has no job_id or transport location is invalid
-        ValueError: If travel time calculation fails
+        TransportConfigError: If source buffer configuration is invalid or travel time is not found
     """
     if transition.job_id is None:
         raise InvalidValue("job_id", None, "No job_id in transition")
 
+    # Validate transport location format
     if not isinstance(transport_state.location.location, str):
         raise InvalidValue(
             "transport.location.location",
@@ -612,24 +670,25 @@ def handle_agv_transport_idle_to_working_transition(
             "transport location is not a string. Tuple could be an progress object -> tuple[str, str, str]",
         )
 
-    # create transport job
+    # Get job and destination information
     job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
     next_op_state = job_type_utils.get_next_idle_operation(job_state)
 
+    # Get source location information
     all_buffer_configs = buffer_type_utils.get_all_buffer_configs(instance)
     source_buffer_config: BufferConfig = buffer_type_utils.get_buffer_config_by_id(
         all_buffer_configs, job_state.location
     )
 
-    # None if it is a buffer that has no parent like the arrival buffer
+    # Determine actual source location ID
     if source_buffer_config.parent is None:
         source_id: str = job_state.location
-    # If parent is a machine
     elif source_buffer_config.parent.startswith("m"):
         source_id: str = source_buffer_config.parent
     else:
         raise TransportConfigError("parent", source_buffer_config.parent)
 
+    # Get travel time to pickup location
     time_to_pickup = instance.logistics.travel_times.get(
         (transport_state.location.location, source_id)
     )
@@ -638,15 +697,15 @@ def handle_agv_transport_idle_to_working_transition(
         raise TransportConfigError("time_to_pickup", time_to_pickup)
 
     time_to_pickup = time_to_pickup.time
-
     current_time = extract_time(state.time)
-
     occupied_till = Time(current_time + time_to_pickup)
 
+    # Create location information for transport route
     new_transport_location = core_utils.create_transport_location_from_job(
         transport_state.location.location, source_buffer_config.id, next_op_state.machine_id
     )
 
+    # Update transport state for movement to pickup
     transport_state = replace(
         transport_state,
         location=new_transport_location,
@@ -664,27 +723,46 @@ def handle_agv_transport_transit_to_outage_transition(
     instance: InstanceConfig,
     transition: ComponentTransition,
     transport: TransportState,
-):
+) -> State:
+    """
+    Handles the transition from transport TRANSIT to OUTAGE state.
+    
+    This function completes the transport task by delivering the job to its
+    destination machine. It moves the job from the transport buffer to the
+    machine's prebuffer and updates all relevant states.
 
+    Args:
+        state: Current state of the system
+        instance: The instance configuration
+        transition: The transition object containing component and job IDs
+        transport: The transport state being transitioned
+
+    Returns:
+        State: Updated state after handling the transition
+        
+    Raises:
+        MissingJobIdError: If transition has no job_id
+    """
     if transition.job_id is None:
         raise MissingJobIdError("transit_to_outage")
-    else:
-        job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
-        machine_state = machine_type_utils.get_machine_state_by_id(
-            state.machines,
-            transport.location.location[
-                2
-            ],  # TODO: hardcoded index -> assumes that the last index is the destination machine
-        )
+    
+    # Get job and destination machine
+    job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
+    machine_state = machine_type_utils.get_machine_state_by_id(
+        state.machines,
+        transport.location.location[2],  # TODO: hardcoded index -> assumes the last index is the destination machine
+    )
 
-        job_state, transport_state, machine_state = manipulate.complete_transport_task(
-            instance, job_state, transport=transport, machine=machine_state, time=state.time
-        )
+    # Complete transport task - deliver job to machine
+    job_state, transport_state, machine_state = manipulate.complete_transport_task(
+        instance, job_state, transport=transport, machine=machine_state, time=state.time
+    )
 
-        state = possible_transition_utils.replace_job_state(state, job_state)
-        state = possible_transition_utils.replace_transport_state(state, transport_state)
-        state = possible_transition_utils.replace_machine_state(state, machine_state)
-        return state
+    # Update all states
+    state = possible_transition_utils.replace_job_state(state, job_state)
+    state = possible_transition_utils.replace_transport_state(state, transport_state)
+    state = possible_transition_utils.replace_machine_state(state, machine_state)
+    return state
 
 
 def handle_agv_transport_outage_to_idle_transition(
@@ -692,7 +770,23 @@ def handle_agv_transport_outage_to_idle_transition(
     instance: InstanceConfig,
     transition: ComponentTransition,
     transport: TransportState,
-):
+) -> State:
+    """
+    Handles the transition from transport OUTAGE to IDLE state.
+    
+    This function releases all outages on the transport and returns it to
+    idle state so it can be assigned to a new task.
+
+    Args:
+        state: Current state of the system
+        instance: The instance configuration
+        transition: The transition object containing component and job IDs
+        transport: The transport state being transitioned
+
+    Returns:
+        State: Updated state after handling the transition
+    """
+    # Release all outages and return to idle state
     outages = tuple(map(outage_utils.release_outage, transport.outages))
     transport = replace(transport, state=TransportStateState.IDLE, outages=outages)
     state = possible_transition_utils.replace_transport_state(state, transport)
@@ -708,8 +802,9 @@ def handle_agv_waiting_pickup_to_waiting_pickup_transition(
     """
     Handles the transition from AGV WAITINGPICKUP to WAITINGPICKUP state.
 
-    This function updates the transport's state to WAITINGPICKUP and sets its
-    occupied_till time based on the job's processing operation end time.
+    This function updates the transport's occupied_till time based on the job's
+    processing operation end time. This is used to extend waiting time, especially
+    in cases of stochastic operation durations.
 
     Args:
         state: Current state of the system
@@ -719,17 +814,22 @@ def handle_agv_waiting_pickup_to_waiting_pickup_transition(
 
     Returns:
         State: Updated state after handling the transition
+        
+    Raises:
+        MissingJobIdError: If transition has no job_id
+        MissingProcessingOperationError: If the job has no processing operation
     """
     if transition.job_id is None:
         raise MissingJobIdError("waitingpickup_to_waitingpickup")
 
+    # Get job and its current processing operation
     job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
     processing_op = job_type_utils.get_processing_operation(job_state)
 
     if processing_op is None:
         raise MissingProcessingOperationError(transition.job_id)
 
-    # update transport
+    # Update transport to continue waiting
     transport = replace(
         transport,
         state=TransportStateState.WAITINGPICKUP,
@@ -737,7 +837,6 @@ def handle_agv_waiting_pickup_to_waiting_pickup_transition(
     )
 
     state = possible_transition_utils.replace_transport_state(state, transport)
-
     return state
 
 
@@ -751,9 +850,10 @@ def handle_transition(
     """
     Handle a transition by finding and executing the appropriate handler function.
 
-    Iterates through a dictionary of condition-handler pairs, where conditions are functions
-    that determine if the handler should be applied based on the component and transition.
-    When a condition evaluates to True, its corresponding handler is called.
+    This function acts as a dispatcher that finds the correct handler for a given
+    transition based on conditional functions. It iterates through a dictionary of
+    condition-handler pairs, where conditions are functions that determine if the 
+    handler should be applied based on the component and transition state.
 
     Args:
         state: Current state of the system
@@ -768,9 +868,12 @@ def handle_transition(
     Raises:
         NotImplementedError: If no matching handler is found for the transition
     """
+    # Try each condition in the handlers dictionary
     for condition, handler in transition_handlers.items():
         if condition(component, transition):
             return handler(state, instance, transition, component)
+            
+    # No appropriate handler found
     raise NotImplementedError()
 
 
@@ -780,8 +883,9 @@ def handle_transport_transition(
     """
     Handle transitions for transport components in the state machine.
 
-    Identifies the appropriate transition handler based on the transport type
-    (currently only AGV supported) and the transition requested.
+    This function identifies the appropriate transition handler based on the transport type
+    (currently only AGV supported) and the transition requested. It maintains a dictionary
+    of transition conditions and their corresponding handler functions.
 
     Args:
         state: Current state of the system
@@ -795,7 +899,7 @@ def handle_transport_transition(
         NotImplementedError: If the transport type is not supported or no matching
                             handler is found for the transition
     """
-
+    # Get transport state and configuration
     transport_state = transport_type_utils.get_transport_state_by_id(
         transports=state.transports, transport_id=transition.component_id
     )
@@ -804,9 +908,10 @@ def handle_transport_transition(
         instance.transports, transport_state.id
     )
 
+    # Handle different transport types
     match transport_config.type:
         case TransportTypeConfig.AGV:
-            # TODO: Implement Progress of Transport
+            # Map of condition functions to handler functions for AGV transitions
             transition_handlers = {
                 core_utils.is_transport_transition_from_idle_to_working: handle_agv_transport_idle_to_working_transition,
                 core_utils.is_transport_transition_from_pickup_to_waitingpickup: handle_agv_transport_pickup_to_waitingpickup_transition,
@@ -818,13 +923,15 @@ def handle_transport_transition(
                 core_utils.is_transport_transition_from_waiting_pickup_waiting_pickup: handle_agv_waiting_pickup_to_waiting_pickup_transition,
             }
         case _:
+            # Transport type not supported
             raise NotImplementedError()
 
-    # Iterate through the dictionary and call the appropriate handler function
+    # Try each condition to find matching handler
     for condition, handler in transition_handlers.items():
         if condition(transport_state, transition):
             return handler(state, instance, transition, transport_state)
 
+    # No appropriate handler found
     raise NotImplementedError()
 
 
@@ -834,8 +941,9 @@ def handle_machine_transition(
     """
     Handle transitions for machine components in the state machine.
 
-    Identifies and executes the appropriate transition handler for machines
-    based on the current state and requested transition.
+    This function identifies and executes the appropriate transition handler for machines
+    based on the current state and requested transition. It maintains a dictionary
+    of transition conditions and their corresponding handler functions.
 
     Args:
         state: Current state of the system
@@ -848,8 +956,10 @@ def handle_machine_transition(
     Raises:
         NotImplementedError: If no matching handler is found for the transition
     """
+    # Get machine state
     machine = machine_type_utils.get_machine_state_by_id(state.machines, transition.component_id)
 
+    # Map of condition functions to handler functions for machine transitions
     transition_handlers = {
         core_utils.is_machine_transition_from_idle_to_setup: handle_machine_idle_to_setup_transition,
         core_utils.is_machine_transition_from_setup_to_working: handle_machine_setup_to_working_transition,
@@ -857,6 +967,7 @@ def handle_machine_transition(
         core_utils.is_machine_transition_from_outage_to_idle: handle_machine_outage_to_idle_transition,
     }
 
+    # Use the generic transition handler to find and execute the appropriate handler
     return handle_transition(state, instance, transition, machine, transition_handlers)
 
 
@@ -864,11 +975,14 @@ def extract_time(time_obj: Time | NoTime) -> int:
     """
     Extract the integer time value from a Time object or raise an error for NoTime.
 
+    This utility function safely extracts the numeric time value from a Time object,
+    or raises an error if given a NoTime object.
+
     Args:
-        time_obj: A Time object
+        time_obj: A Time or NoTime object
 
     Returns:
-        int: The time value
+        int: The time value as an integer
 
     Raises:
         NotImplementedError: If time_obj is not a Time instance

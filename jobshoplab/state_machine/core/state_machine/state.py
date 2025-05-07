@@ -3,7 +3,8 @@ Functional state machine implementation for JobShopLab.
 
 This module contains the core state machine functionality for the JobShopLab simulation.
 It handles state transitions, action processing, and determines possible transitions
-for a given state.
+for a given state. The state machine is responsible for advancing the simulation state
+according to specified transitions and time progression.
 """
 
 from dataclasses import replace
@@ -31,10 +32,11 @@ def is_done(state: StateMachineResult) -> bool:
     """
     Check if the state machine has completed all jobs.
 
-    This function checks if all operations in all jobs have been completed.
+    This function determines if all operations across all jobs have reached completion status.
+    The simulation is considered complete when all required tasks have been processed.
 
     Args:
-        state: The state machine result to check
+        state: The state machine result containing the simulation state to check
 
     Returns:
         bool: True if all operations are done, False otherwise
@@ -52,20 +54,21 @@ def apply_transition(
     Apply a transition to the state machine.
 
     This function routes the transition to the appropriate handler based on the
-    component type (machine or transport).
+    component type (machine or transport). It acts as a dispatcher that determines
+    the specific component type and calls the corresponding handler function.
 
     Args:
-        loglevel: The logging level to use
-        state: The current state of the system
-        instance: The instance configuration
-        transition: The transition to apply
+        loglevel: The logging level to use for debug information
+        state: The current state of the system containing all component states
+        instance: The instance configuration containing problem setup information
+        transition: The transition to apply, specifying component and desired state
 
     Returns:
         State: The updated state after applying the transition
 
     Raises:
-        InvalidValue: If the component ID does not exist
-        NotImplementedError: If the component type is not supported
+        InvalidValue: If the component ID does not exist in the current state
+        NotImplementedError: If the component type is not supported by any handler
     """
     logger = get_logger("state_machine", loglevel)
     _component = component_type_utils.get_comp_by_id(state, transition.component_id)
@@ -95,28 +98,32 @@ def process_state_transitions(
     Process a list of transitions for a given state.
 
     This function validates and applies each transition in sequence. If a sorting
-    function is provided, the transitions will be sorted before processing.
+    function is provided, the transitions will be sorted before processing to ensure
+    proper execution order.
 
     Args:
-        transitions: The transitions to process
-        state: The current state
+        transitions: A tuple of transitions to process sequentially
+        state: The current state of the system
         instance: The instance configuration
-        loglevel: The log level
-        sort: Optional function to sort transitions
+        loglevel: The logging level to use for debug information
+        sort: Optional function to sort transitions in a specific order
 
     Returns:
         TransitionResult: The result of processing the transitions containing
-            the updated state and any errors that occurred
+            the updated state and any errors that occurred during processing
     """
     errors: list[str] = []
 
+    # If no transitions, return the unchanged state with empty errors
     if not transitions:
         return TransitionResult(state=state, errors=errors)
 
     # Apply optional sorting function to determine transition order
     transitions = sort(transitions) if sort else transitions
 
+    # Process each transition in sequence
     for transition in transitions:
+        # Validate transition before applying
         valid, err = validate.is_transition_valid(loglevel, state, transition)
         if valid:
             state = apply_transition(loglevel, state, instance, transition)
@@ -141,11 +148,18 @@ def step(
     transitions (zero travel time) and ensures that the state machine correctly processes
     all events in the proper sequence.
 
+    The step process involves several phases:
+    1. Applying initial transitions from the action
+    2. Advancing time using the specified time machine
+    3. Processing any timed transitions that become active
+    4. Handling teleport transitions with zero travel time
+    5. Repeating the process until no more timed transitions are available
+
     Args:
-        loglevel: The logging level to use
-        instance: The instance configuration
-        config: The global configuration
-        state: The current state
+        loglevel: The logging level to use for debug information
+        instance: The instance configuration containing problem setup
+        config: The global configuration of the simulation
+        state: The current state of the system
         action: The action to apply, containing transitions and time machine
 
     Returns:
@@ -156,15 +170,17 @@ def step(
     _old_state = state
     _all_transitions = action.transitions
     sub_states = tuple()
-    # HERE IT IS IMPORTANT TO SORT THE TRANSITIONS
-    # FIRST APPLY THE TRANSPORT TRANSITIONS
-    # THEN APPLY THE MACHINE TRANSITIONS
-    # THIS ENABLES THAT A JOB CAN ARRIVE AT A MACHINE
-    # AND THEN THE MACHINE CAN START WORKING ON IT IN THE SAME TIME STEP
+    
+    # Process transitions in the action
+    # IMPORTANT: Order matters - transport transitions first, then machine transitions
+    # This enables a job to arrive at a machine and then the machine can start
+    # working on it in the same time step
     transition_result = process_state_transitions(
         action.transitions, state, instance, loglevel, core_utils.sorted_by_transport
     )
     sub_states += (transition_result.state,)
+    
+    # Handle errors from transition processing
     if transition_result.errors:
         return StateMachineResult(
             state=_old_state,
@@ -172,10 +188,11 @@ def step(
             action=action,
             success=False,
             message=f"Transition errors: {transition_result.errors}",
-            possible_transitions=(),  #! EVAL RETURN OLD VALUES
+            possible_transitions=(),
         )
     state = transition_result.state
 
+    # Advance time using the time machine specified in the action
     new_time = action.time_machine(
         loglevel=loglevel,
         current_time=state.time,
@@ -188,20 +205,20 @@ def step(
 
     state = replace(state, time=new_time)
 
+    # Process timed transitions that happen automatically
     timed_transitions = handler.create_timed_transitions(loglevel, state)
     _possible_transitions = get_possible_transitions(state, instance)
     teleport_transitions = _filter_teleport_transitions(_possible_transitions, instance, state)
 
     timed_transitions += tuple(teleport_transitions)
 
+    # Continue processing timed transitions until none are left
     while timed_transitions:
         _all_transitions += timed_transitions
 
-        # HERE IT IS IMPORTANT THAT FIRST THE MACHINE TRANSITIONS ARE APPLIED
-        # THEN THE TRANSPORT TRANSITIONS
-        # SO THAT A MACHINE CAN FINISH WORKING ON A JOB
-        # AND THEN THE JOB CAN BE TRANSPORTED IN THE SAME TIME STEP
-
+        # IMPORTANT: Order matters again, but this time machine transitions first,
+        # then transport transitions so that a machine can finish working on a job and
+        # then the job can be transported in the same time step
         transition_result = process_state_transitions(timed_transitions, state, instance, loglevel)
         if transition_result.errors:
             return StateMachineResult(
@@ -210,10 +227,11 @@ def step(
                 action=action,
                 success=False,
                 message=f"Transition errors: {transition_result.errors}",
-                possible_transitions=(),  #! EVAL RETURN OLD VALUES
+                possible_transitions=(),
             )
         state = transition_result.state
 
+        # Jump to the next event time
         new_time = time_machines.jump_to_event(
             loglevel=loglevel,
             current_time=state.time,
@@ -222,11 +240,12 @@ def step(
             machine_states=state.machines,
             transport_states=state.transports,
             buffer_states=state.buffers,
-        )  # ! Hartcoded time machine
+        )
         state = replace(state, time=new_time)
         sub_states += (state,)
         timed_transitions = handler.create_timed_transitions(loglevel, state)
 
+    # Check if all jobs are complete
     if core_utils.is_done(state):
         logger.info("State machine is done")
         running_ops = core_utils.sorted_done_operations(state.jobs)
@@ -242,6 +261,7 @@ def step(
             possible_transitions=(),
         )
 
+    # Return the final state with possible transitions
     logger.debug(f"_all_transitions: {_all_transitions}")
     possible_transitions = get_possible_transitions(state, instance)
     return StateMachineResult(
@@ -261,27 +281,30 @@ def get_possible_transitions(
     Get all possible transitions for a given state.
 
     This function identifies jobs that can be processed and transports that can
-    move jobs, then creates appropriate transitions for each.
+    move jobs, then creates appropriate transitions for each. The function examines
+    the current state to determine what actions are possible next.
 
     Args:
-        state: The current state of the system
-        instance: The instance configuration
+        state: The current state of the system containing all components
+        instance: The instance configuration with problem setup information
 
     Returns:
-        tuple[ComponentTransition, ...]: A tuple of all possible transitions
+        tuple[ComponentTransition, ...]: A tuple of all possible transitions that
+            can be executed from the current state
     """
-    # Find jobs that can be processed
+    # Find jobs that can be processed (are in the right location and ready)
     possible_jobs = tuple(
         filter(
             lambda x: possible_transition_utils.is_action_possible(x, state, instance), state.jobs
         )
     )
 
-    # Get possible transport transitions
+    # Get possible transport transitions (jobs that can be moved)
     possible_transports = possible_transition_utils.get_possible_transport_transition(
         state, instance
     )
 
+    # Create transitions for each possible job and add transport transitions
     transitions = tuple()
     for job in possible_jobs:
         next_op = job_type_utils.get_next_idle_operation(job)
@@ -294,7 +317,7 @@ def get_possible_transitions(
         )
     transitions += possible_transports
 
-    return transitions  # ? NEED TO SORT
+    return transitions
 
 
 # This section needs refactoring in the future
@@ -306,18 +329,19 @@ def _get_travel_time_for_transport(
     Calculate the travel time for a transport operation.
 
     This function determines how long it will take to transport a job from its
-    current location to the location of its next operation.
+    current location to the location of its next operation by examining the
+    logistics configuration.
 
     Args:
-        instance: The instance configuration
-        jobs: The current job states
+        instance: The instance configuration containing logistics information
+        jobs: The current job states in the system
         job_id: The ID of the job to transport
 
     Returns:
         int: The travel time in time units
 
     Raises:
-        InvalidValue: If the job ID is not found
+        InvalidValue: If the job ID is not found in the jobs collection
         InvalidTransportConfig: If no travel time is defined for the route
         NotImplementedError: If the duration type is not supported
     """
@@ -369,24 +393,26 @@ def _filter_teleport_transitions(
     Filter transitions that can happen instantaneously (teleport).
 
     This function identifies transport transitions that have zero travel time,
-    which allows them to be processed immediately (teleportation).
+    which allows them to be processed immediately within the same time step.
+    It also ensures that multiple transports don't conflict by handling the
+    same job simultaneously.
 
     Args:
-        possible_transitions: The possible transitions
+        possible_transitions: The full set of possible transitions
         instance: The instance configuration
         state: The current state
 
     Returns:
         Iterator[ComponentTransition]: Iterator of filtered teleport transitions
+        that can be executed with zero travel time
     """
 
     # Filter transitions to only include transport transitions with zero travel time
-    # TODO: This filtering could be simplified in future refactoring
     possible_transitions = tuple(
         filter(
             lambda x: all(
                 [
-                    # Only consider transport components
+                    # Only consider transport components (IDs starting with 't')
                     x.component_id.startswith("t"),
                     # Only include transitions with zero travel time
                     _get_travel_time_for_transport(instance, state.jobs, x.job_id) == 0,
