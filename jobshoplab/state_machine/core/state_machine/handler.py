@@ -38,8 +38,6 @@ from jobshoplab.utils.state_machine_utils import (
 )
 from jobshoplab.utils.state_machine_utils.time_utils import _get_travel_time_from_spec
 
-#! TODO FELIX -> add timed transitions for machines and transports
-
 
 def _waiting_time_and_op_time_differ(state, transport) -> bool:
     """
@@ -80,7 +78,7 @@ def create_timed_machine_transitions(
     transitions = []
 
     # check machines is available -> if yes -> set to idle -> release job!
-    for machine in state.machines:  # FELIX maby use sieve
+    for machine in state.machines:  #
         if isinstance(machine.occupied_till, Time) and isinstance(state.time, Time):
             if machine.occupied_till.time <= state.time.time:
                 # Set machine to idle
@@ -183,14 +181,8 @@ def create_avg_idle_to_pick_transition(
         )
         running_op_will_be_done = running_op_end_time <= extract_time(state.time)
 
-    # check if job is in post_buffer
-    # machine_state = machine_type_utils.get_machine_state_by_id(state.machines, job.loc)
-    # in_postbuffer = machine_state.postbuffer.id == job.location
-
     # check if job is ready or gets ready in the same timestep
-    if core_utils.no_processing_operations(
-        job
-    ):  # or running_op_will_be_done: note uncommented because of potential bug FELIX (empties buffer bevor outage)
+    if core_utils.no_processing_operations(job):
         transit_transition = ComponentTransition(
             component_id=transport.id,
             new_state=TransportStateState.TRANSIT,

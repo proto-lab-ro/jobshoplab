@@ -132,7 +132,7 @@ def process_state_transitions(
         return TransitionResult(state=state, errors=errors)
 
     # Apply optional sorting function to determine transition order
-    transitions = sort(transitions) if sort else transitions  # FELIX use dummy sort func
+    transitions = sort(transitions) if sort else transitions
 
     for transition in transitions:
         valid, err = validate.is_transition_valid(loglevel, state, transition)
@@ -300,7 +300,6 @@ def get_possible_transitions(
         state, instance
     )
 
-    # FELIX make dedicated func
     transitions = tuple()
     for job in possible_jobs:
         next_op = job_type_utils.get_next_idle_operation(job)

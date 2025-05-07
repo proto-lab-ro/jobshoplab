@@ -189,7 +189,7 @@ def _get_setup_duration(
     Returns:
         Time: The setup time.
     """
-    #!FELIX add setuptime outages and stochastic times here (simply mod duration)
+
     new_tool = operation_config.tool
     old_tool = machine_state.mounted_tool
     s_time = machine_config.setup_times.get((old_tool, new_tool))
@@ -272,7 +272,6 @@ def begin_machine_setup(
 
     job_state = possible_transition_utils.replace_job_operation_state(job_state, op_state)
 
-    #!FELIX thise block needs to move to some other state transition function
     # #################################################
     # put job from prebuffer to machine buffer
     prebuffer = buffer_type_utils.remove_from_buffer(machine_state.prebuffer, job_state.id)

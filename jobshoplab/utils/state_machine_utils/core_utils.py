@@ -73,23 +73,6 @@ def no_processing_operations(job: JobState) -> bool:
     return True
 
 
-#######FELIX old
-# def is_machine_transition_from_idle_to_working(machine: MachineState, transition):
-#     return (
-#         machine.state == MachineStateState.IDLE
-#         and transition.new_state == MachineStateState.WORKING
-#     )
-
-
-# def is_machine_transition_from_working_to_idle(machine, transition):
-#     return (
-#         machine.state == MachineStateState.WORKING
-#         and transition.new_state == MachineStateState.IDLE
-# )
-
-## Machine transitions checker
-
-
 def is_machine_transition_from_idle_to_setup(machine: MachineState, transition):
     return (
         machine.state == MachineStateState.IDLE and transition.new_state == MachineStateState.SETUP
