@@ -8,7 +8,7 @@ from jobshoplab.env.factories.actions import ActionFactory
 from jobshoplab.env.factories.observations import ObservationFactory
 from jobshoplab.env.factories.rewards import RewardFactory
 from jobshoplab.state_machine.middleware.middleware import Middleware
-from jobshoplab.utils.exceptions import EnvDone
+from jobshoplab.utils.exceptions import EnvDone, ConfigurationError
 
 
 def test_component_builder(test_config):
@@ -27,7 +27,7 @@ def test_component_builder(test_config):
 
 
 def test_constructor_invalid_config(mock_invalid_config):
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigurationError):
         JobShopLabEnv(config=mock_invalid_config)
 
 
