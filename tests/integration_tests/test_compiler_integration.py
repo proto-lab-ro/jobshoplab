@@ -4,14 +4,8 @@ import pytest
 
 from jobshoplab.compiler import manipulators, repos
 from jobshoplab.compiler.compiler import Compiler
-from jobshoplab.types import Config, InstanceConfig, State
-from jobshoplab.utils.exceptions import (
-    DslSyntaxError,
-    FileNotFound,
-    InvalidValue,
-    NotImplementedError,
-    InstanceSchemaError,
-)
+from jobshoplab.types import InstanceConfig, State
+from jobshoplab.utils.exceptions import FileNotFound, InstanceSchemaError
 from jobshoplab.utils.load_config import load_config
 
 

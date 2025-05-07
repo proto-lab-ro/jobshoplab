@@ -3,7 +3,8 @@ from dataclasses import replace
 from jobshoplab.types.instance_config_types import MachineConfig
 from jobshoplab.types.state_types import BufferState, MachineState
 from jobshoplab.utils.exceptions import InvalidValue
-from jobshoplab.utils.state_machine_utils.component_type_utils import get_obj_by_id
+from jobshoplab.utils.state_machine_utils.component_type_utils import \
+    get_obj_by_id
 
 
 def get_machine_state_by_id(machines: tuple[MachineState, ...], machine_id: str) -> MachineState:

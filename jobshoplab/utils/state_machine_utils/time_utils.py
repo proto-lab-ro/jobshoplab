@@ -1,5 +1,6 @@
 from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.types.state_types import DeterministicTimeConfig, StochasticTimeConfig
+from jobshoplab.types.state_types import (DeterministicTimeConfig,
+                                          StochasticTimeConfig)
 
 
 def _get_travel_time_from_spec(
@@ -8,7 +9,7 @@ def _get_travel_time_from_spec(
     if transport_source.startswith("m") or transport_destination.startswith("m"):
         travel_time = instance.logistics.travel_times.get((transport_source, transport_destination))
         match travel_time:
-            case DeterministicTimeConfig():  # @ FELIX ADD STOCHASTIC TIME and Breakdown
+            case DeterministicTimeConfig():
                 return travel_time.time
             case StochasticTimeConfig():
                 travel_time.update()

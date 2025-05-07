@@ -3,17 +3,11 @@ from dataclasses import replace
 import pytest
 
 from jobshoplab.state_machine.core.state_machine.manipulate import (
-    begin_next_job_on_machine,
-    complete_active_operation_on_machine,
-    complete_transport_task,
-)
-from jobshoplab.types.state_types import (
-    MachineStateState,
-    NoTime,
-    OperationStateState,
-    Time,
-    TransportStateState,
-)
+    begin_next_job_on_machine, complete_active_operation_on_machine,
+    complete_transport_task)
+from jobshoplab.types.state_types import (MachineStateState, NoTime,
+                                          OperationStateState, Time,
+                                          TransportStateState)
 from jobshoplab.utils.exceptions import InvalidValue, NotImplementedError
 
 

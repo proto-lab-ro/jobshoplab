@@ -1,14 +1,10 @@
-from functools import partial
-from unittest.mock import Mock
-
 from jobshoplab.env.factories.actions import BinaryJobActionFactory
-from jobshoplab.env.factories.observations import BinaryActionObservationFactory
+from jobshoplab.env.factories.observations import \
+    BinaryActionObservationFactory
 from jobshoplab.state_machine.core.state_machine import step
-from jobshoplab.state_machine.middleware.middleware import EventBasedBinaryActionMiddleware
-from jobshoplab.state_machine.time_machines import force_jump_to_event, jump_to_event
-from jobshoplab.types import Time
-from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
-from jobshoplab.types.state_types import BufferStateState, MachineStateState, StateMachineResult
+from jobshoplab.state_machine.middleware.middleware import \
+    EventBasedBinaryActionMiddleware
+from jobshoplab.types.state_types import BufferStateState
 
 
 def test_event_based_middleware_integration_reset(config, default_instance, default_init_state):

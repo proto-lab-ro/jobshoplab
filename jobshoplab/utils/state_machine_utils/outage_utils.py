@@ -1,21 +1,16 @@
 from typing import Iterable
 
 from jobshoplab.types.instance_config_types import InstanceConfig, OutageConfig
-from jobshoplab.types.state_types import (
-    DeterministicTimeConfig,
-    MachineState,
-    NoTime,
-    OutageActive,
-    OutageInactive,
-    OutageState,
-    State,
-    StochasticTimeConfig,
-    Time,
-    TransportState,
-)
+from jobshoplab.types.state_types import (DeterministicTimeConfig,
+                                          MachineState, NoTime, OutageActive,
+                                          OutageInactive, OutageState,
+                                          StochasticTimeConfig, Time,
+                                          TransportState)
 from jobshoplab.utils.exceptions import InvalidType
-from jobshoplab.utils.state_machine_utils.machine_type_utils import get_machine_config_by_id
-from jobshoplab.utils.state_machine_utils.transport_type_utils import get_transport_config_by_id
+from jobshoplab.utils.state_machine_utils.machine_type_utils import \
+    get_machine_config_by_id
+from jobshoplab.utils.state_machine_utils.transport_type_utils import \
+    get_transport_config_by_id
 
 
 def _get_duration(current_time, outage_state: OutageState):

@@ -8,24 +8,12 @@ from heracless import load_config
 from jobshoplab.compiler import Compiler
 from jobshoplab.env.factories import observations, rewards
 from jobshoplab.env.factories.actions import ActionFactory
-from jobshoplab.types import Config, State
-from jobshoplab.types.instance_config_types import (
-    DeterministicTimeConfig,
-    InstanceConfig,
-    JobConfig,
-    MachineConfig,
-    OutageConfig,
-    OutageTypeConfig,
-    Product,
-    StochasticTimeConfig,
-)
-from jobshoplab.types.stochasticy_models import (
-    BetaFunction,
-    GammaFunction,
-    GaussianFunction,
-    PoissonFunction,
-)
-from tests.conftest import default_instance
+from jobshoplab.types.instance_config_types import (DeterministicTimeConfig,
+                                                    OutageConfig,
+                                                    OutageTypeConfig)
+from jobshoplab.types.stochasticy_models import (BetaFunction, GammaFunction,
+                                                 GaussianFunction,
+                                                 PoissonFunction)
 
 
 @pytest.fixture
@@ -249,7 +237,7 @@ def instance_with_stochastic_transport_times(default_instance_with_intralogistic
 def instance_with_static_setup_times(default_instance, default_products):
     from dataclasses import replace
 
-    from jobshoplab.types.instance_config_types import DeterministicTimeConfig, Product
+    from jobshoplab.types.instance_config_types import DeterministicTimeConfig
 
     # Create tool-based setup times for each machine
     modified_machines = []

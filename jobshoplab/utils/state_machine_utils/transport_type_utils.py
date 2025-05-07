@@ -1,6 +1,7 @@
 from jobshoplab.types.instance_config_types import TransportConfig
 from jobshoplab.types.state_types import TransportState, TransportStateState
-from jobshoplab.utils.state_machine_utils.component_type_utils import get_obj_by_id
+from jobshoplab.utils.state_machine_utils.component_type_utils import \
+    get_obj_by_id
 
 
 def get_transport_state_by_id(

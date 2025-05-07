@@ -1,12 +1,10 @@
 from dataclasses import replace
-from jobshoplab.utils.state_machine_utils import machine_type_utils
+
 from jobshoplab.state_machine.core.state_machine.handler import *
 from jobshoplab.types import NoTime, Time
-from jobshoplab.types.state_types import (
-    MachineStateState,
-    OperationStateState,
-    TransportStateState,
-)
+from jobshoplab.types.state_types import (MachineStateState,
+                                          OperationStateState,
+                                          TransportStateState)
 from jobshoplab.utils.state_machine_utils import machine_type_utils
 
 

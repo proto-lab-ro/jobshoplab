@@ -1,12 +1,11 @@
 import pytest
 
-from jobshoplab.compiler.validators import SimpleDSLValidator as InstanceDSLValidator
-from jobshoplab.utils.exceptions import (
-    InstanceSchemaError,
-    InvalidFieldValueError,
-    JobSpecificationSyntaxError,
-    MissingRequiredFieldError,
-)
+from jobshoplab.compiler.validators import \
+    SimpleDSLValidator as InstanceDSLValidator
+from jobshoplab.utils.exceptions import (InstanceSchemaError,
+                                         InvalidFieldValueError,
+                                         JobSpecificationSyntaxError,
+                                         MissingRequiredFieldError)
 
 
 def test_validator_init(test_config):

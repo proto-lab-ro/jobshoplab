@@ -1,31 +1,17 @@
-import pytest
 from dataclasses import replace
 
 from jobshoplab.state_machine.core.state_machine.handler import (
-    create_timed_machine_transitions,
-    create_timed_transport_transitions,
-    handle_machine_working_to_outage_transition,
+    create_timed_machine_transitions, create_timed_transport_transitions,
     handle_machine_outage_to_idle_transition,
-)
-from jobshoplab.types import NoTime, State, Time
-from jobshoplab.types.instance_config_types import InstanceConfig, OutageConfig
-from jobshoplab.types.state_types import (
-    BufferState,
-    MachineState,
-    MachineStateState,
-    OutageActive,
-    OutageInactive,
-    OutageState,
-    TransportLocation,
-    TransportState,
-    TransportStateState,
-    BufferStateState,
-)
-from jobshoplab.utils.state_machine_utils import (
-    machine_type_utils,
-    outage_utils,
-    transport_type_utils,
-)
+    handle_machine_working_to_outage_transition)
+from jobshoplab.types import NoTime, Time
+from jobshoplab.types.state_types import (BufferState, BufferStateState,
+                                          MachineState, MachineStateState,
+                                          OutageActive, OutageInactive,
+                                          OutageState, TransportLocation,
+                                          TransportState, TransportStateState)
+from jobshoplab.utils.state_machine_utils import (machine_type_utils,
+                                                  outage_utils)
 
 
 class TestDeterministicMachineOutages:
@@ -231,7 +217,7 @@ class TestStochasticMachineOutages:
         current_time = Time(10)
         # Set frequency to ensure outage is applied
         stochastic_outage_config_fail.frequency.time = 1  # Force frequency to small value
-        
+
         # Update the machine state to include the correct outage ID
         machine_state = replace(
             machine_state_with_inactive_outage,
@@ -252,7 +238,7 @@ class TestStochasticMachineOutages:
                 stochastic_outage_config_fail, machine_state, current_time
             )
             outage_states.append(outage_state)
-            
+
             # Check if outage is active before trying to access end_time
             if isinstance(outage_state.active, OutageActive):
                 durations.append(
@@ -260,11 +246,13 @@ class TestStochasticMachineOutages:
                 )
 
         # Assert - verify stochastic behavior
-        assert any(isinstance(os.active, OutageActive) for os in outage_states), "No active outages were created"
-        
+        assert any(
+            isinstance(os.active, OutageActive) for os in outage_states
+        ), "No active outages were created"
+
         # Comment: The stochastic model sometimes doesn't generate enough variation in our test
         # This makes these tests potentially flaky.
-        # If there are durations, we'd ideally expect different values, but we can't 
+        # If there are durations, we'd ideally expect different values, but we can't
         # reliably test for this without making the test potentially flaky
         if durations:
             # Note: For testing, we'll accept a single value as valid
@@ -302,7 +290,9 @@ class TestStochasticMachineOutages:
         ), "Stochastic frequencies should produce different values"
         # We can't deterministically assert true/false for apply_based_on_frequency because it's stochastic
         # but we can at least check we got some variety in the results over multiple samples
-        assert len(set(applications)) >= 1, "Should get at least some variation in application results"
+        assert (
+            len(set(applications)) >= 1
+        ), "Should get at least some variation in application results"
         # But we can verify that we got at least one application since we're testing at the threshold
         assert any(applications), "Stochastic frequency should sometimes result in application"
 
@@ -317,7 +307,7 @@ class TestStochasticMachineOutages:
         # Force frequencies to ensure outages are applied
         stochastic_outage_config_fail.frequency.time = 1
         stochastic_outage_config_maintenance.frequency.time = 1
-        
+
         machine_state = MachineState(
             id="m-1",
             buffer=BufferState(id="b-test3", state=BufferStateState.EMPTY, store=()),
@@ -350,9 +340,9 @@ class TestStochasticMachineOutages:
         # Assert - verify IDs match
         assert fail_outage.id == stochastic_outage_config_fail.id
         assert maintenance_outage.id == stochastic_outage_config_maintenance.id
-        
+
         # Note: Due to stochastic nature, we can't always assert these will be active
-        # Uncomment for debugging: 
+        # Uncomment for debugging:
         # print(f"Fail outage active: {isinstance(fail_outage.active, OutageActive)}")
         # print(f"Maintenance outage active: {isinstance(maintenance_outage.active, OutageActive)}")
 
@@ -556,7 +546,7 @@ class TestStochasticTransportOutages:
         current_time = Time(10)
         # Force frequencies to ensure outages are applied
         stochastic_outage_config_fail.frequency.time = 1
-        
+
         # Update the transport state to include the correct outage ID
         transport_state = replace(
             transport_state_with_inactive_outage,
@@ -577,7 +567,7 @@ class TestStochasticTransportOutages:
                 stochastic_outage_config_fail, transport_state, current_time
             )
             outage_states.append(outage_state)
-            
+
             # Check if outage is active before trying to access end_time
             if isinstance(outage_state.active, OutageActive):
                 durations.append(
@@ -585,11 +575,13 @@ class TestStochasticTransportOutages:
                 )
 
         # Assert - verify stochastic behavior
-        assert any(isinstance(os.active, OutageActive) for os in outage_states), "No active outages were created"
-        
+        assert any(
+            isinstance(os.active, OutageActive) for os in outage_states
+        ), "No active outages were created"
+
         # Comment: The stochastic model sometimes doesn't generate enough variation in our test
         # This makes these tests potentially flaky.
-        # If there are durations, we'd ideally expect different values, but we can't 
+        # If there are durations, we'd ideally expect different values, but we can't
         # reliably test for this without making the test potentially flaky
         if durations:
             # Note: For testing, we'll accept a single value as valid
@@ -627,7 +619,9 @@ class TestStochasticTransportOutages:
         ), "Stochastic frequencies should produce different values"
         # We can't deterministically assert true/false for apply_based_on_frequency because it's stochastic
         # but we can at least check we got some variety in the results over multiple samples
-        assert len(set(applications)) >= 1, "Should get at least some variation in application results"
+        assert (
+            len(set(applications)) >= 1
+        ), "Should get at least some variation in application results"
 
     def test_multiple_transport_outage_types_stochastic(
         self, stochastic_outage_config_fail, stochastic_outage_config_recharge
@@ -640,7 +634,7 @@ class TestStochasticTransportOutages:
         # Force frequencies to ensure outages are applied
         stochastic_outage_config_fail.frequency.time = 1
         stochastic_outage_config_recharge.frequency.time = 1
-        
+
         buffer_state = BufferState(id="b-test", state=BufferStateState.EMPTY, store=())
         transport_state = TransportState(
             id="t-1",
@@ -672,9 +666,9 @@ class TestStochasticTransportOutages:
         # Assert - verify correct IDs
         assert fail_outage.id == stochastic_outage_config_fail.id
         assert recharge_outage.id == stochastic_outage_config_recharge.id
-        
+
         # Note: Due to stochastic nature, we can't always assert these will be active
-        # Uncomment for debugging: 
+        # Uncomment for debugging:
         # print(f"Fail outage active: {isinstance(fail_outage.active, OutageActive)}")
         # print(f"Recharge outage active: {isinstance(recharge_outage.active, OutageActive)}")
 
@@ -718,10 +712,10 @@ class TestOutageUtils:
         # Create a mock instance config with the machine config
         # Commenting this out as InstanceConfig API changed and test needs to be reworked
         # instance_config = InstanceConfig(...)
-        # 
+        #
         # TODO: Update this test to match the current InstanceConfig API which requires:
         # description, instance, logistics, machines, buffers, transports
-        
+
         # For now, skip the test by returning early
         return
 
@@ -782,10 +776,10 @@ class TestOutageUtils:
         # Create a mock instance config with the machine config
         # Commenting this out as InstanceConfig API changed and test needs to be reworked
         # instance_config = InstanceConfig(...)
-        # 
+        #
         # TODO: Update this test to match the current InstanceConfig API which requires:
         # description, instance, logistics, machines, buffers, transports
-        
+
         # For now, skip the test by returning early
         return
 

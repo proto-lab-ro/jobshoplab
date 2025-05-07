@@ -15,12 +15,9 @@ from dash import Dash, Input, Output, dcc, html
 from plotly import colors as plotly_colors
 
 from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.types.state_types import (
-    NoTime,
-    OperationStateState,
-    StateMachineResult,
-    TransportStateState,
-)
+from jobshoplab.types.state_types import (NoTime, OperationStateState,
+                                          StateMachineResult,
+                                          TransportStateState)
 from jobshoplab.utils.exceptions import FileNotFound
 from jobshoplab.utils.logger import get_logger
 

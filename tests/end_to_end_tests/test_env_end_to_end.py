@@ -1,23 +1,13 @@
 import os
-from dataclasses import replace
 from pathlib import Path
-
-import numpy as np
 
 from jobshoplab import JobShopLabEnv
 from jobshoplab.compiler import Compiler
-from jobshoplab.compiler.repos import SpecRepository, DslRepository
-from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.types.state_types import (
-    JobState,
-    OperationStateState,
-    MachineStateState,
-    OutageActive,
-)
+from jobshoplab.compiler.repos import DslRepository, SpecRepository
+from jobshoplab.types.state_types import MachineStateState
 from jobshoplab.utils import solutions
 from jobshoplab.utils.load_config import Config
 from jobshoplab.utils.utils import get_id_int
-
 
 # def test_env_end_to_end3x3_multi_discrete_conf0(multi_discrete_conf0):
 #     instances = ["3x3", "ft06", "dmu35"]

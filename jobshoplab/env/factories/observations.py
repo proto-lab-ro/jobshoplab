@@ -8,22 +8,15 @@ import gymnasium as gym
 import numpy as np
 
 from jobshoplab.types import ComponentTransition, Config, InstanceConfig, State
-from jobshoplab.types.state_types import (
-    JobState,
-    MachineState,
-    MachineStateState,
-    OperationState,
-    OperationStateState,
-    StateMachineResult,
-)
+from jobshoplab.types.state_types import (JobState, MachineState,
+                                          MachineStateState, OperationState,
+                                          OperationStateState,
+                                          StateMachineResult)
 from jobshoplab.utils.exceptions import InvalidValue
 from jobshoplab.utils.logger import get_logger
-from jobshoplab.utils.utils import (
-    get_component_id_int,
-    get_component_type_int,
-    get_id_int,
-    get_max_allowed_time,
-)
+from jobshoplab.utils.utils import (get_component_id_int,
+                                    get_component_type_int, get_id_int,
+                                    get_max_allowed_time)
 
 Observation = type("Observation", (object,), {})
 

@@ -1,12 +1,9 @@
 import numpy as np
 import pytest
 
-from jobshoplab.types.stochasticy_models import (
-    BetaFunction,
-    GammaFunction,
-    GaussianFunction,
-    PoissonFunction,
-)
+from jobshoplab.types.stochasticy_models import (BetaFunction, GammaFunction,
+                                                 GaussianFunction,
+                                                 PoissonFunction)
 
 
 # Helper function that mimics the _update_random_generator process.

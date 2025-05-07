@@ -1,17 +1,10 @@
-from dataclasses import replace
-
 import pytest
 
 from jobshoplab.env.factories.actions import BinaryJobActionFactory
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
-from jobshoplab.types.state_types import (
-    MachineState,
-    MachineStateState,
-    OperationStateState,
-    TransportState,
-    TransportStateState,
-)
+from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
+                                           ComponentTransition)
+from jobshoplab.types.state_types import MachineStateState
 from jobshoplab.utils.exceptions import ActionOutOfActionSpace
 
 

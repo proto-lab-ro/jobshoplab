@@ -6,37 +6,28 @@ for machines and transports in the JobShopLab simulation.
 """
 
 from dataclasses import replace
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import jobshoplab.state_machine.core.state_machine.manipulate as manipulate
 import jobshoplab.utils.state_machine_utils.core_utils as core_utils
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.instance_config_types import (
-    BufferConfig,
-    StochasticTimeConfig,
-    TransportTypeConfig,
-)
-from jobshoplab.types.state_types import (
-    BufferState,
-    DeterministicTimeConfig,
-    MachineState,
-    MachineStateState,
-    NoTime,
-    Time,
-    TransportState,
-    TransportStateState,
-)
+from jobshoplab.types.instance_config_types import (BufferConfig,
+                                                    StochasticTimeConfig,
+                                                    TransportTypeConfig)
+from jobshoplab.types.state_types import (BufferState, DeterministicTimeConfig,
+                                          MachineState, MachineStateState,
+                                          NoTime, Time, TransportState,
+                                          TransportStateState)
 from jobshoplab.utils.exceptions import InvalidValue, NotImplementedError
-from jobshoplab.utils.state_machine_utils import (
-    buffer_type_utils,
-    job_type_utils,
-    machine_type_utils,
-    outage_utils,
-    possible_transition_utils,
-    transport_type_utils,
-)
-from jobshoplab.utils.state_machine_utils.time_utils import _get_travel_time_from_spec
+from jobshoplab.utils.state_machine_utils import (buffer_type_utils,
+                                                  job_type_utils,
+                                                  machine_type_utils,
+                                                  outage_utils,
+                                                  possible_transition_utils,
+                                                  transport_type_utils)
+from jobshoplab.utils.state_machine_utils.time_utils import \
+    _get_travel_time_from_spec
 
 
 def _waiting_time_and_op_time_differ(state, transport) -> bool:

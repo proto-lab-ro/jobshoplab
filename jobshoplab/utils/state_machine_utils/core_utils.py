@@ -1,15 +1,10 @@
 from jobshoplab.types import State
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.state_types import (
-    JobState,
-    MachineState,
-    MachineStateState,
-    OperationState,
-    OperationStateState,
-    TransportLocation,
-    TransportState,
-    TransportStateState,
-)
+from jobshoplab.types.state_types import (JobState, MachineState,
+                                          MachineStateState, OperationState,
+                                          OperationStateState,
+                                          TransportLocation, TransportState,
+                                          TransportStateState)
 from jobshoplab.utils.state_machine_utils import job_type_utils
 
 

@@ -5,7 +5,6 @@ import threading
 import time
 from functools import partial
 
-import keyboard
 import readchar
 from readchar import key
 from rich.columns import Columns

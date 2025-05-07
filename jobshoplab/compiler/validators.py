@@ -1,17 +1,15 @@
 import re
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from jobshoplab.types import Config
 from jobshoplab.utils import get_logger
-from jobshoplab.utils.exceptions import (
-    InstanceSchemaError,
-    InvalidFieldValueError,
-    JobSpecificationSyntaxError,
-    MissingRequiredFieldError,
-    NotImplementedError,
-)
+from jobshoplab.utils.exceptions import (InstanceSchemaError,
+                                         InvalidFieldValueError,
+                                         JobSpecificationSyntaxError,
+                                         MissingRequiredFieldError,
+                                         NotImplementedError)
 
 
 class AbstractValidator(ABC):

@@ -1,5 +1,6 @@
-from jobshoplab.state_machine.time_machines import force_jump_to_event, jump_by_one, jump_to_event
-from jobshoplab.types.state_types import FailTime, NoTime, Time
+from jobshoplab.state_machine.time_machines import (force_jump_to_event,
+                                                    jump_by_one, jump_to_event)
+from jobshoplab.types.state_types import NoTime, Time
 
 
 def test_jump_by_one():

@@ -1,20 +1,11 @@
-import tempfile
-from functools import partial
-from pathlib import Path
-
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
-from heracless import load_config
 
 from jobshoplab.env.env import JobShopLabEnv
 from jobshoplab.env.factories.observations import (
-    BinaryActionObservationFactory,
-    BinaryOperationArrayObservation,
-    SimpleJsspObservationFactory,
-)
-from jobshoplab.state_machine.core.state_machine import step
-from jobshoplab.state_machine.time_machines import jump_to_event
+    BinaryActionObservationFactory, BinaryOperationArrayObservation,
+    SimpleJsspObservationFactory)
 
 
 def test_simple_jssp_of_space(target_simple_jssp_obs_space, default_instance):

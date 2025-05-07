@@ -1,6 +1,7 @@
 from typing import Iterable
 
-from jobshoplab.types import JobConfig, JobState, OperationConfig, OperationState
+from jobshoplab.types import (JobConfig, JobState, OperationConfig,
+                              OperationState)
 from jobshoplab.types.state_types import MachineState, OperationStateState
 from jobshoplab.utils.exceptions import InvalidValue
 

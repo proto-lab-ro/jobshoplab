@@ -4,14 +4,17 @@ from functools import partial
 from logging import Logger
 from typing import Any, Callable, Protocol, TypeAlias, Union
 
-from jobshoplab.env.factories.actions import ActionFactory, BinaryJobActionFactory
+from jobshoplab.env.factories.actions import (ActionFactory,
+                                              BinaryJobActionFactory)
 from jobshoplab.env.factories.observations import *
 from jobshoplab.state_machine.core.state_machine import step
-from jobshoplab.state_machine.time_machines import force_jump_to_event, jump_to_event
+from jobshoplab.state_machine.time_machines import (force_jump_to_event,
+                                                    jump_to_event)
 from jobshoplab.types import Config, InstanceConfig, State, StateMachineResult
 from jobshoplab.types.action_types import Action, ActionFactoryInfo
 from jobshoplab.utils import get_logger
-from jobshoplab.utils.exceptions import InvalidValue, UnsuccessfulStateMachineResult
+from jobshoplab.utils.exceptions import (InvalidValue,
+                                         UnsuccessfulStateMachineResult)
 
 
 class StableBaselines3ActionProtocol(Protocol):

@@ -1,5 +1,5 @@
-from jobshoplab.utils.exceptions import NotImplementedError
 from jobshoplab.types.state_types import TransportStateState
+from jobshoplab.utils.exceptions import NotImplementedError
 
 
 class StateEnum:

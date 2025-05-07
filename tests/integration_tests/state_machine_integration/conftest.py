@@ -1,22 +1,16 @@
 import sys
 from dataclasses import replace
 
-import numpy as np
 import pytest
 
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import (
-    Action,
-    ActionFactoryInfo,
-    ComponentTransition,
-    TransportStateState,
-)
-from jobshoplab.types.instance_config_types import (
-    BufferConfig,
-    BufferTypeConfig,
-    DeterministicTimeConfig,
-    InstanceConfig,
-)
+from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
+                                           ComponentTransition,
+                                           TransportStateState)
+from jobshoplab.types.instance_config_types import (BufferConfig,
+                                                    BufferTypeConfig,
+                                                    DeterministicTimeConfig,
+                                                    InstanceConfig)
 from jobshoplab.types.state_types import BufferState, BufferStateState, State
 
 

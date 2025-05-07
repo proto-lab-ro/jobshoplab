@@ -5,7 +5,8 @@ from dataclasses import replace
 
 import numpy as np
 
-from jobshoplab.types import Config, DeterministicTimeConfig, InstanceConfig, State
+from jobshoplab.types import (Config, DeterministicTimeConfig, InstanceConfig,
+                              State)
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import NotImplementedError
 

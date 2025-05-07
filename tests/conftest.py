@@ -9,44 +9,27 @@ import numpy as np
 import pytest
 from heracless import load_config
 
-from jobshoplab.state_machine.time_machines import force_jump_to_event, jump_by_one, jump_to_event
-from jobshoplab.types.action_types import (
-    Action,
-    ActionFactoryInfo,
-    ComponentState,
-    ComponentTransition,
-)
-from jobshoplab.types.instance_config_types import (
-    BufferConfig,
-    BufferTypeConfig,
-    DeterministicTimeConfig,
-    InstanceConfig,
-    JobConfig,
-    LogisticsConfig,
-    MachineConfig,
-    OperationConfig,
-    ProblemInstanceConfig,
-    ProblemInstanceTypeConfig,
-    Product,
-    TransportConfig,
-    TransportTypeConfig,
-)
-from jobshoplab.types.state_types import (
-    BufferState,
-    BufferStateState,
-    JobState,
-    MachineState,
-    MachineStateState,
-    NoTime,
-    OperationState,
-    OperationStateState,
-    State,
-    StateMachineResult,
-    Time,
-    TransportLocation,
-    TransportState,
-    TransportStateState,
-)
+from jobshoplab.state_machine.time_machines import jump_to_event
+from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
+                                           ComponentTransition)
+from jobshoplab.types.instance_config_types import (BufferConfig,
+                                                    BufferTypeConfig,
+                                                    DeterministicTimeConfig,
+                                                    InstanceConfig, JobConfig,
+                                                    LogisticsConfig,
+                                                    MachineConfig,
+                                                    OperationConfig,
+                                                    ProblemInstanceConfig,
+                                                    ProblemInstanceTypeConfig,
+                                                    Product, TransportConfig,
+                                                    TransportTypeConfig)
+from jobshoplab.types.state_types import (BufferState, BufferStateState,
+                                          JobState, MachineState,
+                                          MachineStateState, NoTime,
+                                          OperationState, OperationStateState,
+                                          State, StateMachineResult, Time,
+                                          TransportLocation, TransportState,
+                                          TransportStateState)
 
 
 @pytest.fixture
@@ -141,9 +124,10 @@ def config_full_feature_3x3():
     temp_file = tempfile.NamedTemporaryFile(delete=False).name
     # Use the test_config_end_to_end.yaml with our special instance
     config = load_config(Path("tests/data/test_config_end_to_end.yaml"), Path(temp_file), True)
-    
-    # Override the instance path 
+
+    # Override the instance path
     from dataclasses import replace
+
     config = replace(
         config,
         compiler=replace(

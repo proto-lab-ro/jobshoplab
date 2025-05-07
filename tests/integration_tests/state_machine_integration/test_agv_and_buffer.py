@@ -1,15 +1,9 @@
-from functools import partial
-
 from jobshoplab.state_machine.core.state_machine.state import step
-from jobshoplab.state_machine.time_machines import jump_by_one, jump_to_event
-from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
-from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.types.state_types import (
-    BufferStateState,
-    OperationStateState,
-    State,
-    TransportStateState,
-)
+from jobshoplab.state_machine.time_machines import jump_to_event
+from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
+                                           ComponentTransition)
+from jobshoplab.types.state_types import (OperationStateState, State,
+                                          TransportStateState)
 
 
 def get_next_action(state: State):

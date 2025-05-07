@@ -1,21 +1,14 @@
 from typing import Any
 
 from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.types.state_types import (
-    BufferState,
-    FailTime,
-    JobState,
-    MachineState,
-    NoTime,
-    OperationStateState,
-    State,
-    Time,
-    TransportState,
-    TransportStateState,
-)
+from jobshoplab.types.state_types import (BufferState, FailTime, JobState,
+                                          MachineState, NoTime,
+                                          OperationStateState, State, Time,
+                                          TransportState, TransportStateState)
 from jobshoplab.utils.logger import get_logger
 from jobshoplab.utils.state_machine_utils import job_type_utils
-from jobshoplab.utils.state_machine_utils.possible_transition_utils import get_num_possible_events
+from jobshoplab.utils.state_machine_utils.possible_transition_utils import \
+    get_num_possible_events
 
 
 def jump_by_one(

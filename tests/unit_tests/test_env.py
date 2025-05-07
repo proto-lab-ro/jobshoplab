@@ -8,8 +8,7 @@ from jobshoplab.env.factories.actions import ActionFactory
 from jobshoplab.env.factories.observations import ObservationFactory
 from jobshoplab.env.factories.rewards import RewardFactory
 from jobshoplab.state_machine.middleware.middleware import Middleware
-from jobshoplab.types.state_types import State
-from jobshoplab.utils.exceptions import EnvDone, NotImplementedError
+from jobshoplab.utils.exceptions import EnvDone
 
 
 def test_component_builder(test_config):

@@ -1,13 +1,16 @@
 from typing import Tuple
 
 import jobshoplab.utils.state_machine_utils.core_utils as core_utils
-from jobshoplab.state_machine.core.transitions import MachineTransition, TransportTransition
+from jobshoplab.state_machine.core.transitions import (MachineTransition,
+                                                       TransportTransition)
 from jobshoplab.types import State
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.state_types import BufferState, MachineState, TransportState
+from jobshoplab.types.state_types import (BufferState, MachineState,
+                                          TransportState)
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import NotImplementedError
-from jobshoplab.utils.state_machine_utils import component_type_utils, job_type_utils
+from jobshoplab.utils.state_machine_utils import (component_type_utils,
+                                                  job_type_utils)
 
 
 def is_machine_transition_valid(

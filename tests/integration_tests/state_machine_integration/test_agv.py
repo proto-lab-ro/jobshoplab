@@ -1,28 +1,11 @@
 from dataclasses import replace
 
-import pytest
-
 from jobshoplab.state_machine.core.state_machine import step
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
-from jobshoplab.types.instance_config_types import (
-    DeterministicTimeConfig,
-    JobConfig,
-    OperationConfig,
-)
-from jobshoplab.types.state_types import (
-    BufferState,
-    BufferStateState,
-    JobState,
-    MachineState,
-    MachineStateState,
-    OperationState,
-    OperationStateState,
-    State,
-    Time,
-    TransportLocation,
-    TransportStateState,
-)
+from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
+                                           ComponentTransition)
+from jobshoplab.types.state_types import (MachineStateState, Time,
+                                          TransportStateState)
 
 
 def test_start_agv_job0_to_machine0(agv_instance, default_init_state, config, agv_transition):
@@ -62,7 +45,7 @@ def test_start_start_j0_at_m0(agv_instance, default_init_state, config, agv_tran
         time_machine=jump_to_event,
     )
 
-    # The original test expected a ValueError, but the validation doesn't 
+    # The original test expected a ValueError, but the validation doesn't
     # check if the job is at the correct machine, so remove this expectation
     state_result = step(
         loglevel="DEBUG",
@@ -75,29 +58,27 @@ def test_start_start_j0_at_m0(agv_instance, default_init_state, config, agv_tran
     # Skip this part since it's causing an error with job at m-1 location
     # The test was already modified to not expect the ValueError,
     # but we also need to skip trying to start the transport with job0 at m-1
-    
+
     # Create a new job state with the job at the machine where it's supposed to be
     job0 = replace(default_init_state.jobs[0], location="m-0")
     modified_state = replace(default_init_state, jobs=(job0, *default_init_state.jobs[1:]))
-    
+
     # Simulate a successful transport operation where job is loaded on the transport (t-0)
     job0_on_transport = replace(job0, location="t-0")
-    transport0_with_job = replace(default_init_state.transports[0], 
-                                occupied_till=Time(5),
-                                transport_job="j-0")
-    
+    transport0_with_job = replace(
+        default_init_state.transports[0], occupied_till=Time(5), transport_job="j-0"
+    )
+
     modified_state_with_transport = replace(
         modified_state,
         jobs=(job0_on_transport, *modified_state.jobs[1:]),
         transports=(transport0_with_job, *modified_state.transports[1:]),
-        time=Time(5)
+        time=Time(5),
     )
-    
+
     # Create result directly without using StateMachineResult class
     state_result = replace(
-        state_result,  # Reuse the existing result 
-        state=modified_state_with_transport,
-        success=True
+        state_result, state=modified_state_with_transport, success=True  # Reuse the existing result
     )
 
     assert state_result.state.jobs[0].location == "t-0"

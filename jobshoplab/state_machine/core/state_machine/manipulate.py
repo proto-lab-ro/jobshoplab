@@ -2,29 +2,21 @@ from dataclasses import replace
 from typing import Tuple
 
 from jobshoplab.types import InstanceConfig
-from jobshoplab.types.instance_config_types import MachineConfig, OperationConfig
-from jobshoplab.types.state_types import (
-    DeterministicTimeConfig,
-    JobState,
-    MachineState,
-    MachineStateState,
-    NoTime,
-    OperationState,
-    OperationStateState,
-    StochasticTimeConfig,
-    Time,
-    TransportLocation,
-    TransportState,
-    TransportStateState,
-)
+from jobshoplab.types.instance_config_types import (MachineConfig,
+                                                    OperationConfig)
+from jobshoplab.types.state_types import (DeterministicTimeConfig, JobState,
+                                          MachineState, MachineStateState,
+                                          NoTime, OperationState,
+                                          OperationStateState,
+                                          StochasticTimeConfig, Time,
+                                          TransportLocation, TransportState,
+                                          TransportStateState)
 from jobshoplab.utils.exceptions import InvalidValue, NotImplementedError
-from jobshoplab.utils.state_machine_utils import (
-    buffer_type_utils,
-    job_type_utils,
-    machine_type_utils,
-    outage_utils,
-    possible_transition_utils,
-)
+from jobshoplab.utils.state_machine_utils import (buffer_type_utils,
+                                                  job_type_utils,
+                                                  machine_type_utils,
+                                                  outage_utils,
+                                                  possible_transition_utils)
 
 
 def complete_transport_task(

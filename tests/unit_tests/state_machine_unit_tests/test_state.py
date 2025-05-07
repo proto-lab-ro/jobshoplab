@@ -1,29 +1,15 @@
-from dataclasses import replace
 from unittest.mock import Mock
 
 import pytest
 
-from jobshoplab import JobShopLabEnv
 from jobshoplab.state_machine.core.state_machine.state import (
-    apply_transition,
-    is_done,
-    process_state_transitions,
-    step,
-)
-from jobshoplab.types import NoTime, State, Time
-from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
-from jobshoplab.types.state_types import (
-    MachineStateState,
-    OperationStateState,
-    StateMachineResult,
-    TransportStateState,
-)
-from jobshoplab.utils.exceptions import (
-    InvalidValue,
-    NotImplementedError,
-    UnsuccessfulStateMachineResult,
-)
+    apply_transition, is_done, process_state_transitions, step)
 from jobshoplab.state_machine.time_machines import jump_to_event
+from jobshoplab.types import State, Time
+from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
+                                           ComponentTransition)
+from jobshoplab.types.state_types import MachineStateState, TransportStateState
+from jobshoplab.utils.exceptions import InvalidValue
 
 
 def test_is_done_with_done_job(job_state_done):

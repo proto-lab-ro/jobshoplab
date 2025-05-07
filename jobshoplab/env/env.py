@@ -13,7 +13,8 @@ from jobshoplab.compiler import Compiler
 from jobshoplab.env import rendering
 from jobshoplab.env.factories import actions, observations, rewards
 from jobshoplab.state_machine.core.state_machine import is_done
-from jobshoplab.state_machine.middleware import middleware as middleware_collection
+from jobshoplab.state_machine.middleware import \
+    middleware as middleware_collection
 from jobshoplab.types import Config, InstanceConfig, StateMachineResult
 from jobshoplab.utils import calculate_lower_bound, get_max_allowed_time
 from jobshoplab.utils.exceptions import EnvDone

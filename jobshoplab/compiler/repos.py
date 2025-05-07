@@ -7,7 +7,8 @@ from venv import logger
 import yaml
 
 from jobshoplab.utils import get_logger
-from jobshoplab.utils.exceptions import FileNotFound, InvalidValue, NotImplementedError
+from jobshoplab.utils.exceptions import (FileNotFound, InvalidValue,
+                                         NotImplementedError)
 from jobshoplab.utils.load_config import Config
 
 

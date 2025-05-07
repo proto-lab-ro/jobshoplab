@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Literal, Mapping, TypeAlias
+from typing import Literal, Mapping, TypeAlias
 
 from jobshoplab.types.stochasticy_models import StochasticTimeConfig
 from jobshoplab.utils.utils import hash

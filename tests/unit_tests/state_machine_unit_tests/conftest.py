@@ -4,40 +4,23 @@ import pytest
 
 from jobshoplab.types import NoTime, State, Time
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.instance_config_types import (
-    BufferConfig,
-    BufferTypeConfig,
-    DeterministicTimeConfig,
-    InstanceConfig,
-    JobConfig,
-    MachineConfig,
-    OperationConfig,
-    OutageConfig,
-    OutageTypeConfig,
-    Product,
-    TransportConfig,
-    TransportTypeConfig,
-)
-from jobshoplab.types.stochasticy_models import (
-    GaussianFunction,
-)
-from jobshoplab.types.state_types import (
-    BufferState,
-    BufferStateState,
-    JobState,
-    MachineState,
-    MachineStateState,
-    NoTime,
-    OperationState,
-    OperationStateState,
-    OutageActive,
-    OutageInactive,
-    OutageState,
-    Time,
-    TransportLocation,
-    TransportState,
-    TransportStateState,
-)
+from jobshoplab.types.instance_config_types import (BufferConfig,
+                                                    BufferTypeConfig,
+                                                    DeterministicTimeConfig,
+                                                    JobConfig, MachineConfig,
+                                                    OperationConfig,
+                                                    OutageConfig,
+                                                    OutageTypeConfig, Product,
+                                                    TransportConfig,
+                                                    TransportTypeConfig)
+from jobshoplab.types.state_types import (BufferState, BufferStateState,
+                                          JobState, MachineState,
+                                          MachineStateState, NoTime,
+                                          OperationState, OperationStateState,
+                                          OutageActive, OutageInactive,
+                                          OutageState, Time, TransportLocation,
+                                          TransportState, TransportStateState)
+from jobshoplab.types.stochasticy_models import GaussianFunction
 
 
 @pytest.fixture
@@ -690,7 +673,8 @@ def default_state_machine_outage(machine_state_outage):
 
 @pytest.fixture
 def simple_job_config():
-    from jobshoplab.types.instance_config_types import JobConfig, OperationConfig
+    from jobshoplab.types.instance_config_types import (JobConfig,
+                                                        OperationConfig)
 
     return JobConfig(
         id="j-1",
@@ -709,7 +693,8 @@ def simple_job_config():
 
 @pytest.fixture
 def simple_machine_config():
-    from jobshoplab.types.instance_config_types import BufferConfig, MachineConfig
+    from jobshoplab.types.instance_config_types import (BufferConfig,
+                                                        MachineConfig)
 
     return MachineConfig(
         id="m-1",
