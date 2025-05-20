@@ -4,28 +4,33 @@ from abc import ABC, abstractmethod
 from dataclasses import replace
 from functools import partial
 from logging import Logger
-from typing import Dict, Generator, Iterator, List, Union
+from typing import Dict, Generator, Iterator, List, Union, Optional
 
 from jobshoplab.types import Config, InstanceConfig, State
 from jobshoplab.types.instance_config_types import *
 from jobshoplab.types.state_types import *
-from jobshoplab.types.stochasticy_models import (BetaFunction, GammaFunction,
-                                                 GaussianFunction,
-                                                 PoissonFunction)
+from jobshoplab.types.stochasticy_models import (
+    UniformFunction,
+    GammaFunction,
+    GaussianFunction,
+    PoissonFunction,
+)
 from jobshoplab.utils import get_logger
-from jobshoplab.utils.exceptions import (ComponentAssociationError,
-                                         InvalidDistributionError,
-                                         InvalidDurationError,
-                                         InvalidOutageTypeError,
-                                         InvalidSetupTimesError,
-                                         TransportConfigError,
-                                         InvalidTimeBehaviorError,
-                                         InvalidToolUsageError,
-                                         InvalidTransportConfig,
-                                         MissingSpecificationError,
-                                         NotImplementedError,
-                                         UnknownDistributionTypeError,
-                                         UnknownLocationNameError)
+from jobshoplab.utils.exceptions import (
+    ComponentAssociationError,
+    InvalidDistributionError,
+    InvalidDurationError,
+    InvalidOutageTypeError,
+    InvalidSetupTimesError,
+    TransportConfigError,
+    InvalidTimeBehaviorError,
+    InvalidToolUsageError,
+    InvalidTransportConfig,
+    MissingSpecificationError,
+    NotImplementedError,
+    UnknownDistributionTypeError,
+    UnknownLocationNameError,
+)
 from jobshoplab.utils.utils import get_id_int
 
 
@@ -594,20 +599,16 @@ class DictToInstanceMapper(AbstractDictMapper):
             dist_type = str(time_behavior["type"])
             match dist_type:
                 case "poisson":
-                    mean = float(time_behavior["mean"])
-                    func = PoissonFunction(duration, mean)
+                    func = PoissonFunction(base_time=duration)
                 case "gamma":
-                    shape = float(time_behavior["shape"])
                     scale = float(time_behavior["scale"])
-                    func = GammaFunction(duration, shape, scale)
-                case "beta":
-                    alpha = float(time_behavior["alpha"])
-                    beta = float(time_behavior["beta"])
-                    func = BetaFunction(duration, alpha, beta)
-                case "gaussian":
-                    mean = float(time_behavior["mean"])
+                    func = GammaFunction(base_time=duration, scale=scale)
+                case "uniform" | "uni":
+                    off = float(time_behavior["offset"])
+                    func = UniformFunction(base_time=duration, offset=off)
+                case "gaussian" | "normal":
                     std = float(time_behavior["std"])
-                    func = GaussianFunction(duration, mean, std)
+                    func = GaussianFunction(base_time=duration, std=std)
                 case _:
                     raise UnknownDistributionTypeError(dist_type)
             return func
@@ -987,7 +988,9 @@ class DictToInitStateMapper(AbstractDictMapper):
         transport_spec = spec_dict["init_state"]["transport"]
         int_id = get_id_int(transport.id)
         if len(transport_spec) < int_id:
-            raise TransportConfigError(f"Transport with id={transport.id} not found in transport_spec")
+            raise TransportConfigError(
+                f"Transport with id={transport.id} not found in transport_spec"
+            )
         outages = self.defaults._get_outage_state(transport)
         return TransportState(
             id=transport.id,

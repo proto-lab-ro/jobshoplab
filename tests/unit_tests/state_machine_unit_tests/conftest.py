@@ -4,22 +4,36 @@ import pytest
 
 from jobshoplab.types import NoTime, State, Time
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.instance_config_types import (BufferConfig,
-                                                    BufferTypeConfig,
-                                                    DeterministicTimeConfig,
-                                                    JobConfig, MachineConfig,
-                                                    OperationConfig,
-                                                    OutageConfig,
-                                                    OutageTypeConfig, Product,
-                                                    TransportConfig,
-                                                    TransportTypeConfig)
-from jobshoplab.types.state_types import (BufferState, BufferStateState,
-                                          JobState, MachineState,
-                                          MachineStateState, NoTime,
-                                          OperationState, OperationStateState,
-                                          OutageActive, OutageInactive,
-                                          OutageState, Time, TransportLocation,
-                                          TransportState, TransportStateState)
+from jobshoplab.types.instance_config_types import (
+    BufferConfig,
+    BufferTypeConfig,
+    DeterministicTimeConfig,
+    JobConfig,
+    MachineConfig,
+    OperationConfig,
+    OutageConfig,
+    OutageTypeConfig,
+    Product,
+    TransportConfig,
+    TransportTypeConfig,
+)
+from jobshoplab.types.state_types import (
+    BufferState,
+    BufferStateState,
+    JobState,
+    MachineState,
+    MachineStateState,
+    NoTime,
+    OperationState,
+    OperationStateState,
+    OutageActive,
+    OutageInactive,
+    OutageState,
+    Time,
+    TransportLocation,
+    TransportState,
+    TransportStateState,
+)
 from jobshoplab.types.stochasticy_models import GaussianFunction
 
 
@@ -673,8 +687,7 @@ def default_state_machine_outage(machine_state_outage):
 
 @pytest.fixture
 def simple_job_config():
-    from jobshoplab.types.instance_config_types import (JobConfig,
-                                                        OperationConfig)
+    from jobshoplab.types.instance_config_types import JobConfig, OperationConfig
 
     return JobConfig(
         id="j-1",
@@ -693,8 +706,7 @@ def simple_job_config():
 
 @pytest.fixture
 def simple_machine_config():
-    from jobshoplab.types.instance_config_types import (BufferConfig,
-                                                        MachineConfig)
+    from jobshoplab.types.instance_config_types import BufferConfig, MachineConfig
 
     return MachineConfig(
         id="m-1",
@@ -735,15 +747,15 @@ def stochastic_setup_times():
     """
     tool0, tool1, tool2 = "tl-0", "tl-1", "tl-2"
     return {
-        (tool0, tool0): GaussianFunction(base_time=0, mean=0, std=0),
-        (tool0, tool1): GaussianFunction(base_time=1, mean=0, std=1),
-        (tool0, tool2): GaussianFunction(base_time=2, mean=0, std=1),
-        (tool1, tool0): GaussianFunction(base_time=1, mean=0, std=1),
-        (tool1, tool1): GaussianFunction(base_time=0, mean=0, std=0),
-        (tool1, tool2): GaussianFunction(base_time=3, mean=0, std=2),
-        (tool2, tool0): GaussianFunction(base_time=2, mean=0, std=1),
-        (tool2, tool1): GaussianFunction(base_time=3, mean=0, std=2),
-        (tool2, tool2): GaussianFunction(base_time=0, mean=0, std=0),
+        (tool0, tool0): GaussianFunction(base_time=0, std=0.1),
+        (tool0, tool1): GaussianFunction(base_time=1, std=1),
+        (tool0, tool2): GaussianFunction(base_time=2, std=1),
+        (tool1, tool0): GaussianFunction(base_time=1, std=1),
+        (tool1, tool1): GaussianFunction(base_time=0, std=0.1),
+        (tool1, tool2): GaussianFunction(base_time=3, std=2),
+        (tool2, tool0): GaussianFunction(base_time=2, std=1),
+        (tool2, tool1): GaussianFunction(base_time=3, std=2),
+        (tool2, tool2): GaussianFunction(base_time=0, std=0.1),
     }
 
 
@@ -1028,8 +1040,8 @@ def stochastic_outage_config_fail():
     """
     return OutageConfig(
         id="o-fail-stoch-1",
-        frequency=GaussianFunction(base_time=100, mean=0, std=10),  # Around every 100 time units
-        duration=GaussianFunction(base_time=20, mean=0, std=5),  # Around 20 time units
+        frequency=GaussianFunction(base_time=100, std=10),  # Around every 100 time units
+        duration=GaussianFunction(base_time=20, std=5),  # Around 20 time units
         type=OutageTypeConfig.FAIL,
     )
 
@@ -1041,8 +1053,8 @@ def stochastic_outage_config_maintenance():
     """
     return OutageConfig(
         id="o-maint-stoch-1",
-        frequency=GaussianFunction(base_time=200, mean=0, std=20),  # Around every 200 time units
-        duration=GaussianFunction(base_time=30, mean=0, std=5),  # Around 30 time units
+        frequency=GaussianFunction(base_time=200, std=20),  # Around every 200 time units
+        duration=GaussianFunction(base_time=30, std=5),  # Around 30 time units
         type=OutageTypeConfig.MAINTENANCE,
     )
 
@@ -1054,8 +1066,8 @@ def stochastic_outage_config_recharge():
     """
     return OutageConfig(
         id="o-recharge-stoch-1",
-        frequency=GaussianFunction(base_time=150, mean=0, std=15),  # Around every 150 time units
-        duration=GaussianFunction(base_time=15, mean=0, std=3),  # Around 15 time units
+        frequency=GaussianFunction(base_time=150, std=15),  # Around every 150 time units
+        duration=GaussianFunction(base_time=15, std=3),  # Around 15 time units
         type=OutageTypeConfig.RECHARGE,
     )
 

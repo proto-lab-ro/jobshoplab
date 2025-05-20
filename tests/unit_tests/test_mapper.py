@@ -1,5 +1,4 @@
-from jobshoplab.compiler.mapper import (DictToInitStateMapper,
-                                        DictToInstanceMapper)
+from jobshoplab.compiler.mapper import DictToInitStateMapper, DictToInstanceMapper
 
 
 def test_instance_mapping(minimal_instance_dict, default_instance, config):

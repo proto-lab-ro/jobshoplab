@@ -57,9 +57,8 @@ Every operation in a job has a tool assigned to it, and the setup time is determ
         tl-1|2 0 8
         tl-2|5 2 0
       time_behavior:
-        type: "beta"
-        alpha: 2
-        beta: 2
+        type: "uni"
+        offset: 2
 
     - machine: "m-2"
       specification: |
@@ -69,9 +68,8 @@ Every operation in a job has a tool assigned to it, and the setup time is determ
         tl-2|5 2 0
 
       time_behavior:
-        type: "beta"
-        alpha: 2
-        beta: 2
+        type: "uni"
+        offset: 2
 
 The setup time matrix should be read as:
 - Rows represent the "from" tool
@@ -178,9 +176,8 @@ Here's a complete example with tools and setup times:
             tl-1|2 0 8
             tl-2|5 2 0
           time_behavior:
-            type: "beta"
-            alpha: 2
-            beta: 2
+            type: "uni"
+            offset: 2
 
 Working with Setup Times in Python
 --------------------------------

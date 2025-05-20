@@ -8,12 +8,17 @@ from heracless import load_config
 from jobshoplab.compiler import Compiler
 from jobshoplab.env.factories import observations, rewards
 from jobshoplab.env.factories.actions import ActionFactory
-from jobshoplab.types.instance_config_types import (DeterministicTimeConfig,
-                                                    OutageConfig,
-                                                    OutageTypeConfig)
-from jobshoplab.types.stochasticy_models import (BetaFunction, GammaFunction,
-                                                 GaussianFunction,
-                                                 PoissonFunction)
+from jobshoplab.types.instance_config_types import (
+    DeterministicTimeConfig,
+    OutageConfig,
+    OutageTypeConfig,
+)
+from jobshoplab.types.stochasticy_models import (
+    GammaFunction,
+    GaussianFunction,
+    PoissonFunction,
+    UniformFunction,
+)
 
 
 @pytest.fixture
@@ -87,7 +92,7 @@ def instance_dict_with_outages(minimal_instance_dict):
 
 @pytest.fixture
 def instance_dict_with_stochastic_machine_times(minimal_instance_dict):
-    time_behavior = {"type": "beta", "alpha": 2, "beta": 2}
+    time_behavior = {"type": "uni", "offset": 2}
     minimal_instance_dict["instance_config"]["instance"]["time_behavior"] = time_behavior
     return minimal_instance_dict
 
@@ -139,7 +144,7 @@ def instance_dict_with_stochastic_setup_times(minimal_instance_dict):
         {
             "machine": "m-1",
             "specification": "tl-0|tl-1|tl-2\ntl-0|0 2 5\ntl-1|2 0 8\ntl-2|5 2 0",
-            "time_behavior": {"type": "beta", "alpha": 2, "beta": 2},
+            "time_behavior": {"type": "uni", "offset": 2},
         },
         {
             "machine": "m-2",
@@ -163,7 +168,7 @@ def instance_dict_with_stochastic_setup_times(minimal_instance_dict):
 def instance_with_outages(default_instance, default_machines):
     # Create machine with maintenance outage
     machine1 = default_machines[1]  # Use m-1
-    gamma_func = GammaFunction(10, 2.0, 5.0)
+    gamma_func = GammaFunction(base_time=10, scale=5.0)
     maintenance_outage = OutageConfig(
         id="out-0",
         frequency=gamma_func,
@@ -173,7 +178,7 @@ def instance_with_outages(default_instance, default_machines):
     modified_machine1 = replace(machine1, outages=(maintenance_outage,))
 
     # Create modified transports with recharge outage
-    gaussian_func = GaussianFunction(10, 5.0, 1.0)
+    gaussian_func = GaussianFunction(base_time=10, std=1.0)
     recharge_outage = OutageConfig(
         id="out-1",
         frequency=DeterministicTimeConfig(10),
@@ -200,11 +205,12 @@ def instance_with_stochastic_machine_times(default_instance):
     for job in default_instance.instance.specification:
         modified_operations = []
         for op in job.operations:
-            # Replace deterministic duration with stochastic beta function
-            beta_func = BetaFunction(
-                base_time=op.duration.time, alpha=2, beta=2  # Use the original time as base
+            # Replace deterministic duration with stochastic uniform function
+            uniform_func = UniformFunction(
+                base_time=op.duration.time,
+                offset=2,
             )
-            modified_op = replace(op, duration=beta_func)
+            modified_op = replace(op, duration=uniform_func)
             modified_operations.append(modified_op)
 
         modified_job = replace(job, operations=tuple(modified_operations))
@@ -225,9 +231,9 @@ def instance_with_stochastic_transport_times(default_instance_with_intralogistic
     default_instance = default_instance_with_intralogistics
     tt_time = dict()
     for locations, _time in default_instance.logistics.travel_times.items():
-        # Replace deterministic duration with stochastic beta function
-        beta_func = PoissonFunction(base_time=_time.time, mean=2.0)
-        tt_time[locations] = beta_func
+        # Replace deterministic duration with stochastic poisson function
+        poisson_func = PoissonFunction(base_time=_time.time)
+        tt_time[locations] = poisson_func
     logistics = replace(default_instance.logistics, travel_times=tt_time)
     instance = replace(default_instance, logistics=logistics)
     return instance
@@ -310,15 +316,15 @@ def instance_with_stochastic_setup_times(default_instance, default_products):
         ("tl-2", "tl-2"): DeterministicTimeConfig(0),
     }
 
-    # For m-1 and m-2: stochastic setup times using beta distribution
+    # For m-1 and m-2: stochastic setup times using uniform distribution
     setup_times_m1_m2 = {}
     for key, value in setup_times_m0.items():
         # Skip cases where the same tool is used (setup time is always 0)
         if key[0] == key[1]:
             setup_times_m1_m2[key] = DeterministicTimeConfig(0)
         else:
-            beta_func = BetaFunction(base_time=value.time, alpha=2, beta=2)
-            setup_times_m1_m2[key] = beta_func
+            uniform_func = UniformFunction(base_time=value.time, offset=2)
+            setup_times_m1_m2[key] = uniform_func
 
     # Apply different setup times to different machines
     for idx, machine in enumerate(default_instance.machines):

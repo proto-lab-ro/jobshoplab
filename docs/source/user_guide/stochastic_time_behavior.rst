@@ -22,7 +22,7 @@ JobShopLab supports four main probability distributions:
 
 1. **Gaussian (Normal) Distribution**
    
-   Symmetric distribution around a mean value, defined by a mean and standard deviation.
+   Symmetric distribution around a mean value, defined by a base time and standard deviation.
    
    Useful for: Processing times with symmetrical variations.
    
@@ -30,9 +30,7 @@ JobShopLab supports four main probability distributions:
    
        time_behavior:
          type: "gaussian"
-         mean: 10
          std: 2
-         base: 0
 
 2. **Poisson Distribution**
    
@@ -44,22 +42,18 @@ JobShopLab supports four main probability distributions:
    
        time_behavior:
          type: "poisson"
-         mean: 5
-         base: 10
 
-3. **Beta Distribution**
+3. **Uniform Distribution**
    
-   Flexible distribution bounded between 0 and 1, scaled by the base time.
+   Distribution with equal probability between a low (base-offset) and high value (base+offset).
    
-   Useful for: When variations have upper and lower bounds, or modeling proportions.
+   Useful for: When any value within a range is equally likely.
    
    .. code-block:: yaml
    
        time_behavior:
-         type: "beta"
-         alpha: 2
-         beta: 5
-         base: 20
+         type: "uniform"
+         offset: 2
 
 4. **Gamma Distribution**
    
@@ -71,16 +65,16 @@ JobShopLab supports four main probability distributions:
    
        time_behavior:
          type: "gamma"
-         shape: 2
-         scale: 1
-         base: 10
+         scale: 2
 
-
+.. note::
+   The `base_time` parameter is the "main" time value for each distribution. It sets the *mode* for each distribution, which is the most likely value to be generated.
+   For Gaussian, it is the mean; for Uniform, it is the lower bound; and for Poisson, it is the average rate of occurrence.
 
 Configuring Stochastic Times
 --------------------------
 
-You can apply stochastic behavior to various components in JobShopLab:
+You can apply stochastic behavior to various components in JobShopLab. The base time is automatically taken from the time values in your specification matrix, and the stochastic distributions will apply variations to those base values.
 
 Operation Durations
 ^^^^^^^^^^^^^^^^^^
@@ -99,13 +93,12 @@ To make processing times stochastic:
           j2|(1,4) (2,3) (0,3)
         time_behavior:
           type: "gaussian"
-          mean: 1.0
           std: 0.2
 
-This applies the stochastic model to all operation times in the specification.
+This applies the Gaussian distribution to all operation times in the specification, with each operation's specified time used as the base (mean) value.
 
 Transport Times
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
 
 For stochastic transport times between locations:
 
@@ -123,8 +116,8 @@ For stochastic transport times between locations:
         out-buf|7 5 2 9 0
       time_behavior:
         type: "poisson"
-        mean: 1
-        base: 0
+
+The transport times in the matrix serve as base times for the Poisson distribution.
 
 Setup Times
 ^^^^^^^^^^
@@ -141,9 +134,10 @@ For stochastic machine setup/changeover times:
           tl-1|2 0 8
           tl-2|5 2 0
         time_behavior:
-          type: "beta"
-          alpha: 2
-          beta: 2
+          type: "uniform"
+          offset: 2
+
+The setup times in the matrix serve as the lower bound (base_time) for the uniform distribution.
 
 Outage Timing
 ^^^^^^^^^^^
@@ -157,13 +151,14 @@ Both outage durations and frequencies can be stochastic:
         type: "maintenance"
         duration:
           type: "gaussian"
-          mean: 5
           std: 1
+          base: 5   # Explicitly setting base time for duration
         frequency: 
           type: "gamma"
-          shape: 2
-          scale: 5
-          base: 10
+          scale: 2
+          base: 10  # Explicitly setting base time for frequency
+
+For outages, you need to explicitly set the base time as there is no corresponding specification matrix.
 
 Working with Stochastic Models in Python
 --------------------------------------
@@ -184,8 +179,8 @@ Stochastic time models can be accessed and manipulated in Python:
     
     # Check the distribution parameters
     if isinstance(stochastic_time, GaussianFunction):
-        mean = stochastic_time.mean
         std = stochastic_time.std
+        base_time = stochastic_time.base_time
 
 
 .. hint::
@@ -209,7 +204,6 @@ Here's a complete example combining multiple stochastic elements:
           j2|(1,4) (2,3) (0,3)
         time_behavior:
           type: "gaussian"
-          mean: 1.0
           std: 0.1
         
         tool_usage:
@@ -228,9 +222,8 @@ Here's a complete example combining multiple stochastic elements:
             tl-1|2 0 8
             tl-2|5 2 0
           time_behavior:
-            type: "beta"
-            alpha: 2
-            beta: 2
+            type: "uniform"
+            offset: 1
       
       logistics: 
         type: "agv"
@@ -244,18 +237,15 @@ Here's a complete example combining multiple stochastic elements:
           out-buf|7 5 2 9 0
         time_behavior:
           type: "poisson"
-          mean: 1
       
       outages:
         - component: "m"
           type: "maintenance"
           duration:
             type: "gaussian"
-            mean: 5
             std: 1
+            base: 5
           frequency: 
             type: "gamma"
-            shape: 2
-            scale: 5
+            scale: 2
             base: 10
-

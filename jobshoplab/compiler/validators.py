@@ -5,11 +5,13 @@ from typing import Any
 
 from jobshoplab.types import Config
 from jobshoplab.utils import get_logger
-from jobshoplab.utils.exceptions import (InstanceSchemaError,
-                                         InvalidFieldValueError,
-                                         JobSpecificationSyntaxError,
-                                         MissingRequiredFieldError,
-                                         NotImplementedError)
+from jobshoplab.utils.exceptions import (
+    InstanceSchemaError,
+    InvalidFieldValueError,
+    JobSpecificationSyntaxError,
+    MissingRequiredFieldError,
+    NotImplementedError,
+)
 
 
 class AbstractValidator(ABC):
@@ -489,7 +491,7 @@ class SimpleDSLValidator(AbstractValidator):
         if isinstance(time_spec, dict):
             # Check for distribution type
             if "type" in time_spec:
-                valid_types = {"poisson", "gamma", "beta", "gaussian"}
+                valid_types = {"poisson", "gamma", "uni", "uniform", "normal", "gaussian"}
                 if time_spec["type"] not in valid_types:
                     raise InvalidFieldValueError(
                         f"{field_path}.type", time_spec["type"], f"One of: {', '.join(valid_types)}"
@@ -498,21 +500,14 @@ class SimpleDSLValidator(AbstractValidator):
                 # Check required parameters for each distribution type
                 dist_type = time_spec["type"]
                 if dist_type == "poisson":
-                    if "mean" not in time_spec:
-                        raise MissingRequiredFieldError("mean", f"{field_path}")
+                    pass
                 elif dist_type == "gamma":
-                    if "shape" not in time_spec:
-                        raise MissingRequiredFieldError("shape", f"{field_path}")
                     if "scale" not in time_spec:
                         raise MissingRequiredFieldError("scale", f"{field_path}")
-                elif dist_type == "beta":
-                    if "alpha" not in time_spec:
-                        raise MissingRequiredFieldError("alpha", f"{field_path}")
-                    if "beta" not in time_spec:
-                        raise MissingRequiredFieldError("beta", f"{field_path}")
-                elif dist_type == "gaussian":
-                    if "mean" not in time_spec:
-                        raise MissingRequiredFieldError("mean", f"{field_path}")
+                elif dist_type in ["uniform", "uni"]:
+                    if "offset" not in time_spec:
+                        raise MissingRequiredFieldError("offset", f"{field_path}")
+                elif dist_type in ["gaussian", "normal"]:
                     if "std" not in time_spec:
                         raise MissingRequiredFieldError("std", f"{field_path}")
             else:

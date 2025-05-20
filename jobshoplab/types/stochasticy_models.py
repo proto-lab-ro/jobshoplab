@@ -12,7 +12,7 @@ class StochasticTimeConfig(ABC):
             start_seed = np.random.randint(0, 2**32 - 1)
         self._current_seed = start_seed
         self._random_generator = np.random.default_rng(seed=start_seed)
-        self.time = self._get_time()
+        self.time = max((0, self._get_time()))
 
     def _update_random_generator(self):
         """Update the random seed."""
@@ -22,7 +22,7 @@ class StochasticTimeConfig(ABC):
     def update(self):
         """Update the random seed."""
         self._update_random_generator()
-        self.time = self._get_time()
+        self.time = max((0, self._get_time()))
 
     @abstractmethod
     def _get_time(self) -> int:
@@ -42,8 +42,8 @@ class StochasticTimeConfig(ABC):
 
 
 class PoissonFunction(StochasticTimeConfig):
-    def __init__(self, base_time: int, mean: float, start_seed: int | None = None):
-        self.mean = mean
+    def __init__(self, base_time: int, start_seed: int | None = None):
+        self.mean = base_time + 0.5  # ensures mode = base_time is roughtly the same
         super().__init__(base_time, start_seed)
 
     def _get_time(self) -> int:
@@ -61,17 +61,39 @@ class PoissonFunction(StochasticTimeConfig):
         return self.base_time == other.base_time and self.mean == other.mean
 
 
+class UniformFunction(StochasticTimeConfig):
+    def __init__(self, base_time: int, offset: float, start_seed: int | None = None):
+        self.low = base_time - offset
+        self.high = base_time + offset
+        super().__init__(base_time, start_seed)
+
+    def _get_time(self) -> int:
+        return int(self._random_generator.uniform(self.low, self.high))
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(base_time={self.base_time}, low={self.low}, high={self.high})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, UniformFunction):
+            return False
+        return (
+            self.base_time == other.base_time and self.low == other.low and self.high == other.high
+        )
+
+
 class GaussianFunction(StochasticTimeConfig):
-    def __init__(self, base_time: int, mean: float, std: float, start_seed: int | None = None):
-        self.mean = mean
+    def __init__(self, base_time: int, std: float, start_seed: int | None = None):
         self.std = std
         super().__init__(base_time, start_seed)
 
     def _get_time(self) -> int:
-        return int(round(self.base_time + self._random_generator.normal(self.mean, self.std)))
+        return int(self._random_generator.normal(self.base_time, self.std))
 
     def __str__(self):
-        return f"{self.__class__.__name__}(base_time={self.base_time}, mean={self.mean}, std={self.std})"
+        return f"{self.__class__.__name__}(mean={self.base_time}, std={self.std})"
 
     def __repr__(self):
         return self.__str__()
@@ -79,44 +101,24 @@ class GaussianFunction(StochasticTimeConfig):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, GaussianFunction):
             return False
-        return (
-            self.base_time == other.base_time and self.mean == other.mean and self.std == other.std
-        )
-
-
-class BetaFunction(StochasticTimeConfig):
-    def __init__(self, base_time: int, alpha: float, beta: float, start_seed: int | None = None):
-        self.alpha = alpha
-        self.beta = beta
-        super().__init__(base_time, start_seed)
-
-    def _get_time(self) -> int:
-        return int(round(self.base_time + self._random_generator.beta(self.alpha, self.beta)))
-
-    def __str__(self):
-        return f"{self.__class__.__name__}(base_time={self.base_time}, alpha={self.alpha}, beta={self.beta})"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, BetaFunction):
-            return False
-        return (
-            self.base_time == other.base_time
-            and self.alpha == other.alpha
-            and self.beta == other.beta
-        )
+        return self.base_time == other.base_time and self.std == other.std
 
 
 class GammaFunction(StochasticTimeConfig):
-    def __init__(self, base_time: int, shape: float, scale: float, start_seed: int | None = None):
-        self.shape = shape
+    def __init__(self, base_time: int, scale: float, start_seed: int | None = None):
+        self.shape = self._compute_gamma_shape_from_mode(base_time, scale)
         self.scale = scale
         super().__init__(base_time, start_seed)
 
+    def _compute_gamma_shape_from_mode(self, mode: float, scale: float) -> float:
+        if scale <= 0:
+            raise ValueError("Scale must be positive.")
+        if mode < 0:
+            raise ValueError("Mode must be non-negative for the Gamma distribution.")
+        return (mode / scale) + 1
+
     def _get_time(self) -> int:
-        return int(round(self.base_time + self._random_generator.gamma(self.shape, self.scale)))
+        return int(round(self.base_time + self._random_generator.gamma(self.base_time, self.scale)))
 
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, shape={self.shape}, scale={self.scale})"
@@ -136,7 +138,7 @@ class GammaFunction(StochasticTimeConfig):
 
 if __name__ == "__main__":
     # Example usage
-    poisson = PoissonFunction(base_time=10, mean=5, start_seed=42)
+    poisson = PoissonFunction(base_time=10, start_seed=42)
     print(poisson.time)  # Random value based on Poisson distribution
     print(poisson)  # String representation
-    print(poisson == PoissonFunction(base_time=10, mean=5))  # True
+    print(poisson == PoissonFunction(base_time=10))  # True

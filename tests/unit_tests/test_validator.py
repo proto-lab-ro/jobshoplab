@@ -1,11 +1,12 @@
 import pytest
 
-from jobshoplab.compiler.validators import \
-    SimpleDSLValidator as InstanceDSLValidator
-from jobshoplab.utils.exceptions import (InstanceSchemaError,
-                                         InvalidFieldValueError,
-                                         JobSpecificationSyntaxError,
-                                         MissingRequiredFieldError)
+from jobshoplab.compiler.validators import SimpleDSLValidator as InstanceDSLValidator
+from jobshoplab.utils.exceptions import (
+    InstanceSchemaError,
+    InvalidFieldValueError,
+    JobSpecificationSyntaxError,
+    MissingRequiredFieldError,
+)
 
 
 def test_validator_init(test_config):
@@ -167,7 +168,7 @@ def test_stochastic_time_validation(minimal_instance_dict, test_config):
         {
             "component": "m-1",
             "type": "maintenance",
-            "duration": {"type": "gaussian", "mean": 5},  # Missing 'std'
+            "duration": {"type": "gaussian"},  # Missing 'std'
             "frequency": 10,
         }
     ]

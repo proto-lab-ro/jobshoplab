@@ -66,7 +66,7 @@ def test_get_setup_duration_stochastic(
     simple_op_config_with_tool1,
 ):
     """Test stochastic setup time calculation"""
-    # The base time for tool0->tool1 is 1 with mean 0 and std 1
+    # The base time for tool0->tool1 is 1 with std 1
     # We mock update() to avoid randomness in tests
     with patch.object(GaussianFunction, "update") as mock_update:
         duration = _get_setup_duration(

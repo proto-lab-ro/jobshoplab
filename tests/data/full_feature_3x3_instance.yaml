@@ -37,9 +37,8 @@ instance_config:
         tl-1|2 0 8
         tl-2|5 2 0
       time_behavior:
-        type: "beta"
-        alpha: 2
-        beta: 2
+        type: "uni"
+        offset: 2
 
     - machine: "m-2"
       specification: |
@@ -47,11 +46,9 @@ instance_config:
         tl-0|0 2 5
         tl-1|2 0 8
         tl-2|5 2 0
-
       time_behavior:
-        type: "beta"
-        alpha: 2
-        beta: 2
+        type: "uni"
+        offset: 2
 
 
   logistics: 
@@ -75,7 +72,6 @@ instance_config:
       duration: 5
       frequency: 
         type: "gamma"
-        shape: 2
         scale: 5
         base: 10
 
@@ -83,7 +79,6 @@ instance_config:
       type: "recharge"
       duration: 
         type: "gaussian"
-        mean: 5
         std: 1
         base: 10
       frequency: 10
