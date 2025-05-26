@@ -5,8 +5,7 @@ from dataclasses import replace
 
 import numpy as np
 
-from jobshoplab.types import (Config, DeterministicTimeConfig, InstanceConfig,
-                              State)
+from jobshoplab.types import Config, DeterministicTimeConfig, InstanceConfig, State
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import NotImplementedError
 
@@ -134,7 +133,7 @@ class InstanceRandomizer(Manipulator):
                 _operation = replace(
                     operation,
                     duration=DeterministicTimeConfig(
-                        duration=random.randrange(min_duration, max_duration)
+                        time=random.randrange(min_duration, max_duration)
                     ),
                     id=f"o-{job.id.split("-")[1]}-{i}",
                 )
@@ -155,7 +154,7 @@ if __name__ == "__main__":
 
     env = JobShopLabEnv()
     state = env.state
-    instance = env.instance_config
+    instance = env.instance
     instance_randomizer = InstanceRandomizer(loglevel="debug", config=env.config)
     new_instance, new_state = instance_randomizer.manipulate(
         instance_config=instance, init_state=state
