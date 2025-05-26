@@ -8,7 +8,6 @@ compiler:
   # repo: "SpecRepository"
   validator: "SimpleDSLValidator"
   manipulators:
-
     - "DummyManipulator"
 
   dsl_repository:
@@ -17,7 +16,6 @@ compiler:
     dir: "data/jssp_instances/transport/ta41.yaml"
 
   spec_repository:
-
     dir: "data/jssp_instances/la10"
 
 env:

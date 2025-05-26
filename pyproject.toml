@@ -26,6 +26,7 @@ dependencies = [
     "pandas",
     "kaleido",
     "dash_daq",
+    "dash_ag_grid",
     "dash",
     "rich",
     "keyboard",
@@ -38,7 +39,7 @@ dependencies = [
 ]
 
 classifiers = [
-    # How mature is this porject? Common values are
+    # How mature is this project? Common values are
     # 3 - Alpha
     # 4 - Beta
     # 5 - Production / Stable

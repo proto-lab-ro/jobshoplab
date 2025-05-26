@@ -42,10 +42,10 @@ class Compiler:
             if repo is None
             else repo
         )
-
+        _manipulators = filter(lambda x: x != None, self.config.compiler.manipulators)
         self.manipulators: tuple[manipulators.Manipulator, ...] = tuple(
             getattr(manipulators, manipulator)(**self._build_obj_args(manipulator))
-            for manipulator in config.compiler.manipulators
+            for manipulator in _manipulators
         )
         if isinstance(self.repo, repos.SpecRepository):
             validator_cls = "DummyValidator"  # if using spec repo, no validation needed (syntax is commonly used)

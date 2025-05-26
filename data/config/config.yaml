@@ -5,11 +5,12 @@ default_loglevel: &default_loglevel "warning" # global loglevel add loglevel to 
 compiler:
   loglevel: *default_loglevel
   # repo: "DslRepository" # change here to mod repo from spec to yaml or vice versa
-  repo: "SpecRepository"
+  repo: "DslRepository"
   validator: "SimpleDSLValidator"
   manipulators:
 
     - "DummyManipulator"
+    - 
 
   dsl_repository:
 

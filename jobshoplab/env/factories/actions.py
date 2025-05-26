@@ -5,11 +5,14 @@ from gymnasium import spaces
 
 from jobshoplab.state_machine.time_machines import jump_to_event
 from jobshoplab.types import Config, InstanceConfig, State
-from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
-                                           ComponentTransition)
-from jobshoplab.types.state_types import (JobState, MachineStateState,
-                                          StateMachineResult, TransportState,
-                                          TransportStateState)
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
+from jobshoplab.types.state_types import (
+    JobState,
+    MachineStateState,
+    StateMachineResult,
+    TransportState,
+    TransportStateState,
+)
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import ActionOutOfActionSpace, InvalidValue
 from jobshoplab.utils.state_machine_utils import job_type_utils
@@ -148,7 +151,7 @@ class BinaryJobActionFactory(ActionFactory):
 
         if int_action == 0:
             # No Operation Schedule
-            self.logger.info("No Operation Schedule")
+            self.logger.debug("No Operation Schedule")
             return Action(
                 transitions=tuple(),
                 action_factory_info=ActionFactoryInfo.NoOperation,

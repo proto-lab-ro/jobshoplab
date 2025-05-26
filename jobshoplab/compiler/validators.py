@@ -176,10 +176,6 @@ class SimpleDSLValidator(AbstractValidator):
         if "instance_config" not in spec_dict:
             raise MissingRequiredFieldError("instance_config")
 
-        # Optional: validate title if present
-        if "title" in spec_dict and spec_dict["title"] != "InstanceConfig":
-            raise InvalidFieldValueError("title", spec_dict["title"], "InstanceConfig")
-
     def _validate_instance_config(self, instance_config: dict) -> None:
         """
         Validates the instance_config section of the specification.

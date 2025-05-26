@@ -15,9 +15,12 @@ from dash import Dash, Input, Output, dcc, html
 from plotly import colors as plotly_colors
 
 from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.types.state_types import (NoTime, OperationStateState,
-                                          StateMachineResult,
-                                          TransportStateState)
+from jobshoplab.types.state_types import (
+    NoTime,
+    OperationStateState,
+    StateMachineResult,
+    TransportStateState,
+)
 from jobshoplab.utils.exceptions import FileNotFound
 from jobshoplab.utils.logger import get_logger
 
@@ -347,7 +350,10 @@ class DashboardDataMapper:
             Tuple of dictionaries containing transport data.
         """
         transport_states = ((tran, h.time.time) for h in history for tran in h.transports)
-        transports = filter(lambda x: x[0].state != TransportStateState.IDLE, transport_states)
+        transports = filter(
+            lambda x: x[0].state not in [TransportStateState.IDLE, TransportStateState.OUTAGE],
+            transport_states,
+        )
         transports = sorted(tuple(transports), key=lambda x: (int(x[0].id[2:]), x[1]))
         transport_list = list(DashboardDataMapper.make_transport_data(transports))
         return tuple(transport_list)
