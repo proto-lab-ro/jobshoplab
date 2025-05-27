@@ -233,9 +233,7 @@ class MachineConfig:
         return {
             "id": self.id,
             "outages": tuple(o.asdict() for o in self.outages),
-            "setup_times": {
-                f"{p1.id}_{p2.id}": st.asdict() for (p1, p2), st in self.setup_times.items()
-            },
+            "setup_times": {f"{t1}_{t1}": st.asdict() for (t1, t2), st in self.setup_times.items()},
             "prebuffer": self.prebuffer.asdict(),
             "postbuffer": self.postbuffer.asdict(),
             "batches": self.batches,
