@@ -186,8 +186,132 @@ def test_init_state_validation(minimal_instance_dict_with_intralogistics, test_c
 
     # Invalid init_state (missing location for transport)
     invalid_dict = minimal_instance_dict_with_intralogistics.copy()
-    invalid_dict["init_state"]["transport"][0] = {}
+    invalid_dict["init_state"]["t-0"] = {}
 
     with pytest.raises(MissingRequiredFieldError) as excinfo:
         validator.validate(invalid_dict)
     assert "location" in str(excinfo.value)
+
+
+def test_init_state_transport_validation(minimal_instance_dict, test_config):
+    validator = InstanceDSLValidator("debug", test_config)
+
+    # Valid transport specification
+    test_dict = minimal_instance_dict.copy()
+    test_dict["init_state"] = {
+        "t-0": {"location": "m-1"},
+        "t-1": {"location": "b-0"},
+    }
+    validator.validate(test_dict)
+
+    # Invalid transport location (wrong format)
+    test_dict["init_state"]["t-0"]["location"] = "invalid-location"
+    with pytest.raises(InvalidFieldValueError) as excinfo:
+        validator.validate(test_dict)
+    assert "Machine ID (m-*) or buffer ID (b-*)" in str(excinfo.value)
+
+    # Invalid transport job reference
+    test_dict["init_state"]["t-0"] = {
+        "location": "m-1",
+        "transport_job": "invalid-job"
+    }
+    with pytest.raises(InvalidFieldValueError) as excinfo:
+        validator.validate(test_dict)
+    assert "Job ID (j-*)" in str(excinfo.value)
+
+
+def test_init_state_job_validation(minimal_instance_dict, test_config):
+    validator = InstanceDSLValidator("debug", test_config)
+
+    # Valid job specification
+    test_dict = minimal_instance_dict.copy()
+    test_dict["init_state"] = {
+        "j-0": {"location": "b-0"},
+        "j-1": {"location": "m-1"},
+    }
+    validator.validate(test_dict)
+
+    # Invalid job location
+    test_dict["init_state"]["j-0"]["location"] = "invalid-location"
+    with pytest.raises(InvalidFieldValueError) as excinfo:
+        validator.validate(test_dict)
+    assert "Machine ID (m-*), buffer ID (b-*), or transport ID (t-*)" in str(excinfo.value)
+
+
+def test_init_state_buffer_validation(minimal_instance_dict, test_config):
+    validator = InstanceDSLValidator("debug", test_config)
+
+    # Valid buffer specification
+    test_dict = minimal_instance_dict.copy()
+    test_dict["init_state"] = {
+        "b-0": {"store": ["j-0", "j-1"]},
+        "b-1": {"store": []},
+    }
+    validator.validate(test_dict)
+
+    # Invalid buffer store (not a list)
+    test_dict["init_state"]["b-0"]["store"] = "j-0"
+    with pytest.raises(InvalidFieldValueError) as excinfo:
+        validator.validate(test_dict)
+    assert "List of job IDs" in str(excinfo.value)
+
+    # Invalid job ID in store
+    test_dict["init_state"]["b-0"]["store"] = ["j-0", "invalid-job"]
+    with pytest.raises(InvalidFieldValueError) as excinfo:
+        validator.validate(test_dict)
+    assert "Job ID (j-*)" in str(excinfo.value)
+
+
+def test_init_state_machine_validation(minimal_instance_dict, test_config):
+    validator = InstanceDSLValidator("debug", test_config)
+
+    # Valid machine specification
+    test_dict = minimal_instance_dict.copy()
+    test_dict["init_state"] = {
+        "m-0": {"occupied_till": 10, "mounted_tool": "tl-0"},
+        "m-1": {"occupied_till": 5.5},
+    }
+    validator.validate(test_dict)
+
+    # Invalid occupied_till type
+    test_dict["init_state"]["m-0"]["occupied_till"] = "invalid"
+    with pytest.raises(InvalidFieldValueError) as excinfo:
+        validator.validate(test_dict)
+    assert "Integer or float representing time" in str(excinfo.value)
+
+    # Invalid mounted_tool type
+    test_dict["init_state"]["m-0"] = {"mounted_tool": 123}
+    with pytest.raises(InvalidFieldValueError) as excinfo:
+        validator.validate(test_dict)
+    assert "String representing tool ID" in str(excinfo.value)
+
+
+def test_init_state_invalid_component_id(minimal_instance_dict, test_config):
+    validator = InstanceDSLValidator("debug", test_config)
+
+    # Invalid component ID format
+    test_dict = minimal_instance_dict.copy()
+    test_dict["init_state"] = {
+        "invalid-id": {"location": "m-1"}
+    }
+
+    with pytest.raises(InstanceSchemaError) as excinfo:
+        validator.validate(test_dict)
+    assert "Unknown component ID format" in str(excinfo.value)
+
+
+def test_init_state_special_fields(minimal_instance_dict, test_config):
+    validator = InstanceDSLValidator("debug", test_config)
+
+    # Valid start_time
+    test_dict = minimal_instance_dict.copy()
+    test_dict["init_state"] = {
+        "start_time": 10
+    }
+    validator.validate(test_dict)
+
+    # Invalid start_time type
+    test_dict["init_state"]["start_time"] = "invalid"
+    with pytest.raises(InvalidFieldValueError) as excinfo:
+        validator.validate(test_dict)
+    assert "Integer or float representing time" in str(excinfo.value)

@@ -524,27 +524,194 @@ class SimpleDSLValidator(AbstractValidator):
 
         Raises:
             InstanceSchemaError: For schema-related errors.
+            MissingRequiredFieldError: For missing required fields.
+            InvalidFieldValueError: For invalid field values.
         """
-        # This is a simplified validation, as init_state is optional and complex
         if not isinstance(init_state, dict):
             raise InstanceSchemaError("Init state must be a dictionary", "init_state")
 
-        # Validate transport section if present
-        if "transport" in init_state:
-            if not isinstance(init_state["transport"], list):
+        # Validate each component specification in init_state
+        for component_id, component_spec in init_state.items():
+            # Handle special fields first (these are not dictionaries)
+            if component_id in ["start_time"]:
+                # Allow special fields like start_time (should be int/float, not dict)
+                if not isinstance(component_spec, (int, float)):
+                    raise InvalidFieldValueError(
+                        f"init_state.{component_id}",
+                        str(component_spec),
+                        "Integer or float representing time"
+                    )
+                continue
+
+            # All component specifications should be dictionaries
+            if not isinstance(component_spec, dict):
                 raise InstanceSchemaError(
-                    "Transport section must be a list", "init_state.transport"
+                    f"Component specification for '{component_id}' must be a dictionary",
+                    f"init_state.{component_id}"
                 )
 
-            for i, transport in enumerate(init_state["transport"]):
-                if not isinstance(transport, dict):
-                    raise InstanceSchemaError(
-                        f"Transport entry {i+1} must be a dictionary", "init_state.transport"
+            # Validate component based on its ID prefix
+            if component_id.startswith("t-"):
+                self._validate_transport_init_state(component_id, component_spec)
+            elif component_id.startswith("j-"):
+                self._validate_job_init_state(component_id, component_spec)
+            elif component_id.startswith("b-"):
+                self._validate_buffer_init_state(component_id, component_spec)
+            elif component_id.startswith("m-"):
+                self._validate_machine_init_state(component_id, component_spec)
+            else:
+                # Unknown component ID format
+                raise InstanceSchemaError(
+                    f"Unknown component ID format: '{component_id}'. "
+                    f"Expected format: t-*, j-*, b-*, m-*, or special fields like 'start_time'",
+                    f"init_state.{component_id}"
+                )
+
+    def _validate_transport_init_state(self, transport_id: str, transport_spec: dict) -> None:
+        """
+        Validates a transport specification in init_state.
+
+        Args:
+            transport_id (str): The transport ID.
+            transport_spec (dict): The transport specification.
+
+        Raises:
+            MissingRequiredFieldError: For missing required fields.
+            InvalidFieldValueError: For invalid field values.
+        """
+        # Location is required for transport specifications
+        if "location" not in transport_spec:
+            raise MissingRequiredFieldError("location", f"init_state.{transport_id}")
+
+        # Validate location format (should be m-* or b-*)
+        location = transport_spec["location"]
+        if not isinstance(location, str):
+            raise InvalidFieldValueError(
+                f"init_state.{transport_id}.location",
+                str(location),
+                "String representing machine or buffer ID"
+            )
+
+        if not (location.startswith("m-") or location.startswith("b-")):
+            raise InvalidFieldValueError(
+                f"init_state.{transport_id}.location",
+                location,
+                "Machine ID (m-*) or buffer ID (b-*)"
+            )
+
+        # Validate optional fields
+        if "occupied_till" in transport_spec:
+            if not isinstance(transport_spec["occupied_till"], (int, float)):
+                raise InvalidFieldValueError(
+                    f"init_state.{transport_id}.occupied_till",
+                    str(transport_spec["occupied_till"]),
+                    "Integer or float representing time"
+                )
+
+        if "transport_job" in transport_spec:
+            job_id = transport_spec["transport_job"]
+            if job_id is not None and not (isinstance(job_id, str) and job_id.startswith("j-")):
+                raise InvalidFieldValueError(
+                    f"init_state.{transport_id}.transport_job",
+                    str(job_id),
+                    "Job ID (j-*) or null"
+                )
+
+        if "buffer" in transport_spec:
+            if not isinstance(transport_spec["buffer"], list):
+                raise InvalidFieldValueError(
+                    f"init_state.{transport_id}.buffer",
+                    str(transport_spec["buffer"]),
+                    "List of job IDs"
+                )
+
+    def _validate_job_init_state(self, job_id: str, job_spec: dict) -> None:
+        """
+        Validates a job specification in init_state.
+
+        Args:
+            job_id (str): The job ID.
+            job_spec (dict): The job specification.
+
+        Raises:
+            InvalidFieldValueError: For invalid field values.
+        """
+        # Validate location if present
+        if "location" in job_spec:
+            location = job_spec["location"]
+            if not isinstance(location, str):
+                raise InvalidFieldValueError(
+                    f"init_state.{job_id}.location",
+                    str(location),
+                    "String representing machine or buffer ID"
+                )
+
+            if not (location.startswith("m-") or location.startswith("b-") or location.startswith("t-")):
+                raise InvalidFieldValueError(
+                    f"init_state.{job_id}.location",
+                    location,
+                    "Machine ID (m-*), buffer ID (b-*), or transport ID (t-*)"
+                )
+
+    def _validate_buffer_init_state(self, buffer_id: str, buffer_spec: dict) -> None:
+        """
+        Validates a buffer specification in init_state.
+
+        Args:
+            buffer_id (str): The buffer ID.
+            buffer_spec (dict): The buffer specification.
+
+        Raises:
+            InvalidFieldValueError: For invalid field values.
+        """
+        # Validate store if present
+        if "store" in buffer_spec:
+            store = buffer_spec["store"]
+            if not isinstance(store, list):
+                raise InvalidFieldValueError(
+                    f"init_state.{buffer_id}.store",
+                    str(store),
+                    "List of job IDs"
+                )
+
+            # Validate each job ID in the store
+            for i, job_id in enumerate(store):
+                if not (isinstance(job_id, str) and job_id.startswith("j-")):
+                    raise InvalidFieldValueError(
+                        f"init_state.{buffer_id}.store[{i}]",
+                        str(job_id),
+                        "Job ID (j-*)"
                     )
 
-                # Each transport must have a location
-                if "location" not in transport:
-                    raise MissingRequiredFieldError("location", f"init_state.transport[{i}]")
+    def _validate_machine_init_state(self, machine_id: str, machine_spec: dict) -> None:
+        """
+        Validates a machine specification in init_state.
+
+        Args:
+            machine_id (str): The machine ID.
+            machine_spec (dict): The machine specification.
+
+        Raises:
+            InvalidFieldValueError: For invalid field values.
+        """
+        # Validate occupied_till if present
+        if "occupied_till" in machine_spec:
+            if not isinstance(machine_spec["occupied_till"], (int, float)):
+                raise InvalidFieldValueError(
+                    f"init_state.{machine_id}.occupied_till",
+                    str(machine_spec["occupied_till"]),
+                    "Integer or float representing time"
+                )
+
+        # Validate mounted_tool if present
+        if "mounted_tool" in machine_spec:
+            tool = machine_spec["mounted_tool"]
+            if not isinstance(tool, str):
+                raise InvalidFieldValueError(
+                    f"init_state.{machine_id}.mounted_tool",
+                    str(tool),
+                    "String representing tool ID"
+                )
 
     def __repr__(self) -> str:
         """
