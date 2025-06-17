@@ -595,7 +595,7 @@ class JobShopLabEnv(gym.Env):
 if __name__ == "__main__":
     # from jobshopsimulation.utils.utils import make_json_dump
 
-    config = load_config()
+    config = load_config(config_path="data/config/config_scaliro.yaml")
     env = JobShopLabEnv(config)
     obs, info = env.reset()
     print(obs)

@@ -23,9 +23,9 @@ def test_start_agv_job0_to_machine0(agv_instance, default_init_state, config, ag
         ),
     )
 
-    # t-0 moves from b-0 to m-0 and put j-0 in buffer (b-1) with no travel time
+    # t-0 moves from b-12 to m-0 and put j-0 in buffer (b-0) with no travel time
     assert state_result.state.time == Time(0)
-    assert state_result.state.jobs[0].location == "b-1"
+    assert state_result.state.jobs[0].location == "b-0"
     assert state_result.state.transports[0].location.location == "m-0"
     assert state_result.state.transports[0].state == TransportStateState.IDLE
 

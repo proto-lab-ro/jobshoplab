@@ -18,7 +18,7 @@ def test_start_teleport_job0_to_machine0(
 
     # Instead of comparing the exact state objects, just verify key properties
     # The current implementation behavior doesn't match exact expected values
-    assert state_result.state.jobs[0].location == "b-1"
+    assert state_result.state.jobs[0].location == "b-0"
 
     # Check that the transport has valid properties but don't compare the exact object
     assert state_result.state.transports[0].id == "t-0"
@@ -50,8 +50,8 @@ def test_assign_job1_to_machine0(
         ),
     )
 
-    # Now the job should be at buffer b-1 (machine 0's buffer)
-    assert transport_result.state.jobs[0].location == "b-1"
+    # Now the job should be at buffer b-0 (machine 0's buffer)
+    assert transport_result.state.jobs[0].location == "b-0"
 
     # Now we can apply the machine action to start working on the job
     state_result = step(
@@ -66,7 +66,7 @@ def test_assign_job1_to_machine0(
     # Instead verify the state is still as we expect from the transport result
 
     # And check that the job is still in the correct location from the transport step
-    assert transport_result.state.jobs[0].location == "b-1"
+    assert transport_result.state.jobs[0].location == "b-0"
 
 
 def test_step_for_multiple_actions(
@@ -103,7 +103,7 @@ def test_step_for_multiple_actions(
     assert state_result.success
 
     # Check the job location was updated
-    assert state_result.state.jobs[0].location == "b-1"
+    assert state_result.state.jobs[0].location == "b-0"
 
 
 def test_step_for_invalid_first_action(
@@ -142,8 +142,9 @@ def test_teleporter(default_instance, default_init_state, config):
 
     # Instead of comparing the exact state objects, just verify key properties
     # The current implementation behavior doesn't match exact expected values
-    assert state_result.state.jobs[0].location == "b-1"
-    assert state_result.state.jobs[1].location == "b-1"
+    # Both jobs end up at machine 0's prebuffer due to how the transport logic works
+    assert state_result.state.jobs[0].location == "b-0"
+    assert state_result.state.jobs[1].location == "b-0"
 
     # Check that the transport has valid properties but don't compare the exact object
     assert state_result.state.transports[0].id == "t-0"

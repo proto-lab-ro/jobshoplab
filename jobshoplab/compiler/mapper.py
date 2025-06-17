@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import replace
 from functools import partial
 from logging import Logger
-from typing import Dict, Generator, Iterator, List, Union, Optional
+from typing import Dict, Generator, Iterator, List, Union, Optional, Callable
 
 from jobshoplab.types import Config, InstanceConfig, State
 from jobshoplab.types.instance_config_types import *
@@ -30,32 +30,99 @@ from jobshoplab.utils.exceptions import (
     NotImplementedError,
     UnknownDistributionTypeError,
     UnknownLocationNameError,
+    InvalidType,
 )
 from jobshoplab.utils.utils import get_id_int
 
 
 class ID_Counter:
     def __init__(self):
-        self.machine_counter = -1
-        self.buffer_counter = 0  # start with 1 to have a buffer_0 reserved for the input
-        self.transport_counter = -1
-        self.outage_counter = -1
+        self.buffer_ids = tuple()
+        self.machine_ids = tuple()
+        self.transport_ids = tuple()
+        self.outage_ids = tuple()
+
+    def _get_new_id(self, ids: tuple[str, ...], prefix: str) -> str:
+        """
+        Get a new ID with the given prefix.
+
+        Args:
+            ids (tuple[str, ...]): The existing IDs.
+            prefix (str): The prefix for the new ID.
+
+        Returns:
+            str: The new ID.
+        """
+        counter = len(ids)
+        _id = f"{prefix}{counter}"
+        while _id in ids:
+            _id = f"{prefix}{counter}"
+            counter += 1
+        return _id
 
     def get_machine_id(self):
-        self.machine_counter += 1
-        return f"m-{self.machine_counter}"
+        _machine_id = self._get_new_id(self.machine_ids, "m-")
+        self.add_machine_id(_machine_id)
+        return _machine_id
 
     def get_buffer_id(self):
-        self.buffer_counter += 1
-        return f"b-{self.buffer_counter}"
+        _buffer_id = self._get_new_id(self.buffer_ids, "b-")
+        self.add_buffer_id(_buffer_id)
+        return _buffer_id
 
     def get_transport_id(self):
-        self.transport_counter += 1
-        return f"t-{self.transport_counter}"
+        _transport_id = self._get_new_id(self.transport_ids, "t-")
+        self.add_transport_id(_transport_id)
+        return _transport_id
 
     def get_outage_id(self):
-        self.outage_counter += 1
-        return f"out-{self.outage_counter}"
+        _outage_id = self._get_new_id(self.outage_ids, "out-")
+        self.add_outage_id(_outage_id)
+        return _outage_id
+
+    def add_buffer_id(self, buffer_id: str):
+        """
+        Add a buffer ID to the counter.
+
+        Args:
+            buffer_id (str): The buffer ID to add.
+        """
+        if not buffer_id.startswith("b-"):
+            raise InvalidType(key="buffer_id", value=buffer_id, expected_type=["b-*"])
+        self.buffer_ids += (buffer_id,)
+
+    def add_machine_id(self, machine_id: str):
+        """
+        Add a machine ID to the counter.
+
+        Args:
+            machine_id (str): The machine ID to add.
+        """
+        if not machine_id.startswith("m-"):
+            raise InvalidType(key="machine_id", value=machine_id, expected_type=["m-*"])
+        self.machine_ids += (machine_id,)
+
+    def add_transport_id(self, transport_id: str):
+        """
+        Add a transport ID to the counter.
+
+        Args:
+            transport_id (str): The transport ID to add.
+        """
+        if not transport_id.startswith("t-"):
+            raise InvalidType(key="transport_id", value=transport_id, expected_type=["t-*"])
+        self.transport_ids += (transport_id,)
+
+    def add_outage_id(self, outage_id: str):
+        """
+        Add a outage ID to the counter.
+
+        Args:
+            outage_id (str): The outage ID to add.
+        """
+        if not outage_id.startswith("out-"):
+            raise InvalidType(key="outage_id", value=outage_id, expected_type=["out-*"])
+        self.outage_ids += (outage_id,)
 
 
 class DefaultInstanceLookUpFactory:
@@ -318,7 +385,9 @@ class DefaultStateLookUpFactory:
         return "tl-0"
 
     def get_default_transport(
-        self, transport: TransportConfig, machines: tuple[MachineState, ...]
+        self,
+        transport: TransportConfig,
+        machines: tuple[MachineState, ...],
     ) -> TransportState:
         # putting one transport to each machine resolving over the ids
         transport_id = get_id_int(transport.id)
@@ -554,6 +623,8 @@ class DictToInstanceMapper(AbstractDictMapper):
         """
         if name.startswith("m-"):
             return name
+        if name.startswith("b-"):
+            return name
         if name.lower() in [
             "input",
             "input-buffer",
@@ -575,6 +646,7 @@ class DictToInstanceMapper(AbstractDictMapper):
             "out-buf",
         ]:
             return output_buffer_id
+
         raise UnknownLocationNameError(name)
 
     def _get_time(
@@ -779,9 +851,10 @@ class DictToInstanceMapper(AbstractDictMapper):
                 duration_behavior = maintance_spec["duration"]
                 frequency_behavior = maintance_spec["frequency"]
                 _type = self._match_outage_type(maintance_spec["type"])
+                outage_id = self.counter.get_outage_id()
                 outages += (
                     OutageConfig(
-                        id=self.counter.get_outage_id(),
+                        id=outage_id,
                         duration=self._get_time(None, duration_behavior),
                         frequency=self._get_time(None, frequency_behavior),
                         type=_type,
@@ -789,8 +862,37 @@ class DictToInstanceMapper(AbstractDictMapper):
                 )
         return outages
 
-    def _add_buffer_spec(self, default: BufferConfig, spec_dict: Dict) -> BufferConfig:
-        raise NotImplementedError
+    def _add_buffer_spec(self, default: BufferConfig, buffer_spec_dict: Dict) -> BufferConfig:
+        """
+        Add a buffer specification to the default buffer configuration.
+
+        Args:
+            default (BufferConfig): The default buffer configuration.
+            buffer_spec_dict (Dict): The buffer specification dictionary.
+
+        Returns:
+            BufferConfig: The updated buffer configuration.
+        """
+        keys = buffer_spec_dict.keys()
+        for key in keys:
+            match key:
+                case "capacity":
+                    default = replace(default, capacity=buffer_spec_dict[key])
+                case "type":
+                    _type_str = buffer_spec_dict[key].upper()
+                    buffer_type = getattr(BufferTypeConfig, _type_str, None)
+                    if buffer_type is None:
+                        raise TransportConfigError(f"Unknown buffer type: {buffer_spec_dict[key]}")
+                    default = replace(default, type=buffer_type)
+                case "name":
+                    pass  # the name is already set in the default buffer
+                case _:
+                    raise InvalidType(
+                        key="BufferTypeConfig",
+                        value=buffer_spec_dict[key],
+                        expected_type=[field.name for field in BufferTypeConfig],
+                    )
+        return default
 
     def _add_transport_spec(self, spec_dict: Dict) -> tuple[TransportConfig, ...]:
         transport = spec_dict["instance_config"]["logistics"]
@@ -810,8 +912,9 @@ class DictToInstanceMapper(AbstractDictMapper):
         outages = self._map_spec_dict_to_outage(
             spec_dict, ["t", "transport", "Transport", "TRANSPORT"], tuple()
         )
-        for i in range(transport["amount"]):
+        for _ in range(transport["amount"]):
             transport_id = self.counter.get_transport_id()
+            transport_buffer_id = self.counter.get_buffer_id()
             transports += (
                 TransportConfig(
                     id=transport_id,
@@ -819,7 +922,7 @@ class DictToInstanceMapper(AbstractDictMapper):
                     outages=outages,
                     resources=tuple(),
                     buffer=BufferConfig(
-                        id=self.counter.get_buffer_id(),
+                        id=transport_buffer_id,
                         type=BufferTypeConfig.FLEX_BUFFER,
                         capacity=1,
                         resources=tuple(),
@@ -843,16 +946,29 @@ class DictToInstanceMapper(AbstractDictMapper):
         Returns:
             JobConfig: The mapped JobConfig object.
         """
+
         self.logger.debug("Map components")
+        # mapping buffers first
+        buffer = tuple()
+        if self.has_key(("instance_config", "buffer"), spec_dict):
+            for _buffer in spec_dict["instance_config"]["buffer"]:
+                _id = _buffer["name"]
+                default_buffer = self.defaults.get_default_buffer(_id, None)
+                _buffer = self._add_buffer_spec(default_buffer, _buffer)
+                self.counter.add_buffer_id(_buffer.id)
+                buffer += (_buffer,)
         machines = tuple()
         # mapping machines
         for _ in range(self.num_machines):
             machine_id = self.counter.get_machine_id()
+            prebuffer_id = self.counter.get_buffer_id()
+            postbuffer_id = self.counter.get_buffer_id()
+            machine_buffer_id = self.counter.get_buffer_id()
             machine = self.defaults.get_default_machine(
                 machine_id,
-                self.defaults.get_default_buffer(self.counter.get_buffer_id(), machine_id),
-                self.defaults.get_default_buffer(self.counter.get_buffer_id(), machine_id),
-                self.counter.get_buffer_id(),
+                self.defaults.get_default_buffer(prebuffer_id, machine_id),
+                self.defaults.get_default_buffer(postbuffer_id, machine_id),
+                machine_buffer_id,
             )
             machine = self._add_machine_spec(machine, spec_dict)
             machines += (machine,)
@@ -862,25 +978,24 @@ class DictToInstanceMapper(AbstractDictMapper):
             transport = self._add_transport_spec(spec_dict)
 
         else:
-            transport = tuple(
-                self.defaults.get_default_transport(
-                    self.counter.get_transport_id(), self.counter.get_buffer_id()
+            transport_configs = []
+            for _ in range(self.num_jobs):
+                transport_id = self.counter.get_transport_id()
+                transport_buffer_id = self.counter.get_buffer_id()
+                transport_configs.append(
+                    self.defaults.get_default_transport(transport_id, transport_buffer_id)
                 )
-                for _ in range(self.num_jobs)
+            transport = tuple(transport_configs)
+
+        # adding buffer mapping buffer
+        if len(buffer) == 0:  # no buffers where specified means we use the defaults
+            input_buffer_id = self.counter.get_buffer_id()
+            output_buffer_id = self.counter.get_buffer_id()
+            buffer = (
+                self.defaults.get_default_buffer(input_buffer_id, None, "input buffer"),
+                self.defaults.get_default_buffer(output_buffer_id, None, "output buffer"),
             )
 
-        # mapping buffer
-
-        buffer = (
-            self.defaults.get_default_buffer("b-0", None, "input buffer"),
-            self.defaults.get_default_buffer(self.counter.get_buffer_id(), None, "output buffer"),
-        )
-
-        if self.has_key(("instance_config", "components", "buffer"), spec_dict):
-            for _ in spec_dict["instance_config"]["components"]["buffer"]:
-                default_buffer = self.defaults.get_default_buffer(self.counter.get_buffer_id())
-                _buffer = self._add_buffer_spec(default_buffer, spec_dict)
-                buffer += (_buffer,)
         self.logger.debug("Successfully mapped components")
         return machines, transport, buffer
 
@@ -967,16 +1082,22 @@ class DictToInitStateMapper(AbstractDictMapper):
         self.logger.debug("Init DictToInitStateMapper")
 
     def _map_jobs(self, spec_dict: Dict, instance: InstanceConfig) -> Iterator[JobState]:
-        input_buffer_id = instance.buffers[0].id
-        for job in instance.instance.specification:
-            if self.has_key(("init_state", "components", "machines"), spec_dict):
-                raise NotImplementedError
-            operations = tuple(self.defaults.get_operations(job))
-            _id = job.id
-            if self.has_key(("init_state", "jobs", str(job.id), "location"), spec_dict):
-                raise NotImplementedError
+        location = instance.buffers[0].id
 
-            yield JobState(_id, operations, location=input_buffer_id)
+        for job in instance.instance.specification:
+            job_dict = spec_dict.get(job.id, {})
+            operations = tuple(self.defaults.get_operations(job))
+            for key in job_dict.keys():
+                match key:
+                    case "operations":
+                        raise NotImplementedError()
+                    case "location":
+                        location = job_dict["location"]
+                    case _:
+                        self.logger.warning(
+                            f"Unknown key '{key}' in job specification, ignoring it."
+                        )
+            yield JobState(job.id, operations, location=location)
 
     def _map_time(self, spec_dict: Dict) -> Time:
         if self.has_key(("init_state", "start_time"), spec_dict):
@@ -984,26 +1105,83 @@ class DictToInitStateMapper(AbstractDictMapper):
             return Time(time)
         return self.defaults.time
 
-    def _get_transport_state(self, transport: TransportConfig, spec_dict: Dict) -> TransportState:
-        transport_spec = spec_dict["init_state"]["transport"]
-        int_id = get_id_int(transport.id)
-        if len(transport_spec) < int_id:
-            raise TransportConfigError(
-                f"Transport with id={transport.id} not found in transport_spec"
-            )
+    def _get_transport_state(
+        self, transport: TransportConfig, machines: tuple[MachineConfig, ...], spec_dict: Dict
+    ) -> TransportState:
+        transport_spec = spec_dict.get(transport.id, {})
         outages = self.defaults._get_outage_state(transport)
-        return TransportState(
-            id=transport.id,
-            outages=outages,
-            state=TransportStateState.IDLE,
-            buffer=BufferState(id=transport.buffer.id, state=BufferStateState.EMPTY, store=tuple()),
-            occupied_till=NoTime(),
-            location=TransportLocation(
-                progress=1.0,
-                location=transport_spec[int_id]["location"],
-            ),
-            transport_job=None,
+        transport_state = self.defaults.get_default_transport(
+            transport=transport, machines=machines
         )
+        transport_state = self._apply_transport_init_state(
+            transport, transport_spec, transport_state
+        )
+
+        return transport_state
+
+    def _get_buffer_state(
+        self, buffer: BufferConfig, spec_dict: Dict, jobs: tuple[JobState, ...]
+    ) -> BufferState:
+        buffer_dict = spec_dict.get(buffer.id, {})
+        jobs_in_buffer = tuple(job.id for job in jobs if job.location == buffer.id)
+        for key in buffer_dict.keys():
+            match key:
+                case "store":
+                    store = tuple(
+                        set(buffer_dict["store"]) | set(jobs_in_buffer)
+                    )  # ensure jobs in buffer are included
+                    if len(store) == 0:
+                        state = BufferStateState.EMPTY
+                    else:
+                        state = BufferStateState.NOT_EMPTY
+                    return BufferState(
+                        id=buffer.id,
+                        state=state,
+                        store=store,
+                    )
+                case _:
+                    raise NotImplementedError()
+        return BufferState(
+            id=buffer.id,
+            state=BufferStateState.NOT_EMPTY if len(jobs_in_buffer) > 0 else BufferStateState.EMPTY,
+            store=jobs_in_buffer,
+        )
+
+    def _apply_transport_init_state(self, transport, transport_spec, transport_state):
+        for key in transport_spec.keys():
+            match key:
+                case "location":
+                    _location = transport_spec["location"]
+                    location = TransportLocation(
+                        progress=1.0,
+                        location=_location,
+                    )
+                    transport_state = replace(transport_state, location=location)
+                case "occupied_till":
+                    occupied_till = Time(transport_spec["occupied_till"])
+                    transport_state = replace(transport_state, occupied_till=occupied_till)
+                case "transport_job":
+                    transport_job = transport_spec["transport_job"]
+                    transport_state = replace(transport_state, transport_job=transport_job)
+                case "buffer":
+                    store = transport_spec["buffer"]
+                    if isinstance(store, list):
+                        store = tuple(store)
+                    if len(store) == 0:
+                        state = BufferStateState.EMPTY
+                    else:
+                        state = BufferStateState.NOT_EMPTY
+                    transport_state = replace(
+                        transport_state,
+                        buffer=BufferState(
+                            id=transport.buffer.id,
+                            state=state,
+                            store=store,
+                        ),
+                    )
+                case _:
+                    raise NotImplementedError()
+        return transport_state
 
     def _map_components(
         self, spec_dict: Dict, instance: InstanceConfig, jobs: tuple[JobState, ...]
@@ -1012,31 +1190,17 @@ class DictToInitStateMapper(AbstractDictMapper):
             raise NotImplementedError
         if self.has_key(("init_state", "components", "buffer"), spec_dict):
             raise NotImplementedError
-        if self.has_key(("init_state", "components", "transport"), spec_dict):
-            raise NotImplementedError
         machine_states = tuple(
             map((lambda m: self.defaults.get_default_machine(m)), instance.machines)
         )
 
-        if self.has_key(("init_state", "transport"), spec_dict):
-            transport_states = tuple(
-                map(
-                    (lambda t: self._get_transport_state(t, spec_dict)),
-                    instance.transports,
-                )
+        transport_states = tuple(
+            map(
+                (lambda t: self._get_transport_state(t, instance.machines, spec_dict=spec_dict)),
+                instance.transports,
             )
-        else:
-            transport_states = tuple(
-                map(
-                    (lambda t: self.defaults.get_default_transport(t, machine_states)),
-                    instance.transports,
-                )
-            )
-        job_ids = tuple(j.id for j in jobs)
-        buffer_states = (
-            BufferState(id=instance.buffers[0].id, state=BufferStateState.NOT_EMPTY, store=job_ids),
-            BufferState(id=instance.buffers[1].id, state=BufferStateState.EMPTY, store=tuple()),
         )
+        buffer_states = tuple(self._get_buffer_state(b, spec_dict, jobs) for b in instance.buffers)
         return (machine_states, transport_states, buffer_states)
 
     def map(self, spec_dict: Dict, instance: InstanceConfig) -> State:
@@ -1054,11 +1218,11 @@ class DictToInitStateMapper(AbstractDictMapper):
 
         # RESET COUNTER FOR EACH MAPPING
         self.counter = ID_Counter()
-
+        init_state_dict = spec_dict.get("init_state", {})
         self.defaults: DefaultStateLookUpFactory = self.default_factory(instance)
-        jobs = tuple(self._map_jobs(spec_dict, instance))
+        jobs = tuple(self._map_jobs(init_state_dict, instance))
         time = self._map_time(spec_dict)
-        machines, transports, buffer = self._map_components(spec_dict, instance, jobs)
+        machines, transports, buffer = self._map_components(init_state_dict, instance, jobs)
         return State(jobs=jobs, time=time, machines=machines, transports=transports, buffers=buffer)
 
     def __repr__(self) -> str:
