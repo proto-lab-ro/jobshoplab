@@ -1,0 +1,70 @@
+title : Dev Environment
+
+
+default_loglevel: &default_loglevel "warning" # global loglevel add loglevel to each module to overwrite for spec module
+compiler:
+  loglevel: *default_loglevel
+  # repo: "DslRepository" # change here to mod repo from spec to yaml or vice versa
+  repo: "DslRepository"
+  validator: "SimpleDSLValidator"
+  manipulators:
+
+    - "DummyManipulator"
+
+  dsl_repository:
+
+    dir: "data/config/scaliro_protolab_instance.yaml"
+
+  spec_repository:
+
+    dir: "data/jssp_instances/ft06"
+
+env:
+  loglevel: *default_loglevel
+  observation_factory: "BinaryActionObservationFactory"
+  reward_factory: "BinaryActionJsspReward"
+  action_factory: "BinaryJobActionFactory"
+  render_backend: "render_in_dashboard"
+  middleware: "EventBasedBinaryActionMiddleware"
+  max_time_fct: 2 # allowed fct for truncation max_time = lower_bound * max_time_fct where 2 is evaluated empirically
+  max_action_fct: 3 # truncation if there is num_actions >   max_action_fct * number of operations 
+
+state_machine:
+  loglevel: *default_loglevel
+
+middleware:
+  event_based_binary_action_middleware:
+    loglevel: *default_loglevel
+    truncation_joker: 5
+    truncation_active: false
+
+action_factory:
+  binary_job_action_factory:
+    loglevel: *default_loglevel
+
+observation_factory:
+  binary_action_observation_factory:
+    loglevel: *default_loglevel
+
+reward_factory:
+  binary_action_jssp_reward:
+    loglevel: *default_loglevel
+    sparse_bias: 1 #[0,inf] float
+    dense_bias: 0.001 #[0,inf] float
+    truncation_bias: -1 #[-inf,0] float
+
+
+render_backend:
+  render_in_dashboard:
+    loglevel: *default_loglevel
+    port: 8050
+    debug: false
+
+  simulation:
+    json_dump_dir: "data/tmp/simulation_interface.json"
+    port: 8051
+    loglevel: *default_loglevel
+    bind_all: false
+  
+  cli_table:
+    loglevel: *default_loglevel
