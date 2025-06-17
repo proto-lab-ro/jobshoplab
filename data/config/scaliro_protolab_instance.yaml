@@ -64,40 +64,59 @@ instance_config:
         base: 40
 
   buffer:
-   0| :
+   - name: "b-0"
      type: "fifo"
      capacity: 1
-   1| :
+   - name: "b-1"
      type: "fifo"
      capacity: 1
-  2| :
-    type: "fifo"
-    capacity: 1
-  3| :
-    type: "fifo"
-    capacity: 1
-  4| :
-    type: "fifo"
-    capacity: 1
-  5| :
-    type: "fifo"
-    capacity: 1
-  6| :
-    type: "fifo"
-    capacity: 1
+   - name: "b-2"
+     type: "fifo"
+     capacity: 1
+   - name: "b-3"
+     type: "fifo"
+     capacity: 1
+   - name: "b-4"
+     type: "fifo"
+     capacity: 1
+   - name: "b-5"
+     type: "fifo"
+     capacity: 1
 
-  init_state:
-    component:
-      buffer:
-        0| :
-          content: ["j0",]
-        1| :
-          content: ["j1",]
-        2| :
-          content: ["j2",]
-        3| :
-          content: ["j3",]
-        4| :
-          content: ["j4",]
-        5| :
-          content: ["j5",]
+init_state:
+  b-0:
+    store: [j-0]
+  b-1:
+    store: [j-1]
+  b-2:
+    store: [j-2]
+  b-3:
+    store: [j-3]
+  b-4:
+    store: [j-4]
+  b-5:
+    store: [j-5]
+  j-0:
+    location: b-0
+  j-1:
+    location: b-1
+  j-2:
+    location: b-2
+  j-3:
+    location: b-3
+  j-4:
+    location: b-4
+  j-5:
+    location: b-5
+  t-0:
+    location: m-0
+  t-1:
+    location: m-1
+  t-2:  
+    location: m-2
+  t-3:
+    location: m-3
+  t-4:
+    location: m-4
+  t-5:
+    location: m-5

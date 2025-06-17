@@ -25,5 +25,5 @@ instance_config:
       m-2|5 2 0
 
 init_state:
-  transport:
-    - location: "m-1"
+  t-0:
+    location: m-1

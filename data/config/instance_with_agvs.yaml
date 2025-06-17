@@ -28,7 +28,9 @@ instance_config:
       out-buf|7 5 2 9 0
 
 init_state:
-  transport:
-    - location: "m-1"
-    - location: "m-2"
-    - location: "m-2"
+  t-0:
+    location: m-1
+  t-1:
+    location: m-2
+  t-2:
+    location: m-2

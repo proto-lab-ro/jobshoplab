@@ -76,11 +76,9 @@ def minimal_instance_dict_with_intralogistics():
             },
         },
         "init_state": {
-            "transport": [
-                {"location": "m-1"},
-                {"location": "m-2"},
-                {"location": "m-2"},
-            ],
+            "t-0": {"location": "m-1"},
+            "t-1": {"location": "m-2"},
+            "t-2": {"location": "m-2"},
         },
     }
 
@@ -179,15 +177,15 @@ def default_machines(default_setup_times) -> tuple[MachineConfig, MachineConfig,
         outages=(),
         setup_times=default_setup_times,  # Using setup_times here
         prebuffer=BufferConfig(
-            id="b-1", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-0"
+            id="b-0", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-0"
         ),
         postbuffer=BufferConfig(
-            id="b-2", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-0"
+            id="b-1", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-0"
         ),
         batches=1,
         resources=(),
         buffer=BufferConfig(
-            id="b-3", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-0"
+            id="b-2", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-0"
         ),
     )
     machine1 = MachineConfig(
@@ -195,15 +193,15 @@ def default_machines(default_setup_times) -> tuple[MachineConfig, MachineConfig,
         outages=(),
         setup_times=default_setup_times,  # Using setup_times here
         prebuffer=BufferConfig(
-            id="b-4", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-1"
+            id="b-3", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-1"
         ),
         postbuffer=BufferConfig(
-            id="b-5", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-1"
+            id="b-4", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-1"
         ),
         batches=1,
         resources=(),
         buffer=BufferConfig(
-            id="b-6", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-1"
+            id="b-5", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-1"
         ),
     )
     machine2 = MachineConfig(
@@ -211,15 +209,15 @@ def default_machines(default_setup_times) -> tuple[MachineConfig, MachineConfig,
         outages=(),
         setup_times=default_setup_times,  # Using setup_times here
         prebuffer=BufferConfig(
-            id="b-7", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-2"
+            id="b-6", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-2"
         ),
         postbuffer=BufferConfig(
-            id="b-8", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-2"
+            id="b-7", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-2"
         ),
         batches=1,
         resources=(),
         buffer=BufferConfig(
-            id="b-9", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-2"
+            id="b-8", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-2"
         ),
     )
     return machine0, machine1, machine2
@@ -229,7 +227,7 @@ def default_machines(default_setup_times) -> tuple[MachineConfig, MachineConfig,
 def default_buffer() -> tuple[BufferConfig, BufferConfig]:
     return (
         BufferConfig(
-            id="b-0",
+            id="b-12",
             type=BufferTypeConfig.FLEX_BUFFER,
             capacity=sys.maxsize,
             resources=(),
@@ -300,7 +298,7 @@ def default_transports() -> tuple[TransportConfig, ...]:
             outages=tuple(),
             resources=(),
             buffer=BufferConfig(
-                id=f"b-{10 + i}",
+                id=f"b-{9 + i}",
                 type=BufferTypeConfig.FLEX_BUFFER,
                 capacity=1,
                 resources=(),
@@ -315,6 +313,8 @@ def default_transports() -> tuple[TransportConfig, ...]:
 @pytest.fixture
 def default_logistics(default_machines, default_buffer) -> LogisticsConfig:
     machine0, machine1, machine2 = default_machines
+    input_buffer_id = "b-12"  # default_buffer[0].id
+    output_buffer_id = "b-13"  # default_buffer[1].id
     return LogisticsConfig(
         capacity=sys.maxsize,
         travel_times={
@@ -327,22 +327,22 @@ def default_logistics(default_machines, default_buffer) -> LogisticsConfig:
             (machine2.id, machine0.id): DeterministicTimeConfig(0),
             (machine1.id, machine2.id): DeterministicTimeConfig(0),
             (machine2.id, machine1.id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, machine0.id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, machine1.id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, machine2.id): DeterministicTimeConfig(0),
-            (machine0.id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (machine2.id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (machine1.id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, machine0.id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, machine1.id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, machine2.id): DeterministicTimeConfig(0),
-            (machine0.id, default_buffer[1].id): DeterministicTimeConfig(0),
-            (machine1.id, default_buffer[1].id): DeterministicTimeConfig(0),
-            (machine2.id, default_buffer[1].id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, default_buffer[1].id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (input_buffer_id, machine0.id): DeterministicTimeConfig(0),
+            (input_buffer_id, machine1.id): DeterministicTimeConfig(0),
+            (input_buffer_id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, input_buffer_id): DeterministicTimeConfig(0),
+            (machine2.id, input_buffer_id): DeterministicTimeConfig(0),
+            (machine1.id, input_buffer_id): DeterministicTimeConfig(0),
+            (output_buffer_id, machine0.id): DeterministicTimeConfig(0),
+            (output_buffer_id, machine1.id): DeterministicTimeConfig(0),
+            (output_buffer_id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, output_buffer_id): DeterministicTimeConfig(0),
+            (machine1.id, output_buffer_id): DeterministicTimeConfig(0),
+            (machine2.id, output_buffer_id): DeterministicTimeConfig(0),
+            (input_buffer_id, output_buffer_id): DeterministicTimeConfig(0),
+            (output_buffer_id, input_buffer_id): DeterministicTimeConfig(0),
+            (input_buffer_id, input_buffer_id): DeterministicTimeConfig(0),
+            (output_buffer_id, output_buffer_id): DeterministicTimeConfig(0),
         },
     )
 
@@ -760,7 +760,7 @@ def default_agvs() -> tuple[TransportConfig, ...]:
             outages=tuple(),
             resources=(),
             buffer=BufferConfig(
-                id=f"b-{10 + i}",
+                id=f"b-{9 + i}",
                 type=BufferTypeConfig.FLEX_BUFFER,
                 capacity=1,
                 resources=(),
@@ -775,6 +775,8 @@ def default_agvs() -> tuple[TransportConfig, ...]:
 @pytest.fixture
 def default_deterministic_logistics(default_machines, default_buffer) -> LogisticsConfig:
     machine0, machine1, machine2 = default_machines
+    input_buffer_id = "b-12"  # default_buffer[0].id
+    output_buffer_id = "b-13"  # default_buffer[1].id
     return LogisticsConfig(
         capacity=sys.maxsize,
         #    m0 m1 m2
@@ -791,22 +793,22 @@ def default_deterministic_logistics(default_machines, default_buffer) -> Logisti
             (machine2.id, machine0.id): DeterministicTimeConfig(4),
             (machine1.id, machine2.id): DeterministicTimeConfig(2),
             (machine2.id, machine1.id): DeterministicTimeConfig(2),
-            (default_buffer[0].id, machine0.id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, machine1.id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, machine2.id): DeterministicTimeConfig(0),
-            (machine0.id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (machine2.id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (machine1.id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, machine0.id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, machine1.id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, machine2.id): DeterministicTimeConfig(0),
-            (machine0.id, default_buffer[1].id): DeterministicTimeConfig(0),
-            (machine1.id, default_buffer[1].id): DeterministicTimeConfig(0),
-            (machine2.id, default_buffer[1].id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, default_buffer[1].id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (default_buffer[0].id, default_buffer[0].id): DeterministicTimeConfig(0),
-            (default_buffer[1].id, default_buffer[1].id): DeterministicTimeConfig(0),
+            (input_buffer_id, machine0.id): DeterministicTimeConfig(0),
+            (input_buffer_id, machine1.id): DeterministicTimeConfig(0),
+            (input_buffer_id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, input_buffer_id): DeterministicTimeConfig(0),
+            (machine2.id, input_buffer_id): DeterministicTimeConfig(0),
+            (machine1.id, input_buffer_id): DeterministicTimeConfig(0),
+            (output_buffer_id, machine0.id): DeterministicTimeConfig(0),
+            (output_buffer_id, machine1.id): DeterministicTimeConfig(0),
+            (output_buffer_id, machine2.id): DeterministicTimeConfig(0),
+            (machine0.id, output_buffer_id): DeterministicTimeConfig(0),
+            (machine1.id, output_buffer_id): DeterministicTimeConfig(0),
+            (machine2.id, output_buffer_id): DeterministicTimeConfig(0),
+            (input_buffer_id, output_buffer_id): DeterministicTimeConfig(0),
+            (output_buffer_id, input_buffer_id): DeterministicTimeConfig(0),
+            (input_buffer_id, input_buffer_id): DeterministicTimeConfig(0),
+            (output_buffer_id, output_buffer_id): DeterministicTimeConfig(0),
         },
     )
 
