@@ -437,13 +437,18 @@ An instance can also be defined inline as a string. This approach is useful when
           out-buf|19 8 7 14 25 24 0 0
 
     init_state:
-      transport:
-        - location: "m-0"
-        - location: "m-1"
-        - location: "m-2"
-        - location: "m-3"
-        - location: "m-4"
-        - location: "m-5"
+      t-0:
+        location: m-0
+      t-1:
+        location: m-1
+      t-2:
+        location: m-2
+      t-3:
+        location: m-3
+      t-4:
+        location: m-4
+      t-5:
+        location: m-5
     """
 
     from jobshoplab.compiler.repos import DslStrRepository

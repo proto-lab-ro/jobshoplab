@@ -120,15 +120,68 @@ To model material handling:
           out-buf|5 8 10 0 0
     
     init_state:
-      transport:
-        - location: "m-0"
-        - location: "m-1"
+      t-0:
+        location: m-0
+      t-1:
+        location: m-1
 
 This defines:
-- 2 AGVs for material transport
+- 2 AGVs for material transport  
 - Travel times between all locations
-- Initial positions of the transport units
+- Initial positions of the transport units (using transport ID as key)
 
+Adding Custom Buffers
+--------------------
+
+Define custom buffers with specific capacities and types:
+
+.. code-block:: yaml
+
+    instance_config:
+      buffer:
+        - name: "b-0"
+          type: "fifo"
+          capacity: 3
+        - name: "b-1" 
+          type: "fifo"
+          capacity: 2
+
+    init_state:
+      b-0:
+        store: [j-0, j-1]  # Jobs initially in buffer
+      b-1:
+        store: []          # Empty buffer
+      j-0:
+        location: b-0      # Job location
+      j-1:
+        location: b-0
+
+Advanced Initial State Configuration
+----------------------------------
+
+The ``init_state`` section supports detailed component initialization:
+
+.. code-block:: yaml
+
+    init_state:
+      # Transport initialization (by transport ID)
+      t-0:
+        location: m-0
+        buffer: [j-2]      # Job being transported
+      t-1:
+        location: m-1
+        
+      # Buffer initialization  
+      b-0:
+        store: [j-0, j-1]  # Jobs in buffer
+        
+      # Job initialization
+      j-0:
+        location: b-0      # Where job starts
+      j-1:
+        location: b-0
+      j-2:
+        location: t-0      # Job being transported
 
 Using DSL Strings
 ----------------
@@ -155,6 +208,81 @@ For quick experiments, define instances inline:
     repo = DslStrRepository(dsl_str=dsl_str, loglevel="warning", config=config)
     compiler = Compiler(config=config, loglevel="warning", repo=repo)
     env = JobShopLabEnv(config=config, compiler=compiler)
+
+Real-World Example: Scaliro Protolab
+----------------------------------
+
+The Scaliro protolab instance demonstrates a comprehensive real-world scheduling problem with multiple advanced features:
+
+.. code-block:: yaml
+
+    # Reference: data/config/scaliro_protolab_instance.yaml
+    instance_config:
+      description: "protolab config for scaliro"
+      instance:
+        description: "6x6"
+        specification: |
+          (m0,t)|(m1,t)|(m2,t)|(m3,t)|(m4,t)|(m5,t)
+          j0|(2,1) (0,3) (1,6) (3,7) (5,3) (4,6)
+          # ... additional jobs
+          
+      transport:
+        type: "agv"
+        amount: 6
+        
+      # Travel time matrix from real measurements
+      logistics:
+        specification: |
+          m-0|m-1|m-2|m-3|m-4|m-5|b-0|b-1|b-2|b-3|b-4|b-5
+          m-0|   0  21  16   9  37  41  12  18  22  15  28  31
+          # ... complete matrix
+          
+      # Machine maintenance and AGV recharging
+      outages:
+        - component: "m"
+          type: "maintenance"
+          duration: 
+            type: "poisson"
+            base: 1
+          frequency: 
+            type: "uni"
+            offset: 20
+            base: 50
+        - component: "t"
+          type: "recharge"
+          duration: 
+            type: "gaussian"
+            std: 1
+            base: 5
+          frequency: 
+            type: "gaussian"
+            std: 3
+            base: 40
+            
+      # Custom buffer configuration
+      buffer:
+        - name: "b-0"
+          type: "fifo"
+          capacity: 1
+        # ... additional buffers
+        
+    init_state:
+      # Jobs start in dedicated buffers
+      b-0:
+        store: [j-0]
+      j-0:
+        location: b-0
+      # AGVs positioned at machines
+      t-0:
+        location: m-0
+      # ... additional initialization
+
+This example showcases:
+
+- **Realistic travel times**: Based on actual measurements from Scaliro's webapp
+- **Stochastic outages**: Machine maintenance with Poisson durations, AGV recharging with Gaussian distributions
+- **Buffer management**: Dedicated input buffers for each job with FIFO behavior
+- **Complex initialization**: Jobs pre-positioned in buffers, AGVs at machine locations
 
 Advanced Instance Features
 ------------------------
