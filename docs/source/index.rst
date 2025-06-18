@@ -191,3 +191,4 @@ Contents
    additional_resources/contributing
    additional_resources/next_steps
    additional_resources/authors
+   additional_resources/dsl_reference

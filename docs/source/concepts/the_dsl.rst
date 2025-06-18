@@ -102,57 +102,6 @@ Advanced Features
 ---------------
 
 The DSL supports several advanced features for realistic production modeling:
+Refer to :doc:`../additional_resources/dsl_reference` for detailed syntax and examples.
 
-Setup Times
-^^^^^^^^^^
-
-Define sequence-dependent setup times between operations:
-
-.. code-block:: yaml
-
-    setup_times:
-      m-0:
-        default: 5
-        matrix: |
-          j0-0|j0-1|j1-0|j1-1
-          j0-0|0 2 10 8
-          j0-1|3 0 7 4
-          j1-0|8 6 0 5
-          j1-1|7 9 3 0
-
-Stochastic Times
-^^^^^^^^^^^^^^^
-
-Model uncertainty in processing times:
-
-.. code-block:: yaml
-
-    specification:
-      j0:
-        - machine: m-0
-          duration:
-            type: "normal"
-            mean: 10
-            std: 2
-        - machine: m-1
-          duration:
-            type: "exponential"
-            mean: 15
-
-Buffers
-^^^^^^^
-
-Define limited buffer capacities:
-
-.. code-block:: yaml
-
-    buffers:
-      machine_input_buffers:
-        default_capacity: 1
-      machine_output_buffers:
-        default_capacity: 1
-      global_input_buffer:
-        capacity: 5
-      global_output_buffer:
-        capacity: 5
 
