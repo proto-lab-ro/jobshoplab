@@ -1,17 +1,25 @@
 from dataclasses import replace
 
 from jobshoplab.state_machine.core.state_machine.handler import (
-    create_timed_machine_transitions, create_timed_transport_transitions,
+    create_timed_machine_transitions,
+    create_timed_transport_transitions,
     handle_machine_outage_to_idle_transition,
-    handle_machine_working_to_outage_transition)
+    handle_machine_working_to_outage_transition,
+)
 from jobshoplab.types import NoTime, Time
-from jobshoplab.types.state_types import (BufferState, BufferStateState,
-                                          MachineState, MachineStateState,
-                                          OutageActive, OutageInactive,
-                                          OutageState, TransportLocation,
-                                          TransportState, TransportStateState)
-from jobshoplab.utils.state_machine_utils import (machine_type_utils,
-                                                  outage_utils)
+from jobshoplab.types.state_types import (
+    BufferState,
+    BufferStateState,
+    MachineState,
+    MachineStateState,
+    OutageActive,
+    OutageInactive,
+    OutageState,
+    TransportLocation,
+    TransportState,
+    TransportStateState,
+)
+from jobshoplab.utils.state_machine_utils import machine_type_utils, outage_utils
 
 
 class TestDeterministicMachineOutages:
