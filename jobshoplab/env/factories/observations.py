@@ -694,7 +694,9 @@ class OperationArrayObservation(ObservationFactory):
 
         super().__init__(loglevel, config, instance)
         #! todo unsafe code get max from all buffers
-        max_buffer_id = int(instance.buffers[-1].id.split("-")[1])
+        self.max_buffer_id = (
+            len(instance.buffers) + len(instance.machines) * 3 + len(instance.transports)
+        ) - 1  # all buffers, 3 buffers per machine and 1 buffer per transport (-1 because buffers start at 0)
         self.spaces = OrderedDict(
             {
                 "operation_state": gym.spaces.Box(
@@ -702,7 +704,7 @@ class OperationArrayObservation(ObservationFactory):
                 ),
                 "current_time": gym.spaces.Box(low=0, high=1.0, shape=(1,), dtype=np.float32),
                 "job_locations": gym.spaces.Box(
-                    low=0, high=max_buffer_id, shape=(1, num_jobs), dtype=np.int32
+                    low=0, high=1.0, shape=(1, num_jobs), dtype=np.float32
                 ),
             }
         )
@@ -742,7 +744,7 @@ class OperationArrayObservation(ObservationFactory):
             "current_time": np.array(
                 [np.float32(state_result.state.time.time / self.max_allowed_time)]
             ),
-            "job_locations": np.array([job_ints], dtype=np.float32),
+            "job_locations": np.array([job_ints], dtype=np.float32) / self.max_buffer_id,
         }
 
     def __repr__(self) -> str:
