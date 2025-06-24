@@ -811,17 +811,18 @@ class TestOutageUtils:
 
     def test_get_occupied_time_from_outage_iterator(self, outage_state_active):
         """
-        Test that get_occupied_time_from_outage_iterator returns the correct occupied time.
+        Test that get_occupied_time_from_outage_iterator returns the correct occupied duration.
         """
         # Arrange
-        outage_end_time = 30  # From fixture
+        # From fixture: start_time=Time(10), end_time=Time(30), so duration = 20
+        expected_duration = 20  # 30 - 10
         outage2 = OutageState(
             id="o-fail-2",
-            active=OutageActive(start_time=Time(15), end_time=Time(25)),  # Earlier end time
+            active=OutageActive(start_time=Time(15), end_time=Time(25)),  # Duration = 10
         )
         outage3 = OutageState(
             id="o-fail-3",
-            active=OutageActive(start_time=Time(15), end_time=Time(40)),  # Later end time
+            active=OutageActive(start_time=Time(15), end_time=Time(40)),  # Duration = 25
         )
         inactive_outage = OutageState(
             id="o-fail-4", active=OutageInactive(last_time_active=Time(5))
@@ -831,7 +832,7 @@ class TestOutageUtils:
         # Test with single outage
         single_time = outage_utils.get_occupied_time_from_outage_iterator([outage_state_active])
 
-        # Test with multiple outages, should take max end time
+        # Test with multiple outages, should take max duration
         multi_time1 = outage_utils.get_occupied_time_from_outage_iterator(
             [outage_state_active, outage2]
         )
@@ -847,11 +848,11 @@ class TestOutageUtils:
         # Test with only inactive outages
         only_inactive_time = outage_utils.get_occupied_time_from_outage_iterator([inactive_outage])
 
-        # Assert
-        assert single_time == outage_end_time
-        assert multi_time1 == outage_end_time  # Should be max of 25 and 30
-        assert multi_time2 == 40  # Should be max of 30 and 40
-        assert with_inactive_time == outage_end_time  # Inactive outages should be ignored
+        # Assert - function returns maximum duration, not end time
+        assert single_time == expected_duration
+        assert multi_time1 == expected_duration  # Should be max of durations: max(20, 10) = 20
+        assert multi_time2 == 25  # Should be max of durations: max(20, 25) = 25
+        assert with_inactive_time == expected_duration  # Inactive outages should be ignored
         assert only_inactive_time == 0  # No active outages means time = 0
 
     def test_release_outage(self, outage_state_active, outage_state_inactive):

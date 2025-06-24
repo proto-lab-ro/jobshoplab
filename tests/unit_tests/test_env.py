@@ -49,7 +49,7 @@ def test_reset(test_config):
     assert env.history == tuple()
     assert not env.truncated
     assert not env.terminated
-    assert np.array_equal(obs, new_obs)
+    _compare_observations(obs, new_obs)
 
 
 # def test_reset_with_manipulator():
@@ -122,14 +122,25 @@ def test_seeding(test_config):
     obs1, _ = env1.reset()
     obs2, _ = env2.reset()
 
-    assert np.array_equal(obs1, obs2)
+    # Compare observations with proper array handling
+    _compare_observations(obs1, obs2)
 
     action = 1
     obs1, r1, _, _, _ = env1.step(action)
     obs2, r2, _, _, _ = env2.step(action)
 
-    assert np.array_equal(obs1, obs2)
+    _compare_observations(obs1, obs2)
     assert r1 == r2
+
+
+def _compare_observations(obs1, obs2):
+    """Helper function to compare observations containing arrays."""
+    assert obs1.keys() == obs2.keys()
+    for key in obs1:
+        if isinstance(obs1[key], np.ndarray):
+            assert np.allclose(obs1[key], obs2[key]), f"Array mismatch in {key}"
+        else:
+            assert obs1[key] == obs2[key], f"Value mismatch in {key}"
 
 
 def test_env_done_exception(test_config):
