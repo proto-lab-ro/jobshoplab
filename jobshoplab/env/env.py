@@ -597,11 +597,12 @@ if __name__ == "__main__":
 
     config = load_config(config_path="data/config/config_scaliro.yaml")
     env = JobShopLabEnv(config)
-    obs, info = env.reset()
-    print(obs)
-    print(10 * "-")
-    done = False
-    while not done:
-        obs, reward, termianted, truncated, inf = env.step(1)
-        done = termianted or truncated
-    env.render()
+    while True:
+        obs, info = env.reset()
+        done = False
+        while not done:
+            action = env.action_space.sample()
+            obs, reward, termianted, truncated, inf = env.step(action)
+            done = termianted or truncated
+
+    # env.render()

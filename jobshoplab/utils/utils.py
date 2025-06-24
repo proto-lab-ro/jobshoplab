@@ -114,7 +114,7 @@ def get_id_int(id: str) -> int:
     return int(id.split("-")[1])
 
 
-def get_component_type_int(id: str) -> int:
+def get_component_type_int(id: str) -> float:
     """
     Get the integer representation of a component type from its ID.
 
@@ -130,16 +130,16 @@ def get_component_type_int(id: str) -> int:
     component_str = id.split("-")[0]
     match component_str:
         case "m":
-            return 0
+            return 0.0
         case "t":
-            return 1
+            return 0.33
         case "b":
-            return 2
+            return 0.66
         case _:
             raise InvalidValue(f"Invalid component id {id}", id)
 
 
-def get_component_id_int(all_components: list[Any], id: str) -> int:
+def get_component_id_int(all_components: list[Any], id: str) -> tuple[int, int]:
     """
     Get the integer index of a component in a list of components.
 
@@ -154,9 +154,10 @@ def get_component_id_int(all_components: list[Any], id: str) -> int:
         InvalidValue: If the component ID is not found
     """
     component_mapping = {component.id: i for i, component in enumerate(all_components)}
+    num_components = len(component_mapping)
     if id not in component_mapping:
         raise InvalidValue(f"Invalid component id {id}", id)
-    return component_mapping[id]
+    return (component_mapping[id]), len(component_mapping)
 
 
 ## calc_lower_bound

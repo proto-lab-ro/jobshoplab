@@ -1,7 +1,6 @@
-from typing import Iterable
+from typing import Iterable, Optional
 
-from jobshoplab.types import (JobConfig, JobState, OperationConfig,
-                              OperationState)
+from jobshoplab.types import JobConfig, JobState, OperationConfig, OperationState
 from jobshoplab.types.state_types import MachineState, OperationStateState
 from jobshoplab.utils.exceptions import InvalidValue
 
@@ -178,6 +177,23 @@ def get_next_idle_operation(job: JobState) -> OperationState:
 
 def get_next_operation_for_machine(machine_id, jobs: JobState) -> OperationState:
     raise NotImplementedError
+
+
+def get_prior_executed_operation(job: JobState) -> Optional[OperationState]:
+    """Get the last operation from a job that is in the DONE state.
+    Args:
+        job (JobState): The job to get the last operation from.
+    Returns:
+        OperationState: The last operation from the job that is in the DONE state.
+    Raises:
+        InvalidValue: If the job has no operations in the DONE state.
+    """
+    done_operations = tuple(
+        filter(lambda op: op.operation_state_state == OperationStateState.DONE, job.operations)
+    )
+    if not done_operations:
+        return None
+    return done_operations[-1]
 
 
 def get_processing_operation(job: JobState) -> OperationState | None:

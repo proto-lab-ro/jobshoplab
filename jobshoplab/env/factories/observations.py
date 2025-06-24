@@ -566,14 +566,10 @@ class BinaryActionObservationFactory(SimpleJsspObservationFactory):
             instance (InstanceConfig): The instance configuration object.
         """
         super().__init__(loglevel, config, instance)
-        self.spaces["current_job"] = gym.spaces.Discrete(self.num_jobs + 1, start=0)
-        self.spaces["current_component_id"] = gym.spaces.Discrete(self.num_components + 1, start=0)
-        self.spaces["current_component_type"] = gym.spaces.Discrete(
-            3, start=0
-        )  # 0: machine, 1: transport, 2: placeholder results in a total of 3 possible values
-        self.spaces.move_to_end("current_job")
-        self.spaces.move_to_end("current_component_id")
-        self.spaces.move_to_end("current_component_type")
+        self.spaces["current_transition"] = gym.spaces.Box(
+            low=0, high=1, shape=(3,), dtype=np.float32
+        )
+        self.spaces.move_to_end("current_transition")
         self.observation_space: gym.spaces.Dict = gym.spaces.Dict(self.spaces)
 
     def make(
@@ -596,17 +592,22 @@ class BinaryActionObservationFactory(SimpleJsspObservationFactory):
             if len(state.possible_transitions) == 0:
                 raise InvalidValue("No possible transitions", state)
             transition: ComponentTransition = state.possible_transitions[0]
-            obs["current_job"] = (
-                get_id_int(transition.job_id) if transition.job_id else len(state.state.jobs)
+            current_job = np.float32(
+                (get_id_int(transition.job_id) if transition.job_id else len(state.state.jobs))
+                / len(state.state.jobs)
             )
-            obs["current_component_id"] = self.get_component_id(transition.component_id)
-            obs["current_component_type"] = get_component_type_int(transition.component_id)
+            _current_component_id, total_components = self.get_component_id(transition.component_id)
+            current_component_id = np.float32(_current_component_id / total_components)
+            current_component_type = np.float32(get_component_type_int(transition.component_id))
         else:
-            obs["current_job"] = len(
-                state.state.jobs
-            )  # setting to biggest job id +1 to prevent RuntimeError in model.learn
-            obs["current_component_id"] = self.num_components
-            obs["current_component_type"] = 3
+            current_job = np.float32(1)
+            current_component_id = np.float32(1)
+            current_component_type = np.float32(1)
+
+        arr = np.array([current_component_id, current_job, current_component_type]).astype(
+            np.float32
+        )
+        obs["current_transition"] = arr
         return obs
 
     def __repr__(self) -> str:
@@ -726,10 +727,12 @@ class OperationArrayObservation(ObservationFactory):
                     case OperationStateState.IDLE:
                         operation_state.append(0)
                     case OperationStateState.PROCESSING:
-                        duration = operation.end_time.time - operation.start_time.time
+                        if operation.start_time is None or operation.end_time is None:
+                            raise InvalidValue("Operation start or end time is None", operation)
+                        duration = operation.end_time.time - operation.start_time.time  # type: ignore
                         progress = (
                             state_result.state.time.time - operation.start_time.time
-                        ) / duration
+                        ) / duration  # type: ignore
                         operation_state.append(progress)
                     case OperationStateState.DONE:
                         operation_state.append(1)
@@ -738,13 +741,13 @@ class OperationArrayObservation(ObservationFactory):
         job_locations = [job.location for job in state_result.state.jobs]
         if any(not j.startswith("b") for j in job_locations):
             raise InvalidValue("Job location must be a buffer", job_locations)
-        job_ints = [int(j.split("-")[1]) for j in job_locations]
+        job_ints = [np.float32(int(j.split("-")[1]) / self.max_buffer_id) for j in job_locations]
         return {
-            "operation_state": np.array([operation_state]),
+            "operation_state": np.array([operation_state]).astype(np.float32),
             "current_time": np.array(
                 [np.float32(state_result.state.time.time / self.max_allowed_time)]
             ),
-            "job_locations": np.array([job_ints], dtype=np.float32) / self.max_buffer_id,
+            "job_locations": np.array([job_ints], dtype=np.float32),
         }
 
     def __repr__(self) -> str:
@@ -768,14 +771,10 @@ class BinaryOperationArrayObservation(OperationArrayObservation):
     ):
         super().__init__(loglevel, config, instance)
         self.num_jobs: int = len(instance.instance.specification)
-        self.spaces["current_job"] = gym.spaces.Discrete(self.num_jobs + 1, start=0)
-        self.spaces["current_component_id"] = gym.spaces.Discrete(self.num_components + 1, start=0)
-        self.spaces["current_component_type"] = gym.spaces.Discrete(
-            3, start=0
-        )  # 0: machine, 1: transport, 2: placeholder results in a total of 3 possible values
-        self.spaces.move_to_end("current_job")
-        self.spaces.move_to_end("current_component_id")
-        self.spaces.move_to_end("current_component_type")
+        self.spaces["current_transition"] = gym.spaces.Box(
+            low=0, high=1, shape=(3,), dtype=np.float32
+        )
+        self.spaces.move_to_end("current_transition")
         self.observation_space: gym.spaces.Dict = gym.spaces.Dict(self.spaces)
 
     def make(
@@ -798,17 +797,22 @@ class BinaryOperationArrayObservation(OperationArrayObservation):
             if len(state.possible_transitions) == 0:
                 raise InvalidValue("No possible transitions", state)
             transition: ComponentTransition = state.possible_transitions[0]
-            obs["current_job"] = (
-                get_id_int(transition.job_id) if transition.job_id else len(state.state.jobs)
+            current_job = np.float32(
+                (get_id_int(transition.job_id) if transition.job_id else len(self.num_jobs))
+                / self.num_jobs
             )
-            obs["current_component_id"] = self.get_component_id(transition.component_id)
-            obs["current_component_type"] = get_component_type_int(transition.component_id)
+            _current_component_id, total_components = self.get_component_id(transition.component_id)
+            current_component_id = np.float32(_current_component_id / total_components)
+            current_component_type = np.float32(get_component_type_int(transition.component_id))
         else:
-            obs["current_job"] = len(
-                state.state.jobs
-            )  # setting to biggest job id +1 to prevent RuntimeError in model.learn
-            obs["current_component_id"] = self.num_components
-            obs["current_component_type"] = 3
+            current_job = np.float32(1)
+            current_component_id = np.float32(1)
+            current_component_type = np.float32(1)
+
+        arr = np.array([current_component_id, current_job, current_component_type]).astype(
+            np.float32
+        )
+        obs["current_transition"] = arr
         return obs
 
     def __repr__(self) -> str:
