@@ -37,9 +37,17 @@ instance_config:
       b-4|  28  14  21  29  18  21  22  19  23  27   0  14
       b-5|  31  26  24  33  22  16  26  24  28  31  14   0
 
-  time_behavior:
-      type: "uni"
-      offset: 5
+    time_behavior:
+        type: "uni"
+        offset: 5
+
+  machines:
+    prebuffer:
+      - capacity: 5
+        type: "fifo"
+    postbuffer:
+      - capacity: 5
+        type: "fifo"
 
   outages:
     - component: "m"

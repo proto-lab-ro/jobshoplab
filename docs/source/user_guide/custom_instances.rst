@@ -119,6 +119,7 @@ To model material handling:
           in-buf|5 8 10 0 0
           out-buf|5 8 10 0 0
     
+    # Optional
     init_state:
       t-0:
         location: m-0
@@ -155,6 +156,49 @@ Define custom buffers with specific capacities and types:
         location: b-0      # Job location
       j-1:
         location: b-0
+
+Configuring Machine Buffers
+---------------------------
+
+Each machine has three buffers: prebuffer (input), buffer (internal), and postbuffer (output). You can customize the prebuffer and postbuffer settings:
+
+**Global Configuration** (applies to all machines):
+
+.. code-block:: yaml
+
+    instance_config:
+      machines:
+        prebuffer:
+          - capacity: 5
+            type: "fifo"
+        postbuffer:
+          - capacity: 5
+            type: "fifo"
+
+**Machine-Specific Configuration** (overrides global settings):
+
+.. code-block:: yaml
+
+    instance_config:
+      machines:
+        - "m-0":
+            prebuffer:
+              - capacity: 10
+                type: "lifo"
+            postbuffer:
+              - capacity: 8
+                type: "fifo"
+        - "m-1":
+            prebuffer:
+              - capacity: 3
+                type: "fifo"
+
+This configuration allows you to:
+
+- Control buffer capacity for queueing behavior
+- Set buffer types (FIFO, LIFO, flex_buffer, dummy) for different processing strategies
+- Override global settings for specific machines that need special handling
+- Model realistic shop floor constraints where different workstations have different buffer limitations
 
 Advanced Initial State Configuration
 ----------------------------------
@@ -266,6 +310,15 @@ The Scaliro protolab instance demonstrates a comprehensive real-world scheduling
           capacity: 1
         # ... additional buffers
         
+      # Machine buffer configuration
+      machines:
+        prebuffer:
+          - capacity: 5
+            type: "fifo"
+        postbuffer:
+          - capacity: 5
+            type: "fifo"
+        
     init_state:
       # Jobs start in dedicated buffers
       b-0:
@@ -282,6 +335,7 @@ This example showcases:
 - **Realistic travel times**: Based on actual measurements from Scaliro's webapp
 - **Stochastic outages**: Machine maintenance with Poisson durations, AGV recharging with Gaussian distributions
 - **Buffer management**: Dedicated input buffers for each job with FIFO behavior
+- **Machine buffer configuration**: Standardized prebuffer and postbuffer settings across all machines
 - **Complex initialization**: Jobs pre-positioned in buffers, AGVs at machine locations
 
 Advanced Instance Features
@@ -292,4 +346,5 @@ JobShopLab supports advanced features including:
 - **Setup times**: Sequence-dependent changeover times
 - **Stochastic processing**: Distribution-based processing durations 
 - **Machine breakdowns**: Scheduled or random downtime events
+- **Machine buffer configuration**: Customizable prebuffer and postbuffer settings
 - **Alternative process plans**: Multiple operation sequences for jobs

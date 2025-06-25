@@ -24,7 +24,7 @@ The GIF above showcases our framework in action, visualizing an automated produc
 
 - **Modular Gym Environment**: A customizable and extensible framework for testing diverse scheduling strategies and problem specifications.
 - **Reinforcement Learning Ready**: Seamless integration with RL algorithms via the standard Gym Interface.
-- **Real-World Constraints**: Incorporates transport logistics, buffer management, machine breakdowns, setup times, and stochastic processing conditions.
+- **Real-World Constraints**: Incorporates transport logistics, buffer management, machine buffer configuration, machine breakdowns, setup times, and stochastic processing conditions.
 - **Multi-Objective Optimization**: Supports scheduling based on multiple objectives, such as makespan, energy efficiency, machine utilization, and lead time.
 - **Pip Installable**: Easy installation from the repository, ensuring quick setup and integration into existing projects.
 
@@ -83,9 +83,9 @@ We also provide a **Getting Started Jupyter Notebook** that walks you through th
 
 JobShopLab extends the classical Job Shop Scheduling Problem (JSSP) by considering real-world production constraints and enabling RL-based optimization. It provides a state-machine-based simulation model that includes:
 
-- **Machines**: Modeled with setup times, breakdowns, and stochastic processing.
+- **Machines**: Modeled with setup times, breakdowns, stochastic processing, and configurable prebuffer/postbuffer settings.
 - **Transport Units**: Handling job movements between machines with delays and constraints.
-- **Buffers**: Limited storage capacity impacting scheduling decisions.
+- **Buffers**: Limited storage capacity impacting scheduling decisions, with machine-specific buffer configurations.
 
 ## Experiments
 

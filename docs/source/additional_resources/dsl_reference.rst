@@ -106,6 +106,52 @@ Define custom buffers:
         type: "lifo"
         capacity: 3
 
+Machine Buffer Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Configure machine-specific prebuffer and postbuffer settings:
+
+**Global Machine Buffer Configuration** (applies to all machines):
+
+.. code-block:: yaml
+
+    machines:
+      prebuffer:
+        - capacity: 5       # Buffer capacity
+          type: "fifo"      # Buffer type: fifo, lifo, flex_buffer, dummy
+      postbuffer:
+        - capacity: 5       # Buffer capacity  
+          type: "fifo"      # Buffer type
+
+**Machine-Specific Buffer Configuration** (overrides global settings):
+
+.. code-block:: yaml
+
+    machines:
+      - "m-0":              # Specific machine ID
+          prebuffer:
+            - capacity: 10
+              type: "lifo"
+          postbuffer:
+            - capacity: 8
+              type: "fifo"
+      - "m-1":
+          prebuffer:
+            - capacity: 3
+              type: "fifo"
+
+**Buffer Types:**
+- ``fifo``: First-In-First-Out queue
+- ``lifo``: Last-In-First-Out stack  
+- ``flex_buffer``: Flexible buffer with no ordering constraints
+- ``dummy``: Pass-through buffer with no storage
+
+**Notes:**
+- Machine-specific configurations override global configurations
+- Each machine has three buffers: prebuffer (input), buffer (internal), and postbuffer (output)
+- Only prebuffer and postbuffer can be configured; the internal buffer is always capacity 1
+- If not specified, machines use default buffer settings (unlimited capacity, flex_buffer type)
+
 Outage Configuration
 ^^^^^^^^^^^^^^^^^^^
 
@@ -245,6 +291,14 @@ Here's a complete DSL file example:
         - name: "b-0"
           type: "fifo"
           capacity: 3
+          
+      machines:
+        prebuffer:
+          - capacity: 5
+            type: "fifo"
+        postbuffer:
+          - capacity: 5
+            type: "fifo"
           
       outages:
         - component: "m"
