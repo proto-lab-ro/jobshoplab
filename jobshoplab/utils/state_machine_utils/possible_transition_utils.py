@@ -4,13 +4,19 @@ from typing import Generator
 from jobshoplab.types import InstanceConfig
 from jobshoplab.types.action_types import ComponentTransition
 from jobshoplab.types.instance_config_types import TransportTypeConfig
-from jobshoplab.types.state_types import (BufferState, JobState, MachineState,
-                                          MachineStateState, OperationState,
-                                          OperationStateState, State,
-                                          TransportState, TransportStateState)
+from jobshoplab.types.state_types import (
+    BufferState,
+    JobState,
+    MachineState,
+    MachineStateState,
+    OperationState,
+    OperationStateState,
+    State,
+    TransportState,
+    TransportStateState,
+)
 from jobshoplab.utils.exceptions import InvalidKey, InvalidType, InvalidValue
-from jobshoplab.utils.state_machine_utils import (job_type_utils,
-                                                  machine_type_utils)
+from jobshoplab.utils.state_machine_utils import job_type_utils, machine_type_utils
 from jobshoplab.utils.utils import get_id_int
 
 

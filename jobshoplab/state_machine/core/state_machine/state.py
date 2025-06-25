@@ -14,18 +14,31 @@ import jobshoplab.state_machine.core.state_machine.handler as handler
 import jobshoplab.state_machine.core.state_machine.validate as validate
 import jobshoplab.utils.state_machine_utils.core_utils as core_utils
 from jobshoplab.state_machine import time_machines
-from jobshoplab.types import (Config, InstanceConfig, JobState, OperationState,
-                              State, StateMachineResult, TransitionResult)
+from jobshoplab.types import (
+    Config,
+    InstanceConfig,
+    JobState,
+    OperationState,
+    State,
+    StateMachineResult,
+    TransitionResult,
+)
 from jobshoplab.types.action_types import Action, ComponentTransition
-from jobshoplab.types.state_types import (DeterministicTimeConfig,
-                                          MachineState, MachineStateState,
-                                          StochasticTimeConfig, TransportState)
+from jobshoplab.types.state_types import (
+    DeterministicTimeConfig,
+    MachineState,
+    MachineStateState,
+    StochasticTimeConfig,
+    TransportState,
+)
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import NotImplementedError
-from jobshoplab.utils.state_machine_utils import (buffer_type_utils,
-                                                  component_type_utils,
-                                                  job_type_utils,
-                                                  possible_transition_utils)
+from jobshoplab.utils.state_machine_utils import (
+    buffer_type_utils,
+    component_type_utils,
+    job_type_utils,
+    possible_transition_utils,
+)
 
 
 def is_done(state: StateMachineResult) -> bool:
@@ -170,7 +183,7 @@ def step(
     _old_state = state
     _all_transitions = action.transitions
     sub_states = tuple()
-    
+
     # Process transitions in the action
     # IMPORTANT: Order matters - transport transitions first, then machine transitions
     # This enables a job to arrive at a machine and then the machine can start
@@ -179,7 +192,7 @@ def step(
         action.transitions, state, instance, loglevel, core_utils.sorted_by_transport
     )
     sub_states += (transition_result.state,)
-    
+
     # Handle errors from transition processing
     if transition_result.errors:
         return StateMachineResult(
@@ -206,7 +219,7 @@ def step(
     state = replace(state, time=new_time)
 
     # Process timed transitions that happen automatically
-    timed_transitions = handler.create_timed_transitions(loglevel, state)
+    timed_transitions = handler.create_timed_transitions(loglevel, state, instance)
     _possible_transitions = get_possible_transitions(state, instance)
     teleport_transitions = _filter_teleport_transitions(_possible_transitions, instance, state)
 
@@ -243,7 +256,7 @@ def step(
         )
         state = replace(state, time=new_time)
         sub_states += (state,)
-        timed_transitions = handler.create_timed_transitions(loglevel, state)
+        timed_transitions = handler.create_timed_transitions(loglevel, state, instance)
 
     # Check if all jobs are complete
     if core_utils.is_done(state):
@@ -264,6 +277,7 @@ def step(
     # Return the final state with possible transitions
     logger.debug(f"_all_transitions: {_all_transitions}")
     possible_transitions = get_possible_transitions(state, instance)
+
     return StateMachineResult(
         state=state,
         sub_states=sub_states[:-1],

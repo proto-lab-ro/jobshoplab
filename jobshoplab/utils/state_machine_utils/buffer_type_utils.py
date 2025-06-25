@@ -1,7 +1,8 @@
 from dataclasses import replace
+from typing import Optional
 
 from jobshoplab.types import InstanceConfig, State
-from jobshoplab.types.instance_config_types import BufferConfig
+from jobshoplab.types.instance_config_types import BufferConfig, BufferTypeConfig
 from jobshoplab.types.state_types import (BufferState, BufferStateState,
                                           JobState)
 from jobshoplab.utils.exceptions import (BufferFullError, InvalidValue,
@@ -213,3 +214,31 @@ def get_buffer_state_by_id(buffers: tuple[BufferState, ...], buffer_id: str) -> 
     if buffer is None:
         raise InvalidValue(buffer_id, buffers, "desired buffer not found")
     return buffer
+
+
+
+def get_next_job_from_buffer(buffer_state: BufferState, buffer_config: BufferConfig) -> Optional[str]:
+    """
+    Get the next job ID to process based on buffer type.
+    
+    Args:
+        buffer_state: The current state of the buffer containing job IDs
+        buffer_config: The buffer configuration specifying type (FIFO, LIFO, etc.)
+    
+    Returns:
+        str  < /dev/null |  None: The job ID to process next, or None if no automatic ordering applies
+    """
+    if not buffer_state.store:
+        return None
+    
+    match buffer_config.type:
+        case BufferTypeConfig.FIFO:
+            return buffer_state.store[0]  # First job in, first out
+        case BufferTypeConfig.LIFO:
+            return buffer_state.store[-1]  # Last job in, first out
+        case BufferTypeConfig.FLEX_BUFFER:
+            return None  # No automatic ordering - requires manual selection
+        case BufferTypeConfig.DUMMY:
+            return buffer_state.store[0] if buffer_state.store else None
+        case _:
+            return None

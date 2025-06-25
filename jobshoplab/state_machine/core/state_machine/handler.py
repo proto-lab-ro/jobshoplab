@@ -70,7 +70,7 @@ def _waiting_time_and_op_time_differ(state: State, transport: TransportState) ->
 
 
 def create_timed_machine_transitions(
-    loglevel: int | str, state: State
+    loglevel: int | str, state: State, instance: InstanceConfig
 ) -> tuple[ComponentTransition, ...]:
     """
     Create timed machine transitions based on the given state.
@@ -88,9 +88,12 @@ def create_timed_machine_transitions(
             that need to transition to their next state
     """
     transitions = []
-
+    all_buffer_configs = buffer_type_utils.get_all_buffer_configs(instance)
     # Check each machine to see if it's time to change its state
     for machine in state.machines:
+
+        # Check for timed transitions (when occupation time is over)
+        transition = None
         if isinstance(machine.occupied_till, Time) and isinstance(state.time, Time):
             if machine.occupied_till.time <= state.time.time:
                 # Create appropriate transition based on current machine state
@@ -117,12 +120,36 @@ def create_timed_machine_transitions(
                             job_id=machine.buffer.store[0],
                         )
                     case _:
-                        transition = None
-
-                if transition is not None:
-                    transitions.append(transition)
+                        pass
+        if transition is None and machine.state == MachineStateState.IDLE:
+            transition = create_machine_setup_transition(
+                all_buffer_configs, machine
+            )  # Create setup transition if applicable
+        if transition is not None:
+            transitions.append(transition)
 
     return tuple(transitions)
+
+
+def create_machine_setup_transition(all_buffer_configs, machine):
+    transition = None
+    if len(machine.prebuffer.store) > 0:
+        prebuffer_config = buffer_type_utils.get_buffer_config_by_id(
+            all_buffer_configs, machine.prebuffer.id
+        )
+
+        # Determine if automatic transition should be created based on buffer type
+        next_job_id = buffer_type_utils.get_next_job_from_buffer(
+            machine.prebuffer, prebuffer_config
+        )
+        if next_job_id is not None:  # FIFO/LIFO/DUMMY, not flex
+            transition = ComponentTransition(
+                component_id=machine.id,
+                new_state=MachineStateState.SETUP,
+                job_id=next_job_id,
+            )
+
+    return transition
 
 
 def create_avg_pickup_to_drop_transition(
@@ -305,7 +332,7 @@ def create_timed_transport_transitions(
 
 
 def create_timed_transitions(
-    loglevel: Union[int, str], state: State
+    loglevel: Union[int, str], state: State, instance: InstanceConfig = None
 ) -> Tuple[ComponentTransition, ...]:
     """
     Create timed transitions for the given state.
@@ -330,7 +357,7 @@ def create_timed_transitions(
     # ORDER IS IMPORTANT
     # First handle machine transitions, then transport transitions
     # This ordering ensures machines complete their work before transports try to move jobs
-    transitions.extend(create_timed_machine_transitions(loglevel, state))
+    transitions.extend(create_timed_machine_transitions(loglevel, state, instance))
     transitions.extend(create_timed_transport_transitions(loglevel, state))
 
     return tuple(transitions)

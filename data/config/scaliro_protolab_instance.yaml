@@ -43,10 +43,10 @@ instance_config:
 
   machines:
     prebuffer:
-      - capacity: 5
-        type: "fifo"
+      - capacity: 6
+        type: "lifo"
     postbuffer:
-      - capacity: 5
+      - capacity: 6
         type: "fifo"
 
   outages:

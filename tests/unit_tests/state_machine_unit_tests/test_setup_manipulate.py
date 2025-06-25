@@ -3,12 +3,14 @@ from unittest.mock import patch
 
 from jobshoplab.state_machine.core.state_machine.handler import (
     create_timed_machine_transitions,
-    handle_machine_setup_to_working_transition)
+    handle_machine_setup_to_working_transition,
+)
 from jobshoplab.state_machine.core.state_machine.manipulate import (
-    _get_setup_duration, begin_machine_setup)
+    _get_setup_duration,
+    begin_machine_setup,
+)
 from jobshoplab.types import InstanceConfig, Time
-from jobshoplab.types.state_types import (MachineStateState,
-                                          OperationStateState, State)
+from jobshoplab.types.state_types import MachineStateState, OperationStateState, State
 from jobshoplab.types.stochasticy_models import GaussianFunction
 from jobshoplab.utils.state_machine_utils import machine_type_utils
 
@@ -92,7 +94,9 @@ def test_begin_machine_setup(
     """Test begin_machine_setup with deterministic setup times"""
     # Arrange
     from jobshoplab.types.instance_config_types import (
-        ProblemInstanceConfig, ProblemInstanceTypeConfig)
+        ProblemInstanceConfig,
+        ProblemInstanceTypeConfig,
+    )
 
     current_time = Time(10)
 
@@ -135,7 +139,9 @@ def test_begin_machine_setup_stochastic(
     """Test begin_machine_setup with stochastic setup times"""
     # Arrange
     from jobshoplab.types.instance_config_types import (
-        ProblemInstanceConfig, ProblemInstanceTypeConfig)
+        ProblemInstanceConfig,
+        ProblemInstanceTypeConfig,
+    )
 
     current_time = Time(10)
 
@@ -180,7 +186,9 @@ def test_machine_setup_to_working_transition_with_setup_time(
     """Test that the machine setup to working transition takes the defined setup time"""
     # Arrange
     from jobshoplab.types.instance_config_types import (
-        ProblemInstanceConfig, ProblemInstanceTypeConfig)
+        ProblemInstanceConfig,
+        ProblemInstanceTypeConfig,
+    )
 
     current_time = Time(10)
     expected_setup_duration = 1  # For tool0 to tool1, the fixture returns 1
@@ -224,14 +232,14 @@ def test_machine_setup_to_working_transition_with_setup_time(
     before_completion_time = Time(current_time.time + expected_setup_duration - 0.1)
     before_completion_state = replace(setup_state, time=before_completion_time)
 
-    transitions_before = create_timed_machine_transitions("debug", before_completion_state)
+    transitions_before = create_timed_machine_transitions("debug", before_completion_state, None)
     assert len(transitions_before) == 0  # No transitions should occur before setup is done
 
     # Check for transitions at exactly the setup completion time
     at_completion_time = Time(current_time.time + expected_setup_duration)
     at_completion_state = replace(setup_state, time=at_completion_time)
 
-    transitions_at = create_timed_machine_transitions("debug", at_completion_state)
+    transitions_at = create_timed_machine_transitions("debug", at_completion_state, None)
     assert len(transitions_at) == 1  # Should have one transition
     assert transitions_at[0].new_state == MachineStateState.WORKING
     assert transitions_at[0].component_id == machine_in_setup.id

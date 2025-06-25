@@ -2,14 +2,16 @@ from dataclasses import replace
 
 from jobshoplab.state_machine.core.state_machine.handler import *
 from jobshoplab.types import NoTime, Time
-from jobshoplab.types.state_types import (MachineStateState,
-                                          OperationStateState,
-                                          TransportStateState)
+from jobshoplab.types.state_types import MachineStateState, OperationStateState, TransportStateState
 from jobshoplab.utils.state_machine_utils import machine_type_utils
 
 
-def test_create_timed_machine_transitions(default_state_with_machine_occupied):
-    transitions = create_timed_machine_transitions("debug", default_state_with_machine_occupied)
+def test_create_timed_machine_transitions(
+    default_state_with_machine_occupied,
+):
+    transitions = create_timed_machine_transitions(
+        "debug", default_state_with_machine_occupied, None
+    )
     assert len(transitions) == 1
     transition = transitions[0]
     assert transition.component_id == "m-1"
@@ -141,14 +143,14 @@ def test_machine_setup_to_working_transition_with_setup_time(
     before_completion_time = Time(current_time.time + expected_setup_duration - 0.1)
     before_completion_state = replace(setup_state, time=before_completion_time)
 
-    transitions_before = create_timed_machine_transitions("debug", before_completion_state)
+    transitions_before = create_timed_machine_transitions("debug", before_completion_state, None)
     assert len(transitions_before) == 0  # No transitions should occur before setup is done
 
     # Check for transitions at exactly the setup completion time
     at_completion_time = Time(current_time.time + expected_setup_duration)
     at_completion_state = replace(setup_state, time=at_completion_time)
 
-    transitions_at = create_timed_machine_transitions("debug", at_completion_state)
+    transitions_at = create_timed_machine_transitions("debug", at_completion_state, None)
     assert len(transitions_at) == 1  # Should have one transition
     assert transitions_at[0].new_state == MachineStateState.WORKING
     assert transitions_at[0].component_id == machine_in_setup.id

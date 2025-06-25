@@ -121,7 +121,7 @@ class TestDeterministicMachineOutages:
 
         # Act
         transitions = create_timed_machine_transitions(
-            "debug", default_state_machine_with_active_outage
+            "debug", default_state_machine_with_active_outage, None
         )
 
         # Assert - no transitions should be created during active outage
@@ -140,7 +140,7 @@ class TestDeterministicMachineOutages:
         )
 
         # Act
-        transitions = create_timed_machine_transitions("debug", state_after_outage)
+        transitions = create_timed_machine_transitions("debug", state_after_outage, None)
 
         # Assert - transition to idle should be created
         assert len(transitions) == 1

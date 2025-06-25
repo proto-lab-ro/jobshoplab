@@ -830,100 +830,100 @@ class DictToInstanceMapper(AbstractDictMapper):
                 _time_behavior = "static"
             setup_times = self._parse_setup_times(setup_times_str["specification"], _time_behavior)
             machine = replace(machine, setup_times=setup_times)
-        
+
         # Handle machine buffer configurations
         machine = self._apply_machine_buffer_config(machine, spec_dict)
-        
+
         return machine
 
-    def _apply_buffer_spec_if_exists(self, buffer_config: BufferConfig, spec_dict: Dict, key_path: tuple) -> BufferConfig:
+    def _apply_buffer_spec_if_exists(
+        self, buffer_config: BufferConfig, spec_dict: Dict, key_path: tuple
+    ) -> BufferConfig:
         """
         Apply buffer specification if it exists at the given key path.
-        
+
         Args:
             buffer_config: The buffer configuration to update
             spec_dict: The specification dictionary
             key_path: The key path to check for buffer specifications
-            
+
         Returns:
             Updated buffer configuration or original if no specification found
         """
         if not self.has_key(key_path, spec_dict):
             return buffer_config
-            
+
         # Navigate to the specification using the key path
         spec_location = spec_dict
         for key in key_path:
             spec_location = spec_location[key]
-            
+
         # Get first valid specification using generator expression
         buffer_spec = next((spec for spec in spec_location if spec), None)
-        
+
         return self._add_buffer_spec(buffer_config, buffer_spec) if buffer_spec else buffer_config
 
-    def _apply_global_buffer_configs(self, machine: MachineConfig, spec_dict: Dict) -> tuple[BufferConfig, BufferConfig]:
+    def _apply_global_buffer_configs(
+        self, machine: MachineConfig, spec_dict: Dict
+    ) -> tuple[BufferConfig, BufferConfig]:
         """
         Apply global buffer configurations for both prebuffer and postbuffer.
-        
+
         Args:
             machine: The machine configuration
             spec_dict: The specification dictionary
-            
+
         Returns:
             Tuple of (updated_prebuffer, updated_postbuffer)
         """
         buffer_types = ["prebuffer", "postbuffer"]
         original_buffers = [machine.prebuffer, machine.postbuffer]
-        
+
         # Use map to apply global configurations for both buffer types
         updated_buffers = [
             self._apply_buffer_spec_if_exists(
-                buffer_config, 
-                spec_dict, 
-                ("instance_config", "machines", buffer_type)
+                buffer_config, spec_dict, ("instance_config", "machines", buffer_type)
             )
             for buffer_config, buffer_type in zip(original_buffers, buffer_types)
         ]
-        
+
         return tuple(updated_buffers)
 
     def _find_machine_specific_config(self, machine_id: str, machines_config: list) -> dict | None:
         """
         Find machine-specific configuration using functional programming.
-        
+
         Args:
             machine_id: The ID of the machine to find configuration for
             machines_config: List of machine configuration dictionaries
-            
+
         Returns:
             Machine-specific configuration dictionary or None if not found
         """
         # Use next() with generator expression to find matching machine config
         machine_spec = next(
-            (spec for spec in machines_config 
-             if isinstance(spec, dict) and machine_id in spec), 
-            None
+            (spec for spec in machines_config if isinstance(spec, dict) and machine_id in spec),
+            None,
         )
-        
+
         return machine_spec[machine_id] if machine_spec else None
 
-    def _apply_machine_specific_buffers(self, prebuffer: BufferConfig, postbuffer: BufferConfig, machine_config: dict) -> tuple[BufferConfig, BufferConfig]:
+    def _apply_machine_specific_buffers(
+        self, prebuffer: BufferConfig, postbuffer: BufferConfig, machine_config: dict
+    ) -> tuple[BufferConfig, BufferConfig]:
         """
         Apply machine-specific buffer configurations.
-        
+
         Args:
             prebuffer: Current prebuffer configuration
-            postbuffer: Current postbuffer configuration  
+            postbuffer: Current postbuffer configuration
             machine_config: Machine-specific configuration dictionary
-            
+
         Returns:
             Tuple of (updated_prebuffer, updated_postbuffer)
         """
-        buffer_map = {
-            "prebuffer": prebuffer,
-            "postbuffer": postbuffer
-        }
-        
+        buffer_map = {"prebuffer": prebuffer, "postbuffer": postbuffer}
+
         # Use dictionary comprehension with functional approach
         updated_buffers = {
             buffer_type: (
@@ -933,25 +933,27 @@ class DictToInstanceMapper(AbstractDictMapper):
             )
             for buffer_type, buffer_config in buffer_map.items()
         }
-        
+
         return updated_buffers["prebuffer"], updated_buffers["postbuffer"]
 
-    def _apply_machine_buffer_config(self, machine: MachineConfig, spec_dict: Dict) -> MachineConfig:
+    def _apply_machine_buffer_config(
+        self, machine: MachineConfig, spec_dict: Dict
+    ) -> MachineConfig:
         """
         Apply machine buffer configurations from spec_dict to machine.
-        
+
         Orchestrates the application of both global and machine-specific buffer configurations.
-        
+
         Args:
             machine: The machine configuration to update
             spec_dict: The specification dictionary containing buffer configurations
-            
+
         Returns:
             Updated machine configuration with applied buffer settings
         """
         # Apply global buffer configurations first
         prebuffer, postbuffer = self._apply_global_buffer_configs(machine, spec_dict)
-        
+
         # Check for and apply machine-specific configurations (overrides global)
         if self.has_key(("instance_config", "machines"), spec_dict):
             machines_config = spec_dict["instance_config"]["machines"]
@@ -961,7 +963,7 @@ class DictToInstanceMapper(AbstractDictMapper):
                     prebuffer, postbuffer = self._apply_machine_specific_buffers(
                         prebuffer, postbuffer, machine_config
                     )
-        
+
         return replace(machine, prebuffer=prebuffer, postbuffer=postbuffer)
 
     def _match_outage_type(self, type: str) -> OutageTypeConfig:
@@ -1014,7 +1016,9 @@ class DictToInstanceMapper(AbstractDictMapper):
                     _type_str = buffer_spec_dict[key].upper()
                     buffer_type = getattr(BufferTypeConfig, _type_str, None)
                     if buffer_type is None:
-                        raise TransportConfigError(f"Unknown buffer type: {buffer_spec_dict[key]}")
+                        raise TransportConfigError(
+                            f"Unknown buffer type: {buffer_spec_dict[key]} choose form {', '.join(field.name.lower() for field in BufferTypeConfig)}"
+                        )
                     default = replace(default, type=buffer_type)
                 case "name":
                     pass  # the name is already set in the default buffer
