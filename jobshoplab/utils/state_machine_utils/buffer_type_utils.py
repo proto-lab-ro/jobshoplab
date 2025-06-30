@@ -3,10 +3,8 @@ from typing import Optional
 
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.instance_config_types import BufferConfig, BufferTypeConfig
-from jobshoplab.types.state_types import (BufferState, BufferStateState,
-                                          JobState)
-from jobshoplab.utils.exceptions import (BufferFullError, InvalidValue,
-                                         JobNotInBufferError)
+from jobshoplab.types.state_types import BufferState, BufferStateState, JobState
+from jobshoplab.utils.exceptions import BufferFullError, InvalidValue, JobNotInBufferError
 
 
 def replace_buffer_state(state: State, buffer_state) -> State:
@@ -216,21 +214,22 @@ def get_buffer_state_by_id(buffers: tuple[BufferState, ...], buffer_id: str) -> 
     return buffer
 
 
-
-def get_next_job_from_buffer(buffer_state: BufferState, buffer_config: BufferConfig) -> Optional[str]:
+def get_next_job_from_buffer(
+    buffer_state: BufferState, buffer_config: BufferConfig
+) -> Optional[str]:
     """
     Get the next job ID to process based on buffer type.
-    
+
     Args:
         buffer_state: The current state of the buffer containing job IDs
         buffer_config: The buffer configuration specifying type (FIFO, LIFO, etc.)
-    
+
     Returns:
         str  < /dev/null |  None: The job ID to process next, or None if no automatic ordering applies
     """
     if not buffer_state.store:
         return None
-    
+
     match buffer_config.type:
         case BufferTypeConfig.FIFO:
             return buffer_state.store[0]  # First job in, first out
@@ -242,3 +241,90 @@ def get_next_job_from_buffer(buffer_state: BufferState, buffer_config: BufferCon
             return buffer_state.store[0] if buffer_state.store else None
         case _:
             return None
+
+
+def get_job_position_in_postbuffer(job_id: str, postbuffer_state: BufferState) -> Optional[int]:
+    """
+    Get the position (index) of a job within a postbuffer.
+
+    Args:
+        job_id: The ID of the job to find
+        postbuffer_state: The postbuffer state containing job IDs
+
+    Returns:
+        int | None: The index position of the job, or None if not found
+    """
+    try:
+        return postbuffer_state.store.index(job_id)
+    except ValueError:
+        return None
+
+
+def is_correct_position_for_buffer_type(
+    job_position: int, buffer_length: int, buffer_type: BufferTypeConfig
+) -> bool:
+    """
+    Check if a job position is valid for pickup based on buffer type.
+
+    Args:
+        job_position: The index position of the job in the buffer
+        buffer_length: The total number of jobs in the buffer
+        buffer_type: The type of buffer (FIFO, LIFO, FLEX, etc.)
+
+    Returns:
+        bool: True if the job can be picked up from this position, False otherwise
+    """
+    if buffer_length <= 0:
+        return False
+
+    match buffer_type:
+        case BufferTypeConfig.FIFO | BufferTypeConfig.DUMMY:
+            # FIFO: only first job (index 0) can be picked up
+            return job_position == 0
+        case BufferTypeConfig.LIFO:
+            # LIFO: only last job (index buffer_length-1) can be picked up
+            return job_position == buffer_length - 1
+        case BufferTypeConfig.FLEX_BUFFER:
+            # FLEX: any job can be picked up
+            return 0 <= job_position < buffer_length
+        case _:
+            return False
+
+
+def is_job_ready_for_pickup_from_postbuffer(
+    job_id: str, state: State, instance_config: InstanceConfig
+) -> bool:
+    """
+    Check if a job is ready for pickup from its postbuffer based on buffer type constraints.
+
+    Args:
+        job_id: The ID of the job to check
+        state: The current state of the system
+        instance_config: The instance configuration containing buffer configurations
+
+    Returns:
+        bool: True if the job can be picked up, False otherwise
+    """
+    # Find which postbuffer contains the job
+    all_buffer_configs = get_all_buffer_configs(instance_config)
+
+    for machine_state in state.machines:
+        if job_id in machine_state.postbuffer.store:
+            # Found the job in this machine's postbuffer
+            postbuffer_state = machine_state.postbuffer
+
+            # Get the corresponding buffer configuration
+            postbuffer_config = get_buffer_config_by_id(all_buffer_configs, postbuffer_state.id)
+
+            # Get job position in this postbuffer
+            job_position = get_job_position_in_postbuffer(job_id, postbuffer_state)
+            if job_position is None:
+                return False
+
+            # Check if position is valid for buffer type
+            return is_correct_position_for_buffer_type(
+                job_position, len(postbuffer_state.store), postbuffer_config.type
+            )
+
+    # Job not found in any postbuffer
+    return False
