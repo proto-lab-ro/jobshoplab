@@ -601,8 +601,8 @@ if __name__ == "__main__":
         obs, info = env.reset()
         done = False
         while not done:
-            action = env.action_space.sample()
+            action = 1
             obs, reward, termianted, truncated, inf = env.step(action)
             done = termianted or truncated
 
-    # env.render()
+        env.render()

@@ -49,26 +49,6 @@ from jobshoplab.utils.state_machine_utils import (
 from jobshoplab.utils.state_machine_utils.time_utils import _get_travel_time_from_spec
 
 
-def _waiting_time_and_op_time_differ(state: State, transport: TransportState) -> bool:
-    """
-    Check if the waiting time and operation time differ.
-
-    This function checks if the waiting time of a transport is different from the
-    operation time of the job it is carrying. If they differ, it returns True,
-    indicating that the transport should wait for the job to be ready.
-
-    Args:
-        state: Current state of the system
-        transport: The transport state being checked
-
-    Returns:
-        bool: True if waiting time and operation time differ, False otherwise
-    """
-    job = job_type_utils.get_job_state_by_id(state.jobs, transport.transport_job)
-    running_op = job_type_utils.get_processing_operation(job)
-    return running_op.end_time != transport.occupied_till
-
-
 def create_timed_machine_transitions(
     loglevel: int | str, state: State, instance: InstanceConfig
 ) -> tuple[ComponentTransition, ...]:
@@ -188,7 +168,7 @@ def create_avg_pickup_to_drop_transition(
 
 
 def create_avg_idle_to_pick_transition(
-    state: State, transport: TransportState
+    state: State, transport: TransportState, instance: InstanceConfig
 ) -> Optional[ComponentTransition]:
     """
     Creates transition from IDLE to PICKUP or WAITINGPICKUP.
@@ -216,18 +196,12 @@ def create_avg_idle_to_pick_transition(
     else:
         raise TransportJobError(transport.id)
 
-    # Get the job's current running operation if any
-    running_op = job_type_utils.get_processing_operation(job)
-    running_op_will_be_done = False
+    ready_for_pickup = buffer_type_utils.is_job_ready_for_pickup_from_postbuffer(
+        job, state, instance
+    )
 
-    if running_op is not None:
-        running_op_end_time = extract_time(
-            running_op.end_time if running_op is not None else NoTime()
-        )
-        running_op_will_be_done = running_op_end_time <= extract_time(state.time)
-
-    # CASE 1: Job is ready to be transported (no processing operations)
-    if core_utils.no_processing_operations(job):
+    # CASE 1: Job is ready to be transported (is in correct postbuffer pos)
+    if (transport.state == TransportStateState.WAITINGPICKUP) and ready_for_pickup:
         transit_transition = ComponentTransition(
             component_id=transport.id,
             new_state=TransportStateState.TRANSIT,
@@ -243,18 +217,15 @@ def create_avg_idle_to_pick_transition(
             job_id=job.id,
         )
         return waiting_transition
-
-    # CASE 3: Extend waiting time for stochastic outages
-    elif (
-        transport.state == TransportStateState.WAITINGPICKUP
-    ) and _waiting_time_and_op_time_differ(state, transport):
+    elif transport.state == TransportStateState.WAITINGPICKUP and not ready_for_pickup:
+        # If the transport is already waiting for pickup and the job is not ready,
+        # we return a waiting transition to keep it in WAITINGPICKUP state.
         waiting_transition = ComponentTransition(
             component_id=transport.id,
             new_state=TransportStateState.WAITINGPICKUP,
             job_id=job.id,
         )
         return waiting_transition
-
     # No appropriate transition found
     else:
         return None
@@ -284,7 +255,7 @@ def create_agv_drop_to_idle_transition(
 
 
 def create_timed_transport_transitions(
-    loglevel: Union[int, str], state: State
+    loglevel: Union[int, str], state: State, instance: InstanceConfig
 ) -> Tuple[ComponentTransition, ...]:
     """
     Creates timed transport transitions based on the given state.
@@ -296,6 +267,7 @@ def create_timed_transport_transitions(
     Args:
         loglevel: The log level to use
         state: Current state of the system
+        instance: The instance configuration
 
     Returns:
         Tuple[ComponentTransition, ...]: A tuple of transitions for transports that
@@ -314,7 +286,7 @@ def create_timed_transport_transitions(
                 # Create appropriate transition based on current transport state
                 match transport.state:
                     case TransportStateState.PICKUP | TransportStateState.WAITINGPICKUP:
-                        transition = create_avg_idle_to_pick_transition(state, transport)
+                        transition = create_avg_idle_to_pick_transition(state, transport, instance)
                     case TransportStateState.TRANSIT:
                         transition = create_avg_pickup_to_drop_transition(state, transport)
                     case TransportStateState.OUTAGE:
@@ -332,7 +304,7 @@ def create_timed_transport_transitions(
 
 
 def create_timed_transitions(
-    loglevel: Union[int, str], state: State, instance: InstanceConfig = None
+    loglevel: Union[int, str], state: State, instance: InstanceConfig
 ) -> Tuple[ComponentTransition, ...]:
     """
     Create timed transitions for the given state.
@@ -358,7 +330,7 @@ def create_timed_transitions(
     # First handle machine transitions, then transport transitions
     # This ordering ensures machines complete their work before transports try to move jobs
     transitions.extend(create_timed_machine_transitions(loglevel, state, instance))
-    transitions.extend(create_timed_transport_transitions(loglevel, state))
+    transitions.extend(create_timed_transport_transitions(loglevel, state, instance))
 
     return tuple(transitions)
 
@@ -526,6 +498,39 @@ def handle_machine_outage_to_idle_transition(
     return state
 
 
+def _get_waiting_time(state, transition, instance):
+    job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
+    job_location_id = job_state.location
+    _all_buffer_configs = buffer_type_utils.get_all_buffer_configs(instance)
+    buffer_config: BufferConfig = buffer_type_utils.get_buffer_config_by_id(
+        _all_buffer_configs, job_location_id
+    )
+    if buffer_config.parent is None:  # standalone buffer
+        return state.time  # setting time to now.. hence pick up gets performed in thise time step
+    if buffer_config.parent.startswith("m"):  # machine buffer
+        # Get the machine state and its buffer
+        machine_state = machine_type_utils.get_machine_state_by_id(
+            state.machines, buffer_config.parent
+        )
+        if job_state.id in machine_state.postbuffer.store:  # job is done and in postbuffer
+            if buffer_type_utils.is_job_ready_for_pickup_from_postbuffer(
+                job_state, state, instance
+            ):
+
+                return (
+                    state.time
+                )  # setting time to now.. hence pick up could be performed in this time step
+            else:
+                raise NotImplementedError()
+        # job is either being processed or waiting in the prebuffer
+        processing_op = job_type_utils.get_processing_operation(job_state)
+        if processing_op is None:
+            raise MissingProcessingOperationError(transition.job_id)
+        return processing_op.end_time
+    else:
+        raise NotImplementedError()  # very likely a bug
+
+
 def handle_agv_transport_pickup_to_waitingpickup_transition(
     state: State,
     instance: InstanceConfig,
@@ -556,29 +561,32 @@ def handle_agv_transport_pickup_to_waitingpickup_transition(
         raise MissingJobIdError("pickup_to_waitingpickup")
 
     # Get job and its current processing operation
-    job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
-    processing_op = job_type_utils.get_processing_operation(job_state)
+    # job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
+    # processing_op = job_type_utils.get_processing_operation(job_state)
 
-    if processing_op is None:
-        # check if the job has allready landed in the postbuffer thise can happen if the job finished in the same time step as the agv arives at the machine
-        last_op = job_type_utils.get_prior_executed_operation(job_state)
-        if last_op is None:  # no operation was executed before were hitting a bug
-            raise MissingProcessingOperationError(transition.job_id)
-        machine_state = machine_type_utils.get_machine_state_by_id(
-            state.machines, last_op.machine_id
-        )
-        if not buffer_type_utils.is_job_in_buffer(
-            machine_state.postbuffer, job_state.id
-        ):  # if the job is not in the postbuffer we have a bug
-            raise MissingProcessingOperationError(transition.job_id)
-        else:  # the
-            processing_op = last_op
+    # if processing_op is None:
+    #     # check if the job has allready landed in the postbuffer thise can happen if the job finished in the same time step as the agv arives at the machine
+    #     last_op = job_type_utils.get_prior_executed_operation(job_state)
+    #     if last_op is None:  # no operation was executed before were hitting a bug
+    #         raise MissingProcessingOperationError(transition.job_id)
+    #     machine_state = machine_type_utils.get_machine_state_by_id(
+    #         state.machines, last_op.machine_id
+    #     )
+    #     if not buffer_type_utils.is_job_in_buffer(
+    #         machine_state.postbuffer, job_state.id
+    #     ):  # if the job is not in the postbuffer we have a bug
+    #         raise MissingProcessingOperationError(transition.job_id)
+    #     else:  # the
+    #         processing_op = last_op
+    # else:
+    #     occupied_till = processing_op.end_time
+    occupied_till = _get_waiting_time(state, transition, instance)
 
     # Update transport to wait until job's operation is complete
     transport = replace(
         transport,
         state=TransportStateState.WAITINGPICKUP,
-        occupied_till=processing_op.end_time,
+        occupied_till=occupied_till,
     )
 
     state = possible_transition_utils.replace_transport_state(state, transport)
@@ -873,21 +881,18 @@ def handle_agv_waiting_pickup_to_waiting_pickup_transition(
         MissingJobIdError: If transition has no job_id
         MissingProcessingOperationError: If the job has no processing operation
     """
-    if transition.job_id is None:
-        raise MissingJobIdError("waitingpickup_to_waitingpickup")
-
-    # Get job and its current processing operation
-    job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
-    processing_op = job_type_utils.get_processing_operation(job_state)
-
-    if processing_op is None:
-        raise MissingProcessingOperationError(transition.job_id)
-
-    # Update transport to continue waiting
+    occupied_till = _get_waiting_time(state, transition, instance)
+    # if occupied_till.time <= state.time.time:
+    #     occupied_till = _get_waiting_time(state, transition, instance)
+    #     raise ValueError()  # if this happens wre traversiing from waiting to waiting (bug)
+    #     # occupied_till = Time(
+    #     #     state.time.time + 1
+    #     # )  # Ensure occupied_till is in the future as we're in transition for waiting to waiting
+    # # Update transport to continue waiting
     transport = replace(
         transport,
         state=TransportStateState.WAITINGPICKUP,
-        occupied_till=processing_op.end_time,
+        occupied_till=occupied_till,
     )
 
     state = possible_transition_utils.replace_transport_state(state, transport)

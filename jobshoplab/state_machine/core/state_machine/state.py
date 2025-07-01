@@ -226,6 +226,7 @@ def step(
     timed_transitions += tuple(teleport_transitions)
 
     # Continue processing timed transitions until none are left
+
     while timed_transitions:
         _all_transitions += timed_transitions
 
@@ -277,6 +278,8 @@ def step(
     # Return the final state with possible transitions
     logger.debug(f"_all_transitions: {_all_transitions}")
     possible_transitions = get_possible_transitions(state, instance)
+    if len(possible_transitions) == 0:
+        pass
 
     return StateMachineResult(
         state=state,

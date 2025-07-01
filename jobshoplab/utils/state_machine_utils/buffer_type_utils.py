@@ -243,7 +243,7 @@ def get_next_job_from_buffer(
             return None
 
 
-def get_job_position_in_postbuffer(job_id: str, postbuffer_state: BufferState) -> Optional[int]:
+def get_job_position_in_buffer(job_id: str, postbuffer_state: BufferState) -> Optional[int]:
     """
     Get the position (index) of a job within a postbuffer.
 
@@ -280,10 +280,10 @@ def is_correct_position_for_buffer_type(
     match buffer_type:
         case BufferTypeConfig.FIFO | BufferTypeConfig.DUMMY:
             # FIFO: only first job (index 0) can be picked up
-            return job_position == 0
+            return job_position == buffer_length - 1
         case BufferTypeConfig.LIFO:
             # LIFO: only last job (index buffer_length-1) can be picked up
-            return job_position == buffer_length - 1
+            return job_position == 0
         case BufferTypeConfig.FLEX_BUFFER:
             # FLEX: any job can be picked up
             return 0 <= job_position < buffer_length
@@ -291,14 +291,29 @@ def is_correct_position_for_buffer_type(
             return False
 
 
+def job_in_correct_buffer_for_pickup(instance: InstanceConfig, buffer: BufferState) -> bool:
+    """
+
+    Check if a job is in the correct buffer for pickup based on buffer type constraints.
+    Args:
+        instance: The instance configuration containing buffer configurations
+        buffer: The buffer to check against
+    """
+    if buffer.id in [b.id for b in instance.buffers]:  # Standard buffers
+        return True
+    if buffer.id in [m.postbuffer.id for m in instance.machines]:  # Postbuffers of machines
+        return True
+    return False
+
+
 def is_job_ready_for_pickup_from_postbuffer(
-    job_id: str, state: State, instance_config: InstanceConfig
+    job_state: JobState, state: State, instance_config: InstanceConfig
 ) -> bool:
     """
     Check if a job is ready for pickup from its postbuffer based on buffer type constraints.
 
     Args:
-        job_id: The ID of the job to check
+        job_state: The state of the job to check
         state: The current state of the system
         instance_config: The instance configuration containing buffer configurations
 
@@ -307,24 +322,13 @@ def is_job_ready_for_pickup_from_postbuffer(
     """
     # Find which postbuffer contains the job
     all_buffer_configs = get_all_buffer_configs(instance_config)
-
-    for machine_state in state.machines:
-        if job_id in machine_state.postbuffer.store:
-            # Found the job in this machine's postbuffer
-            postbuffer_state = machine_state.postbuffer
-
-            # Get the corresponding buffer configuration
-            postbuffer_config = get_buffer_config_by_id(all_buffer_configs, postbuffer_state.id)
-
-            # Get job position in this postbuffer
-            job_position = get_job_position_in_postbuffer(job_id, postbuffer_state)
-            if job_position is None:
-                return False
-
-            # Check if position is valid for buffer type
-            return is_correct_position_for_buffer_type(
-                job_position, len(postbuffer_state.store), postbuffer_config.type
-            )
-
-    # Job not found in any postbuffer
-    return False
+    all_buffer_states = get_all_buffer_states(state)
+    job_location = job_state.location
+    buffer_state = get_buffer_state_by_id(all_buffer_states, job_location)
+    buffer_config = get_buffer_config_by_id(all_buffer_configs, job_location)
+    job_position = get_job_position_in_buffer(job_state.id, buffer_state)
+    is_postbuffer_or_std_buffer = job_in_correct_buffer_for_pickup(instance_config, buffer_state)
+    is_correct_pos = is_correct_position_for_buffer_type(
+        job_position, len(buffer_state.store), buffer_config.type
+    )
+    return is_postbuffer_or_std_buffer and is_correct_pos
