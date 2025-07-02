@@ -403,10 +403,43 @@ def default_state_transport_transit(transport_state_transit):
 
 
 @pytest.fixture
-def default_state_transport_pickup(transport_state_pickup):
+def default_state_transport_pickup(transport_state_pickup, default_machines, default_buffer):
+    machine0, machine1, machine2 = default_machines
+    machine_states = tuple()
+    for machine in default_machines:
+        machine_state = MachineState(
+            id=machine.id,
+            buffer=BufferState(id=machine.buffer.id, state=BufferStateState.EMPTY, store=()),
+            occupied_till=NoTime(),
+            prebuffer=BufferState(
+                id=machine.prebuffer.id,
+                state=BufferStateState.EMPTY,
+                store=(),
+            ),
+            mounted_tool="tl-0",
+            outages=(),
+            postbuffer=BufferState(
+                id=machine.postbuffer.id,
+                state=BufferStateState.EMPTY,
+                store=(),
+            ),
+            state=MachineStateState.IDLE,
+            resources=(),
+        )
+        machine_states += (machine_state,)
+    
+    default_buffer_states = (
+        BufferState(
+            id=default_buffer[0].id,
+            state=BufferStateState.EMPTY,
+            store=(),
+        ),
+        BufferState(id=default_buffer[1].id, state=BufferStateState.EMPTY, store=()),
+    )
+    
     state = State(
         time=Time(10),
-        machines=(),
+        machines=machine_states,
         transports=(replace(transport_state_pickup, occupied_till=Time(10)),),
         jobs=(
             JobState(
@@ -430,7 +463,7 @@ def default_state_transport_pickup(transport_state_pickup):
                 location="b-1",
             ),
         ),
-        buffers=(),
+        buffers=default_buffer_states,
     )
     return state
 

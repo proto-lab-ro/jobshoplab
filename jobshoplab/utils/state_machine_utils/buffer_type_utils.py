@@ -280,10 +280,10 @@ def is_correct_position_for_buffer_type(
     match buffer_type:
         case BufferTypeConfig.FIFO | BufferTypeConfig.DUMMY:
             # FIFO: only first job (index 0) can be picked up
-            return job_position == buffer_length - 1
+            return job_position == 0
         case BufferTypeConfig.LIFO:
             # LIFO: only last job (index buffer_length-1) can be picked up
-            return job_position == 0
+            return job_position == buffer_length - 1
         case BufferTypeConfig.FLEX_BUFFER:
             # FLEX: any job can be picked up
             return 0 <= job_position < buffer_length

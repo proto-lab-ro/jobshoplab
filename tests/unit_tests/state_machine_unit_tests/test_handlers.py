@@ -6,9 +6,7 @@ from jobshoplab.types.state_types import MachineStateState, OperationStateState,
 from jobshoplab.utils.state_machine_utils import machine_type_utils
 
 
-def test_create_timed_machine_transitions(
-    default_state_with_machine_occupied, default_instance
-):
+def test_create_timed_machine_transitions(default_state_with_machine_occupied, default_instance):
     transitions = create_timed_machine_transitions(
         "debug", default_state_with_machine_occupied, default_instance
     )
@@ -29,14 +27,20 @@ def test_create_transit_to_dropoff_transition(default_state_transport_transit):
 
 def test_create_pickup_to_transit_transition(default_state_transport_pickup, default_instance):
     transport = default_state_transport_pickup.transports[0]
-    transition = create_avg_idle_to_pick_transition(default_state_transport_pickup, transport, default_instance)
+    transition = create_avg_idle_to_pick_transition(
+        default_state_transport_pickup, transport, default_instance
+    )
     assert transition.component_id == transport.id
     assert transition.new_state == TransportStateState.WAITINGPICKUP
     assert transition.job_id == transport.transport_job
 
 
-def test_create_timed_transport_transitions(default_state_with_transport_occupied, default_instance):
-    transitions = create_timed_transport_transitions("debug", default_state_with_transport_occupied, default_instance)
+def test_create_timed_transport_transitions(
+    default_state_with_transport_occupied, default_instance
+):
+    transitions = create_timed_transport_transitions(
+        "debug", default_state_with_transport_occupied, default_instance
+    )
     assert len(transitions) == 1
     transition = transitions[0]
     assert transition.component_id == "t-1"
@@ -49,7 +53,9 @@ def test_create_timed_transport_transitions(default_state_with_transport_occupie
     assert transition.job_id == "j-1"
 
 
-def test_create_timed_transitions(default_state_with_machine_and_transport_occupied, default_instance):
+def test_create_timed_transitions(
+    default_state_with_machine_and_transport_occupied, default_instance
+):
     transitions = create_timed_transitions(
         "debug", default_state_with_machine_and_transport_occupied, default_instance
     )
@@ -143,7 +149,9 @@ def test_machine_setup_to_working_transition_with_setup_time(
     before_completion_time = Time(current_time.time + expected_setup_duration - 0.1)
     before_completion_state = replace(setup_state, time=before_completion_time)
 
-    transitions_before = create_timed_machine_transitions("debug", before_completion_state, instance)
+    transitions_before = create_timed_machine_transitions(
+        "debug", before_completion_state, instance
+    )
     assert len(transitions_before) == 0  # No transitions should occur before setup is done
 
     # Check for transitions at exactly the setup completion time

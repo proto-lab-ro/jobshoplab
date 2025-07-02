@@ -10,7 +10,7 @@ import pytest
 from jobshoplab.types.instance_config_types import BufferConfig, BufferTypeConfig
 from jobshoplab.types.state_types import BufferState, BufferStateState
 from jobshoplab.utils.state_machine_utils.buffer_type_utils import (
-    get_job_position_in_postbuffer,
+    get_job_position_in_buffer,
     is_correct_position_for_buffer_type,
     is_job_ready_for_pickup_from_postbuffer,
 )
@@ -23,7 +23,7 @@ class TestGetJobPositionInPostbuffer:
         """Test job found at first position returns index 0."""
         buffer = create_buffer_state("postbuffer-1", BufferStateState.NOT_EMPTY, ("job-1", "job-2", "job-3"))
         
-        position = get_job_position_in_postbuffer("job-1", buffer)
+        position = get_job_position_in_buffer("job-1", buffer)
         
         assert position == 0
 
@@ -31,7 +31,7 @@ class TestGetJobPositionInPostbuffer:
         """Test job found at second position returns index 1."""
         buffer = create_buffer_state("postbuffer-1", BufferStateState.NOT_EMPTY, ("job-1", "job-2", "job-3"))
         
-        position = get_job_position_in_postbuffer("job-2", buffer)
+        position = get_job_position_in_buffer("job-2", buffer)
         
         assert position == 1
 
@@ -39,7 +39,7 @@ class TestGetJobPositionInPostbuffer:
         """Test job found at last position returns correct index."""
         buffer = create_buffer_state("postbuffer-1", BufferStateState.NOT_EMPTY, ("job-1", "job-2", "job-3"))
         
-        position = get_job_position_in_postbuffer("job-3", buffer)
+        position = get_job_position_in_buffer("job-3", buffer)
         
         assert position == 2
 
@@ -47,7 +47,7 @@ class TestGetJobPositionInPostbuffer:
         """Test job not in buffer returns None."""
         buffer = create_buffer_state("postbuffer-1", BufferStateState.NOT_EMPTY, ("job-1", "job-2"))
         
-        position = get_job_position_in_postbuffer("job-999", buffer)
+        position = get_job_position_in_buffer("job-999", buffer)
         
         assert position is None
 
@@ -55,7 +55,7 @@ class TestGetJobPositionInPostbuffer:
         """Test empty buffer returns None for any job."""
         buffer = create_buffer_state("postbuffer-1", BufferStateState.EMPTY, ())
         
-        position = get_job_position_in_postbuffer("job-1", buffer)
+        position = get_job_position_in_buffer("job-1", buffer)
         
         assert position is None
 
