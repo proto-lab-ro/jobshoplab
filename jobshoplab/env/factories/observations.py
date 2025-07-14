@@ -548,6 +548,75 @@ class SimpleJsspObservationFactory(ObservationFactory):
 #         return f"SimpleJsspObservationFactory with observation_space {self.observation_space}"
 
 
+class GNNObservationFactory(ObservationFactory):
+    def __init__(self, loglevel: int, config: Config, instance: InstanceConfig, *args, **kwargs):
+        """
+        Initialize the GNNObservationFactory.
+
+        Args:
+            loglevel (int): The log level.
+            config (Config): The configuration object.
+            instance (InstanceConfig): The instance configuration object.
+        """
+        # TODO: Implement the GNNObservationFactory
+        self.max_nodes: int = 60
+        self.num_node_features: int = 5  # Example feature size, adjust as needed
+        self.max_edges: int = 100
+        super().__init__(loglevel, config, instance)
+        self.observation_space = gym.spaces.Dict(
+            {
+                "node_feats": gym.spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(self.max_nodes, self.num_node_features),
+                    dtype=np.float32,
+                ),
+                "edge_index": gym.spaces.Box(
+                    low=0,
+                    high=self.max_nodes,
+                    shape=(2, self.max_edges),
+                    dtype=np.int64,
+                ),
+                "num_nodes": gym.spaces.Box(0, 1, (1,), dtype=np.int64),
+                "num_edges": gym.spaces.Box(0, 1, (1,), dtype=np.int64),
+            }
+        )
+
+    def make(self, state_result: StateMachineResult, *args, **kwargs) -> dict:
+        """
+        Create an observation for the GNN.
+
+        Args:
+            state_result (StateMachineResult): The state result to create the observation from.
+
+        Returns:
+            dict: The observation containing node features and edge indices.
+        """
+        # TODO: Implement
+        state: State = state_result.state
+        # Example implementation, adjust according to your state structure
+        node_feats = np.random.rand(self.max_nodes, self.num_node_features).astype(np.float32)
+        edge_index = np.random.randint(0, self.max_nodes, (2, self.max_edges)).astype(np.int64)
+        num_nodes = np.array([self.max_nodes], dtype=np.int64)
+        num_edges = np.array([self.max_edges], dtype=np.int64)
+
+        return {
+            "node_feats": node_feats,
+            "edge_index": edge_index,
+            "num_nodes": num_nodes,
+            "num_edges": num_edges,
+        }
+
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the GNNObservationFactory.
+
+        Returns:
+            str: The string representation of the GNNObservationFactory.
+        """
+        return "GNNObservationFactory"
+
+
 class BinaryActionObservationFactory(SimpleJsspObservationFactory):
     def __init__(
         self,
