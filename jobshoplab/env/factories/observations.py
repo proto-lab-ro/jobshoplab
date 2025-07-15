@@ -27,6 +27,7 @@ from jobshoplab.utils.utils import (
     get_id_int,
     get_max_allowed_time,
 )
+from jobshoplab.utils.state_machine_utils import job_type_utils
 
 Observation = type("Observation", (object,), {})
 
@@ -563,7 +564,7 @@ class GNNObservationFactory(ObservationFactory):
         """
         # TODO: Implement the GNNObservationFactory
         self.max_nodes: int = 60
-        self.num_node_features: int = 5  # Example feature size, adjust as needed
+        self.num_node_features: int = 3  # Example feature size, adjust as needed
         self.max_edges: int = 100
         self.show_graph = True
         super().__init__(loglevel, config, instance)
@@ -586,8 +587,6 @@ class GNNObservationFactory(ObservationFactory):
             }
         )
 
-
-
     def make(self, state_result: StateMachineResult, *args, **kwargs) -> dict:
         """
         Create an observation for the GNN.
@@ -602,16 +601,18 @@ class GNNObservationFactory(ObservationFactory):
         state: State = state_result.state
         # Example implementation, adjust according to your state structure
 
-        max_edge_index, num_ops_nodes, ops_num_edges = self.__graph_feats__(state)
+        max_edge_index, num_ops_nodes, ops_num_edges = self._graph_feats(state)
 
+        ops_node_feats = self._ops_node_feats(state, num_ops_nodes)
+        ops_edge_index_forward = self._ops_edge_index_forward(state)
+        # ops_node_feats = np.random.rand(num_ops_nodes, self.num_node_features).astype(np.float32)
+        # edge_index = np.random.randint(0, max_edge_index, (2, self.max_edges)).astype(np.int64)
 
-        ops_node_feats = self.__ops_node_feats(num_ops_nodes)
-        ops_edge_index_forward = self.__ops_edge_index_forward(state)
-        #ops_node_feats = np.random.rand(num_ops_nodes, self.num_node_features).astype(np.float32)
-        #edge_index = np.random.randint(0, max_edge_index, (2, self.max_edges)).astype(np.int64)
-        
         if self.show_graph:
-            data = Data(x = torch.tensor(ops_node_feats),edge_index=torch.tensor(ops_edge_index_forward,dtype=torch.int64))
+            data = Data(
+                x=torch.tensor(ops_node_feats),
+                edge_index=torch.tensor(ops_edge_index_forward, dtype=torch.int64),
+            )
             G = nx.Graph()
             edges = data.edge_index.t().tolist()
             G.add_edges_from(edges)
@@ -620,9 +621,8 @@ class GNNObservationFactory(ObservationFactory):
             nx.draw(G, with_labels=True)
             plt.show()
 
-
-        num_nodes = np.array([self.max_nodes], dtype=np.int64)#TODO
-        num_edges = np.array([self.max_edges], dtype=np.int64)#TODO
+        num_nodes = np.array([self.max_nodes], dtype=np.int64)  # TODO
+        num_edges = np.array([self.max_edges], dtype=np.int64)  # TODO
 
         return {
             "node_feats": ops_node_feats,
@@ -630,9 +630,8 @@ class GNNObservationFactory(ObservationFactory):
             "num_nodes": num_nodes,
             "num_edges": num_edges,
         }
-    
 
-    def __ops_edge_index_forward(self, state):
+    def _ops_edge_index_forward(self, state):
         jobs = state.jobs
         edge_list = []
         op_offset = 0  # Offset for global op index across jobs
@@ -650,8 +649,6 @@ class GNNObservationFactory(ObservationFactory):
             # No edges, return empty array with correct shape
             return np.zeros((2, 0), dtype=np.int64)
 
-
-
         edge_index = np.array(edge_list, dtype=np.int64).T
         num_edges = edge_index.shape[1]
         if num_edges < self.max_edges:
@@ -660,21 +657,47 @@ class GNNObservationFactory(ObservationFactory):
             edge_index = np.hstack([edge_index, padding])
 
         return edge_index
-    def __ops_node_feats(self,num_ops_nodes):
-        ops_node_feats = np.random.rand(num_ops_nodes, self.num_node_features).astype(np.float32)
-        #Check For padding
+
+    def _ops_node_feats(self, state: State, num_ops_nodes):
+        # ops_node_feats = np.random.rand(num_ops_nodes, self.num_node_features).astype(np.float32)
+        ops_node_feats = np.zeros((num_ops_nodes, self.num_node_features), dtype=np.float32)
+
+        i = 0
+        for job_state in state.jobs:
+            for op in job_state.operations:
+
+                op_config = job_type_utils.get_operation_config_by_id(
+                    self.instance.instance.specification, op.id
+                )
+
+                process_state = op.operation_state_state.value
+                match process_state:
+                    case OperationStateState.IDLE.value:
+                        ops_node_feats[i, 0] = 0.0  # Idle
+                    case OperationStateState.PROCESSING.value:
+                        ops_node_feats[i, 0] = 1.0  # Processing
+                    case OperationStateState.DONE.value:
+                        ops_node_feats[i, 0] = 2.0  # Done
+                    case _:
+                        ops_node_feats[i, 0] = -1.0  # Unknown state
+
+                ops_node_feats[i, 1] = get_id_int(op.machine_id)
+                ops_node_feats[i, 2] = op_config.duration.time
+                i += 1
+
+        # Check For padding
         if ops_node_feats.shape[0] < self.max_nodes:
             pad_rows = self.max_nodes - ops_node_feats.shape[0]
             padding = np.zeros((pad_rows, self.num_node_features), dtype=np.float32)
             ops_node_feats = np.vstack([ops_node_feats, padding])
-        
+
         return ops_node_feats
 
-    def __graph_feats__(self, state):
+    def _graph_feats(self, state):
         ### Ops
         jobs = state.jobs
         ops = [op for job in jobs for op in job.operations]
-        num_ops_nodes = len(ops) 
+        num_ops_nodes = len(ops)
         num_jobs = len(jobs)
         ### Edges between ops
         ops_num_edges = 0
@@ -684,8 +707,7 @@ class GNNObservationFactory(ObservationFactory):
             ops_num_edges += max(0, len(job.operations) - 1)
             max_edge_index += 1
 
-
-        ### 
+        ###
         return max_edge_index, num_ops_nodes, ops_num_edges
 
     def __repr__(self) -> str:
