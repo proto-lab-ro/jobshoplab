@@ -3,7 +3,10 @@ from collections import OrderedDict
 from functools import partial
 from logging import Logger
 from typing import Callable
-
+import torch
+from torch_geometric.data import Data
+import networkx as nx
+import matplotlib.pyplot as plt
 import gymnasium as gym
 import numpy as np
 
@@ -562,6 +565,7 @@ class GNNObservationFactory(ObservationFactory):
         self.max_nodes: int = 60
         self.num_node_features: int = 5  # Example feature size, adjust as needed
         self.max_edges: int = 100
+        self.show_graph = True
         super().__init__(loglevel, config, instance)
         self.observation_space = gym.spaces.Dict(
             {
@@ -582,6 +586,8 @@ class GNNObservationFactory(ObservationFactory):
             }
         )
 
+
+
     def make(self, state_result: StateMachineResult, *args, **kwargs) -> dict:
         """
         Create an observation for the GNN.
@@ -595,17 +601,92 @@ class GNNObservationFactory(ObservationFactory):
         # TODO: Implement
         state: State = state_result.state
         # Example implementation, adjust according to your state structure
-        node_feats = np.random.rand(self.max_nodes, self.num_node_features).astype(np.float32)
-        edge_index = np.random.randint(0, self.max_nodes, (2, self.max_edges)).astype(np.int64)
-        num_nodes = np.array([self.max_nodes], dtype=np.int64)
-        num_edges = np.array([self.max_edges], dtype=np.int64)
+
+        max_edge_index, num_ops_nodes, ops_num_edges = self.__graph_feats__(state)
+
+
+        ops_node_feats = self.__ops_node_feats(num_ops_nodes)
+        ops_edge_index_forward = self.__ops_edge_index_forward(state)
+        #ops_node_feats = np.random.rand(num_ops_nodes, self.num_node_features).astype(np.float32)
+        #edge_index = np.random.randint(0, max_edge_index, (2, self.max_edges)).astype(np.int64)
+        
+        if self.show_graph:
+            data = Data(x = torch.tensor(ops_node_feats),edge_index=torch.tensor(ops_edge_index_forward,dtype=torch.int64))
+            G = nx.Graph()
+            edges = data.edge_index.t().tolist()
+            G.add_edges_from(edges)
+
+            # Draw the graph
+            nx.draw(G, with_labels=True)
+            plt.show()
+
+
+        num_nodes = np.array([self.max_nodes], dtype=np.int64)#TODO
+        num_edges = np.array([self.max_edges], dtype=np.int64)#TODO
 
         return {
-            "node_feats": node_feats,
-            "edge_index": edge_index,
+            "node_feats": ops_node_feats,
+            "edge_index": ops_edge_index_forward,
             "num_nodes": num_nodes,
             "num_edges": num_edges,
         }
+    
+
+    def __ops_edge_index_forward(self, state):
+        jobs = state.jobs
+        edge_list = []
+        op_offset = 0  # Offset for global op index across jobs
+
+        for job in jobs:
+            num_ops = len(job.operations)
+            # For each pair of subsequent operations in the job, create an edge
+            for i in range(num_ops - 1):
+                src = op_offset + i
+                dst = op_offset + i + 1
+                edge_list.append([src, dst])
+            op_offset += num_ops
+
+        if len(edge_list) == 0:
+            # No edges, return empty array with correct shape
+            return np.zeros((2, 0), dtype=np.int64)
+
+
+
+        edge_index = np.array(edge_list, dtype=np.int64).T
+        num_edges = edge_index.shape[1]
+        if num_edges < self.max_edges:
+            pad_width = self.max_edges - num_edges
+            padding = np.zeros((2, pad_width), dtype=np.int64)
+            edge_index = np.hstack([edge_index, padding])
+
+        return edge_index
+    def __ops_node_feats(self,num_ops_nodes):
+        ops_node_feats = np.random.rand(num_ops_nodes, self.num_node_features).astype(np.float32)
+        #Check For padding
+        if ops_node_feats.shape[0] < self.max_nodes:
+            pad_rows = self.max_nodes - ops_node_feats.shape[0]
+            padding = np.zeros((pad_rows, self.num_node_features), dtype=np.float32)
+            ops_node_feats = np.vstack([ops_node_feats, padding])
+        
+        return ops_node_feats
+
+    def __graph_feats__(self, state):
+        ### Ops
+        jobs = state.jobs
+        ops = [op for job in jobs for op in job.operations]
+        num_ops_nodes = len(ops) 
+        num_jobs = len(jobs)
+        ### Edges between ops
+        ops_num_edges = 0
+        max_edge_index = -1
+        for job in jobs:
+            # Each job has (number of operations - 1) edges between consecutive operations
+            ops_num_edges += max(0, len(job.operations) - 1)
+            max_edge_index += 1
+
+
+        ### 
+        return max_edge_index, num_ops_nodes, ops_num_edges
 
     def __repr__(self) -> str:
         """

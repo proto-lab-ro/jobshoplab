@@ -20,7 +20,7 @@ from jobshoplab import JobShopLabEnv, load_config
 MAX_NODES = 60  # Set this higher than any instance in your dataset
 MAX_EDGES = 300  # Approximate upper bound on edge count
 MAX_ELIGIBLE = 10  # Max eligible ops (usually ≤ num_jobs)
-NUM_NODE_FEATURES = 6
+NUM_NODE_FEATURES = 5#6
 
 
 class GINEncoder(nn.Module):
