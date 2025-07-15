@@ -20,7 +20,7 @@ from jobshoplab import JobShopLabEnv, load_config
 MAX_NODES = 60  # Set this higher than any instance in your dataset
 MAX_EDGES = 300  # Approximate upper bound on edge count
 MAX_ELIGIBLE = 10  # Max eligible ops (usually ≤ num_jobs)
-NUM_NODE_FEATURES = 5#6
+NUM_NODE_FEATURES = 5  # 6
 
 
 class GINEncoder(nn.Module):
@@ -127,37 +127,43 @@ if __name__ == "__main__":
     config = load_config(config_path=Path("./data/config/config_gnn_classic_jssp.yaml"))
     env = JobShopLabEnv(config=config)
 
-    os.makedirs(log_dir, exist_ok=True)
-    os.makedirs(save_dir, exist_ok=True)
+    env.reset()
 
-    features_extractor_kwargs = dict(
-        input_dim=NUM_NODE_FEATURES,
-        hidden_dim=64,
-        k_layers=1,
-        # op_node_id=g_env.op_node_id,
-        # observation_space = g_env.observation_space,
-    )
-    policy_kwargs = dict(
-        features_extractor_class=GNNFeatureExtractor,
-        features_extractor_kwargs=features_extractor_kwargs,
-    )
-    model = PPO(
-        "GraphInputPolicy",
-        env,
-        policy_kwargs=policy_kwargs,
-        learning_rate=1e-4,
-        verbose=1,
-        batch_size=32,
-        tensorboard_log=log_dir,
-    )
+    action = int(input("Enter action index: "))
+    while action != -1:
+        observation, reward, terminated, truncated, info = env.step(action)
 
-    eval_callback = EvalCallback(
-        env,
-        best_model_save_path=save_dir,
-        log_path=log_dir,
-        eval_freq=1000,  # Adjust evaluation frequency as needed
-        deterministic=False,  # TODO: error when True -> IndexError: Dimension out of range (expected to be in range of [-1, 0], but got 1)
-        render=False,
-    )
+    # os.makedirs(log_dir, exist_ok=True)
+    # os.makedirs(save_dir, exist_ok=True)
 
-    model.learn(callback=eval_callback, total_timesteps=100000, tb_log_name="GNN_PPO")
+    # features_extractor_kwargs = dict(
+    #     input_dim=NUM_NODE_FEATURES,
+    #     hidden_dim=64,
+    #     k_layers=1,
+    #     # op_node_id=g_env.op_node_id,
+    #     # observation_space = g_env.observation_space,
+    # )
+    # policy_kwargs = dict(
+    #     features_extractor_class=GNNFeatureExtractor,
+    #     features_extractor_kwargs=features_extractor_kwargs,
+    # )
+    # model = PPO(
+    #     "GraphInputPolicy",
+    #     env,
+    #     policy_kwargs=policy_kwargs,
+    #     learning_rate=1e-4,
+    #     verbose=1,
+    #     batch_size=32,
+    #     tensorboard_log=log_dir,
+    # )
+
+    # eval_callback = EvalCallback(
+    #     env,
+    #     best_model_save_path=save_dir,
+    #     log_path=log_dir,
+    #     eval_freq=1000,  # Adjust evaluation frequency as needed
+    #     deterministic=False,  # TODO: error when True -> IndexError: Dimension out of range (expected to be in range of [-1, 0], but got 1)
+    #     render=False,
+    # )
+
+    # model.learn(callback=eval_callback, total_timesteps=100000, tb_log_name="GNN_PPO")

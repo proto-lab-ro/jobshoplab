@@ -3,31 +3,25 @@ from collections import OrderedDict
 from functools import partial
 from logging import Logger
 from typing import Callable
+
+import gymnasium as gym
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 import torch
 from torch_geometric.data import Data
-import networkx as nx
-import matplotlib.pyplot as plt
-import gymnasium as gym
-import numpy as np
 
 from jobshoplab.types import ComponentTransition, Config, InstanceConfig, State
-from jobshoplab.types.state_types import (
-    JobState,
-    MachineState,
-    MachineStateState,
-    OperationState,
-    OperationStateState,
-    StateMachineResult,
-)
+from jobshoplab.types.state_types import (JobState, MachineState,
+                                          MachineStateState, OperationState,
+                                          OperationStateState,
+                                          StateMachineResult)
 from jobshoplab.utils.exceptions import InvalidValue
 from jobshoplab.utils.logger import get_logger
-from jobshoplab.utils.utils import (
-    get_component_id_int,
-    get_component_type_int,
-    get_id_int,
-    get_max_allowed_time,
-)
 from jobshoplab.utils.state_machine_utils import job_type_utils
+from jobshoplab.utils.utils import (get_component_id_int,
+                                    get_component_type_int, get_id_int,
+                                    get_max_allowed_time)
 
 Observation = type("Observation", (object,), {})
 

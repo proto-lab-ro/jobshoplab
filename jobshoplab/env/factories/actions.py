@@ -5,14 +5,11 @@ from gymnasium import spaces
 
 from jobshoplab.state_machine.time_machines import jump_to_event
 from jobshoplab.types import Config, InstanceConfig, State
-from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
-from jobshoplab.types.state_types import (
-    JobState,
-    MachineStateState,
-    StateMachineResult,
-    TransportState,
-    TransportStateState,
-)
+from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
+                                           ComponentTransition)
+from jobshoplab.types.state_types import (JobState, MachineStateState,
+                                          StateMachineResult, TransportState,
+                                          TransportStateState)
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import ActionOutOfActionSpace, InvalidValue
 from jobshoplab.utils.state_machine_utils import job_type_utils
@@ -166,6 +163,84 @@ class BinaryJobActionFactory(ActionFactory):
 
     def __repr__(self) -> str:
         return f"SimpleJsspActionFactory with action space:{self.action_space}"
+
+
+class OperationActionFactory(ActionFactory):
+    def __init__(
+        self,
+        loglevel: int | str,
+        config: Config,
+        instance: InstanceConfig,
+        *args,
+        **kwargs,
+    ):
+        self.num_operations = sum(len(job.operations) for job in instance.instance.specification)
+
+        # Create mapping from operation IDs to action indices
+        self.operation_to_index: dict[str, int] = {}
+        self.index_to_operation: dict[int, str] = {}
+
+        index = 0
+        for job in instance.instance.specification:
+            for operation in job.operations:
+                self.operation_to_index[operation.id] = index
+                self.index_to_operation[index] = operation.id
+                index += 1
+
+        # TODO: No-Op needed?
+        action_space = spaces.Discrete(self.num_operations, start=0)
+        super().__init__(loglevel, config, instance, action_space, *args, **kwargs)
+
+    def interpret(
+        self,
+        action: int,
+        state: StateMachineResult,
+        *args,
+        **kwargs,
+    ) -> Action:
+        # Validate action is within action space
+        if not self.action_space.contains(action):
+            raise ActionOutOfActionSpace(action, self.action_space)
+
+        # Get the operation ID from the action index
+        operation_id = self.index_to_operation[action]
+
+        # TODO: use utils to find the operation in the state
+        # Find the job that contains this operation
+        job_state = None
+        for job in state.state.jobs:
+            if any(op.id == operation_id for op in job.operations):
+                job_state = job
+                break
+
+        if job_state is None:
+            raise InvalidValue("operation_id", operation_id, "Operation not found in any job")
+
+        # Find the operation state in the job
+        operation_state = None
+        for op in job_state.operations:
+            if op.id == operation_id:
+                operation_state = op
+                break
+
+        if operation_state is None:
+            raise InvalidValue("operation_id", operation_id, "Operation state not found in job")
+
+        # Create the component transition for the machine
+        transition = ComponentTransition(
+            component_id=operation_state.machine_id,
+            new_state=MachineStateState.SETUP,  # Machines start in SETUP state
+            job_id=job_state.id,
+        )
+
+        return Action(
+            transitions=(transition,),
+            action_factory_info=ActionFactoryInfo.Valid,
+            time_machine=jump_to_event,
+        )
+
+    def __repr__(self) -> str:
+        return f"OperationActionFactory with action space:{self.action_space}"
 
 
 class MultiDiscreteActionSpaceFactory(ActionFactory):

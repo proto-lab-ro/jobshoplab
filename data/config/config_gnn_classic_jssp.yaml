@@ -19,7 +19,7 @@ env:
   loglevel: *default_loglevel
   observation_factory: "GNNObservationFactory"
   reward_factory: "BinaryActionJsspReward"
-  action_factory: "BinaryJobActionFactory"
+  action_factory: "OperationActionFactory"
   render_backend: "render_in_dashboard"
   middleware: "EventBasedBinaryActionMiddleware"
   max_time_fct: 2 # allowed fct for truncation max_time = lower_bound * max_time_fct where 2 is evaluated empirically
