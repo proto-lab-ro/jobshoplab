@@ -3,6 +3,8 @@ jobshoplab/types/auto_config_types.py
 /tmp/**
 /tmp/*
 *.obj
+/logs
+/log
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,pycharm,images,archives
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,visualstudiocode,pycharm,images,archives
