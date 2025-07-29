@@ -1021,6 +1021,11 @@ class DictToInstanceMapper(AbstractDictMapper):
                     default = replace(default, capacity=buffer_spec_dict[key])
                 case "type":
                     _type_str = buffer_spec_dict[key].upper()
+                    match _type_str:  # explicitly match known types
+                        case "FLEX":
+                            _type_str = "FLEX_BUFFER"
+                        case _:
+                            pass
                     buffer_type = getattr(BufferTypeConfig, _type_str, None)
                     if buffer_type is None:
                         raise TransportConfigError(
@@ -1128,8 +1133,12 @@ class DictToInstanceMapper(AbstractDictMapper):
             machine_buffer_id = self.counter.get_buffer_id()
             machine = self.defaults.get_default_machine(
                 machine_id,
-                self.defaults.get_default_buffer(prebuffer_id, machine_id),
-                self.defaults.get_default_buffer(postbuffer_id, machine_id),
+                self.defaults.get_default_buffer(
+                    prebuffer_id, machine_id, role=BufferRoleConfig.COMPONENT
+                ),
+                self.defaults.get_default_buffer(
+                    postbuffer_id, machine_id, role=BufferRoleConfig.COMPONENT
+                ),
                 machine_buffer_id,
             )
             machine = self._add_machine_spec(machine, spec_dict)
