@@ -65,6 +65,20 @@ class NoTime:
 
 
 @dataclass(frozen=True)
+class TimeDependency:
+    """A class to represent a time dependency for a transport job.
+    This is used to indicate that the transport job should be scheduled at a specific time.
+    """
+
+    buffer_id: str  # ID of the buffer that is dependent on this time
+    job_id: str  # ID of the job that is dependent on this time
+    transition: any
+
+    def asdict(self) -> dict:
+        return {"time_dependency": {"job": self.job_id}}
+
+
+@dataclass(frozen=True)
 class FailTime:
     reason: str
     time = None

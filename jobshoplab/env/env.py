@@ -605,4 +605,4 @@ if __name__ == "__main__":
             obs, reward, termianted, truncated, inf = env.step(action)
             done = termianted or truncated
 
-        env.render()
+        # env.render()

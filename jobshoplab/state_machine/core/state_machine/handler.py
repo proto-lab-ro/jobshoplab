@@ -14,6 +14,7 @@ import jobshoplab.state_machine.core.state_machine.manipulate as manipulate
 import jobshoplab.utils.state_machine_utils.core_utils as core_utils
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.action_types import ComponentTransition
+from jobshoplab.state_machine.time_machines import force_jump_to_event
 from jobshoplab.types.instance_config_types import (
     BufferConfig,
     StochasticTimeConfig,
@@ -26,6 +27,7 @@ from jobshoplab.types.state_types import (
     MachineStateState,
     NoTime,
     Time,
+    TimeDependency,
     TransportState,
     TransportStateState,
 )
@@ -281,6 +283,8 @@ def create_timed_transport_transitions(
 
     # Check each transport to see if it's time to change its state
     for transport in state.transports:
+        if isinstance(transport.occupied_till, TimeDependency):
+            transitions.append(transport.occupied_till.transition)
         if isinstance(transport.occupied_till, Time) and isinstance(state.time, Time):
             if transport.occupied_till.time <= state.time.time:
                 # Create appropriate transition based on current transport state
@@ -519,9 +523,39 @@ def _get_waiting_time(state, transition, instance):
 
                 return (
                     state.time
-                )  # setting time to now.. hence pick up could be performed in this time step
+                )  # setting time to now.. hence pick up could be performed in this time step as job is ready to get transported
             else:
-                raise NotImplementedError()
+                # in case the job is not ready to get transported we have to wait until the prior jobs are transported.
+                # considering the nature of the state machine and waiting to waiting transitions the simplest solution is to set the time to the time next jobs pickup estimate.
+                # Hence if fifo and job in 5 were hitting waiting to waiting transitions for multiple times during different time steps.
+
+                next_job_in_queue = buffer_type_utils.get_next_job_from_buffer(
+                    machine_state.postbuffer, buffer_config
+                )
+                if next_job_in_queue is None:
+                    raise InvalidValue(
+                        key="next_job_in_queue",
+                        value=next_job_in_queue,
+                    )  # bug
+                transport_state = transport_type_utils.get_transport_state_by_job_id(
+                    state, next_job_in_queue
+                )
+                next_job_state_in_queue = job_type_utils.get_job_state_by_id(
+                    state.jobs, next_job_in_queue
+                )
+                if job_type_utils.is_done(next_job_state_in_queue):
+                    # if the next job is done and the end pos is the machines buffer (wre cheating)
+                    return (
+                        state.time
+                    )  # setting time to now.. hence pick up gets performed in this time step
+                if transport_state is None:
+                    # means no transport is assigned to this job. (Wre having a situation where the next job locks the queue)
+                    # this could potentially happen.
+                    # setting time to now.. hence pick up gets performed in this time step
+                    return TimeDependency(
+                        job_id=next_job_in_queue, buffer_id=job_location_id, transition=transition
+                    )
+                return transport_state.occupied_till
         # job is either being processed or waiting in the prebuffer
         processing_op = job_type_utils.get_processing_operation(job_state)
         if processing_op is None:
