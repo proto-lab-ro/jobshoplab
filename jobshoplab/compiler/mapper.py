@@ -222,17 +222,22 @@ class DefaultInstanceLookUpFactory:
             batches=1,
             resources=tuple(),
             buffer=BufferConfig(
-                machine_buffer_id,
-                BufferTypeConfig.FLEX_BUFFER,
-                1,
-                tuple(),
-                "Machine buffer",
-                machine_id,
+                id=machine_buffer_id,
+                type=BufferTypeConfig.FLEX_BUFFER,
+                capacity=1,
+                resources=tuple(),
+                role=BufferRoleConfig.COMPONENT,
+                description="Machine buffer",
+                parent=machine_id,
             ),
         )
 
     def get_default_buffer(
-        self, buffer_id: str, parent: str, description: str | None = None
+        self,
+        buffer_id: str,
+        parent: str,
+        role: BufferRoleConfig = BufferRoleConfig.COMPENSATION,
+        description: str | None = None,
     ) -> BufferConfig:
         """
         Get the default buffer configuration.
@@ -248,8 +253,9 @@ class DefaultInstanceLookUpFactory:
             type=BufferTypeConfig.FLEX_BUFFER,
             capacity=sys.maxsize,
             resources=tuple(),
-            parent=parent,
+            role=role,
             description=description,
+            parent=parent,
         )
 
     def get_default_transport(self, transport_id: str, buffer_id: str) -> TransportConfig:
@@ -272,8 +278,9 @@ class DefaultInstanceLookUpFactory:
                 type=BufferTypeConfig.FLEX_BUFFER,
                 capacity=1,
                 resources=tuple(),
-                parent=transport_id,
+                role=BufferRoleConfig.COMPONENT,
                 description="AGV buffer",
+                parent=transport_id,
             ),
         )
 
@@ -1022,6 +1029,24 @@ class DictToInstanceMapper(AbstractDictMapper):
                     default = replace(default, type=buffer_type)
                 case "name":
                     pass  # the name is already set in the default buffer
+                case "role":
+                    role_str = buffer_spec_dict[key].upper()
+                    role = getattr(BufferRoleConfig, role_str, None)
+                    if role is None:
+                        raise InvalidType(
+                            key="BufferRoleConfig",
+                            value=buffer_spec_dict[key],
+                            expected_type=[field.name for field in BufferRoleConfig],
+                        )
+                    default = replace(default, role=role)
+                case "description":
+                    if not isinstance(buffer_spec_dict[key], str):
+                        raise InvalidType(
+                            key="BufferDescription",
+                            value=buffer_spec_dict[key],
+                            expected_type=["str"],
+                        )
+                    default = replace(default, description=buffer_spec_dict[key])
                 case _:
                     raise InvalidType(
                         key="BufferTypeConfig",
@@ -1062,8 +1087,9 @@ class DictToInstanceMapper(AbstractDictMapper):
                         type=BufferTypeConfig.FLEX_BUFFER,
                         capacity=1,
                         resources=tuple(),
-                        parent=transport_id,
+                        role=BufferRoleConfig.COMPONENT,
                         description="AGV buffer",
+                        parent=transport_id,
                     ),
                 ),
             )
@@ -1128,8 +1154,8 @@ class DictToInstanceMapper(AbstractDictMapper):
             input_buffer_id = self.counter.get_buffer_id()
             output_buffer_id = self.counter.get_buffer_id()
             buffer = (
-                self.defaults.get_default_buffer(input_buffer_id, None, "input buffer"),
-                self.defaults.get_default_buffer(output_buffer_id, None, "output buffer"),
+                self.defaults.get_default_buffer(input_buffer_id, None, BufferRoleConfig.INPUT),
+                self.defaults.get_default_buffer(output_buffer_id, None, BufferRoleConfig.OUTPUT),
             )
 
         self.logger.debug("Successfully mapped components")

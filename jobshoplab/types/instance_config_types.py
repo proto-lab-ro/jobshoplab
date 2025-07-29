@@ -144,6 +144,23 @@ class OutageConfig:
         }
 
 
+class BufferRoleConfig(Enum):
+    """
+    Enumeration for buffer role configuration.
+    Attributes:
+        INPUT (str): The input role.
+        OUTPUT (str): The output role.
+    """
+
+    INPUT = "input"
+    OUTPUT = "output"
+    COMPONENT = "component"
+    COMPENSATION = "compensation"
+
+    def asdict(self) -> str:
+        return self.value
+
+
 @dataclass(frozen=True)
 class BufferConfig:
     """
@@ -160,6 +177,7 @@ class BufferConfig:
     type: BufferTypeConfig
     capacity: int
     resources: tuple[ResourceConfig, ...]
+    role: BufferRoleConfig
     description: str | None = None
     parent: str | None = None
 

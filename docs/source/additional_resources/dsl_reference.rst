@@ -94,7 +94,7 @@ Format:
 Buffer Configuration
 ^^^^^^^^^^^^^^^^^^^
 
-Define custom buffers:
+Define custom buffers with specific types, capacities, and roles:
 
 .. code-block:: yaml
 
@@ -102,9 +102,38 @@ Define custom buffers:
       - name: "b-0"
         type: "fifo"        # Buffer type: fifo, lifo, flex_buffer
         capacity: 5         # Maximum capacity
+        role: "input"       # Buffer role: input, output, component, compensation
+        description: "Main input staging buffer"  # Optional description
       - name: "b-1"
         type: "lifo"
         capacity: 3
+        role: "compensation"
+        description: "Temporary overflow storage"
+
+**Buffer Types:**
+- ``fifo``: First-In-First-Out queue
+- ``lifo``: Last-In-First-Out stack  
+- ``flex_buffer``: Flexible buffer with no ordering constraints
+- ``dummy``: Pass-through buffer with no storage
+
+**Buffer Roles:**
+- ``input``: Buffers where jobs enter the system from external sources
+- ``output``: Buffers where completed jobs exit the system  
+- ``component``: Buffers that are integral parts of machines or transport units (assigned automatically)
+- ``compensation``: Buffers used for temporary storage, overflow handling, or workflow compensation
+
+**Buffer Fields:**
+- ``name``: Buffer identifier (must start with ``b-``, e.g., ``b-0``, ``b-input``)
+- ``type``: Buffer scheduling discipline (required)
+- ``capacity``: Maximum number of jobs the buffer can hold (required)
+- ``role``: Functional classification of the buffer (required)
+- ``description``: Human-readable description of the buffer's purpose (optional)
+
+**Role Assignment Rules:**
+- Custom buffers defined in the ``buffer`` section require explicit ``role`` specification
+- Machine buffers (prebuffer, buffer, postbuffer) automatically receive ``component`` role
+- AGV/transport buffers automatically receive ``component`` role  
+- Default system buffers (when no custom buffers are defined) automatically get ``input`` and ``output`` roles
 
 Machine Buffer Configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -291,6 +320,13 @@ Here's a complete DSL file example:
         - name: "b-0"
           type: "fifo"
           capacity: 3
+          role: "input"
+          description: "Main input buffer"
+        - name: "b-1"
+          type: "flex_buffer"
+          capacity: 5
+          role: "output"
+          description: "Finished goods buffer"
           
       machines:
         prebuffer:
@@ -321,7 +357,9 @@ Here's a complete DSL file example:
       t-1:
         location: m-1
       b-0:
-        store: [j-0, j-1, j-2]
+        store: [j-0, j-1, j-2]  # Jobs start in input buffer
+      b-1:
+        store: []               # Output buffer starts empty
       j-0:
         location: b-0
       j-1:
