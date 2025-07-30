@@ -258,6 +258,15 @@ def replace_machine_state(state, machine_state):
     return state
 
 
+def replace_buffer_state(state, buffer_state) -> State:
+    return replace(
+        state,
+        buffers=tuple(
+            buffer_state if buffer.id == buffer_state.id else buffer for buffer in state.buffers
+        ),
+    )
+
+
 def replace_job_state(state, job_state) -> State:
     return replace(
         state, jobs=tuple(job_state if job.id == job_state.id else job for job in state.jobs)

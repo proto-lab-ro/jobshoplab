@@ -49,6 +49,7 @@ from jobshoplab.utils.state_machine_utils import (
     transport_type_utils,
 )
 from jobshoplab.utils.state_machine_utils.time_utils import _get_travel_time_from_spec
+from jobshoplab.utils.state_machine_utils.component_type_utils import get_comp_by_id
 
 
 def create_timed_machine_transitions(
@@ -842,22 +843,29 @@ def handle_agv_transport_transit_to_outage_transition(
 
     # Get job and destination machine
     job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
-    machine_state = machine_type_utils.get_machine_state_by_id(
-        state.machines,
+    target_component_state = get_comp_by_id(
+        state,
         transport.location.location[
             2
         ],  # TODO: hardcoded index -> assumes the last index is the destination machine
     )
 
-    # Complete transport task - deliver job to machine
-    job_state, transport_state, machine_state = manipulate.complete_transport_task(
-        instance, job_state, transport=transport, machine=machine_state, time=state.time
+    # Complete transport task - deliver job to machine or buffer(out)
+    job_state, transport_state, target_component_state = manipulate.complete_transport_task(
+        instance,
+        job_state,
+        transport=transport,
+        target_component_state=target_component_state,
+        time=state.time,
     )
 
     # Update all states
     state = possible_transition_utils.replace_job_state(state, job_state)
     state = possible_transition_utils.replace_transport_state(state, transport_state)
-    state = possible_transition_utils.replace_machine_state(state, machine_state)
+    if isinstance(target_component_state, MachineState):
+        state = possible_transition_utils.replace_machine_state(state, target_component_state)
+    if isinstance(target_component_state, BufferState):  # replacing output buffer state
+        state = possible_transition_utils.replace_buffer_state(state, target_component_state)
     return state
 
 

@@ -11,42 +11,53 @@ from dataclasses import replace
 from typing import Tuple, Sequence
 
 from jobshoplab.types import InstanceConfig
-from jobshoplab.types.instance_config_types import (MachineConfig,
-                                                  OperationConfig)
-from jobshoplab.types.state_types import (DeterministicTimeConfig, JobState,
-                                        MachineState, MachineStateState,
-                                        NoTime, OperationState,
-                                        OperationStateState,
-                                        StochasticTimeConfig, Time,
-                                        TransportLocation, TransportState,
-                                        TransportStateState)
-from jobshoplab.utils.exceptions import (
-    InvalidValue, NotImplementedError, InvalidTimeTypeError, 
-    InvalidSetupTimeTypeError
+from jobshoplab.types.instance_config_types import MachineConfig, OperationConfig
+from jobshoplab.types.state_types import (
+    BufferState,
+    DeterministicTimeConfig,
+    JobState,
+    MachineState,
+    MachineStateState,
+    NoTime,
+    OperationState,
+    OperationStateState,
+    StochasticTimeConfig,
+    Time,
+    TransportLocation,
+    TransportState,
+    TransportStateState,
 )
-from jobshoplab.utils.state_machine_utils import (buffer_type_utils,
-                                                job_type_utils,
-                                                machine_type_utils,
-                                                outage_utils,
-                                                possible_transition_utils)
+from jobshoplab.utils.exceptions import (
+    InvalidValue,
+    NotImplementedError,
+    InvalidTimeTypeError,
+    InvalidSetupTimeTypeError,
+)
+from jobshoplab.utils.state_machine_utils import (
+    buffer_type_utils,
+    job_type_utils,
+    machine_type_utils,
+    outage_utils,
+    possible_transition_utils,
+)
 
 
 def complete_transport_task(
     instance: InstanceConfig,
     job_state: JobState,
     transport: TransportState,
-    machine: MachineState,
+    target_component_state: MachineState | BufferState,
     time: Time | NoTime,
-) -> Tuple[JobState, TransportState, MachineState]:
+) -> Tuple[JobState, TransportState, MachineState | BufferState]:
     """
     Complete a transport task by delivering a job to its destination machine.
-    
+
     This function handles the process of:
     1. Moving the job from the transport buffer to the machine prebuffer
     2. Setting the transport to OUTAGE state (representing drop-off time)
     3. Calculating and setting the time required for drop-off
     4. Clearing the transport's job assignment
-    
+
     Args:
         instance: The instance configuration containing time information
         job_state: The state of the job being transported
@@ -61,18 +72,23 @@ def complete_transport_task(
         NotImplementedError: If time is not a Time instance
     """
     if isinstance(time, Time):
+        buffer_to_fill = (
+            target_component_state.prebuffer
+            if isinstance(target_component_state, MachineState)
+            else target_component_state
+        )
         # Move job from transport buffer to machine prebuffer
-        transport_buffer, machine_prebuffer, job_state = buffer_type_utils.switch_buffer(
+        transport_buffer, filled_buffer, job_state = buffer_type_utils.switch_buffer(
             instance=instance,
             buffer_from_state=transport.buffer,
-            buffer_to_state=machine.prebuffer,
+            buffer_to_state=buffer_to_fill,
             job_state=job_state,
         )
 
         # Calculate outage time for transport (drop-off time)
         outages = outage_utils.get_new_outage_states(transport, instance, time)
         occupied_for = outage_utils.get_occupied_time_from_outage_iterator(outages)
-        
+
         # Update transport state: remove job, set to outage status, update location
         transport = replace(
             transport,
@@ -85,9 +101,10 @@ def complete_transport_task(
         )
 
         # Update machine's prebuffer
-        machine = replace(machine, prebuffer=machine_prebuffer)
+        if isinstance(target_component_state, MachineState):
+            target_component_state = replace(target_component_state, prebuffer=filled_buffer)
 
-        return job_state, transport, machine
+        return job_state, transport, target_component_state
     else:
         raise NotImplementedError()
 
@@ -100,13 +117,13 @@ def complete_active_operation_on_machine(
 ) -> Tuple[JobState, MachineState]:
     """
     Complete the active operation on a machine.
-    
+
     This function handles the process of:
     1. Moving the job from the machine buffer to the postbuffer
     2. Setting the operation state to DONE
     3. Setting the machine state to IDLE
     4. Clearing machine outages
-    
+
     Args:
         instance: The instance configuration
         jobs: Tuple of all job states in the system
@@ -137,13 +154,13 @@ def complete_active_operation_on_machine(
 
     if not active_op:
         raise InvalidValue("No active operation", active_op)
-    
+
     # Mark the operation as complete
     active_op = replace(active_op, end_time=time, operation_state_state=OperationStateState.DONE)
 
     # Update job state with completed operation
     job_state = possible_transition_utils.replace_job_operation_state(job_state, active_op)
-    
+
     # Remove job from machine buffer
     buffer = buffer_type_utils.remove_from_buffer(machine_state.buffer, job_state.id)
 
@@ -174,17 +191,17 @@ def complete_active_operation_on_machine(
 def _get_duration(time: DeterministicTimeConfig | StochasticTimeConfig) -> int:
     """
     Get the duration from a time configuration object.
-    
+
     Extracts the time value from either a deterministic or stochastic time
     configuration. For stochastic times, this updates the random value before
     returning it.
-    
+
     Args:
         time: The time configuration object (either deterministic or stochastic)
-        
+
     Returns:
         int: The duration in time units
-        
+
     Raises:
         InvalidTimeTypeError: If the time object is not of a supported type
     """
@@ -208,13 +225,13 @@ def begin_next_job_on_machine(
 ) -> Tuple[JobState, MachineState]:
     """
     Start processing a job on a machine after setup is complete.
-    
+
     This function handles the transition from setup to working state by:
     1. Setting the operation state to PROCESSING
     2. Calculating operation duration based on the operation configuration
     3. Setting the machine state to WORKING
     4. Setting the machine's occupied_till time based on the operation duration
-    
+
     Args:
         instance: The instance configuration containing operation durations
         job_state: The state of the job to process
@@ -255,25 +272,23 @@ def begin_next_job_on_machine(
 
 
 def _get_setup_duration(
-    machine_state: MachineState, 
-    machine_config: MachineConfig, 
-    operation_config: OperationConfig
+    machine_state: MachineState, machine_config: MachineConfig, operation_config: OperationConfig
 ) -> int:
     """
     Calculate the setup time for a machine to change tools.
-    
+
     This function determines the time required to change from the currently mounted tool
     to the tool required for the next operation. It handles both deterministic and
     stochastic setup times.
-    
+
     Args:
         machine_state: The current machine state containing the currently mounted tool
         machine_config: The machine configuration containing setup time information
         operation_config: The operation configuration with the required tool
-        
+
     Returns:
         int: The setup time duration in time units
-        
+
     Raises:
         InvalidValue: If the setup time for the tool change is not defined
         InvalidSetupTimeTypeError: If the setup time is not of a supported type
@@ -281,10 +296,10 @@ def _get_setup_duration(
     # Get the tools involved in the setup
     new_tool = operation_config.tool
     old_tool = machine_state.mounted_tool
-    
+
     # Get the setup time for changing from old_tool to new_tool
     s_time = machine_config.setup_times.get((old_tool, new_tool))
-    
+
     # Handle different types of setup times
     match s_time:
         case DeterministicTimeConfig():
@@ -300,7 +315,7 @@ def _get_setup_duration(
                     value=None,
                     message="setup time not found in mapping (check instance mapping)",
                 )
-            
+
             raise InvalidSetupTimeTypeError(
                 type(s_time), "DeterministicTimeConfig or StochasticTimeConfig"
             )
@@ -316,13 +331,13 @@ def begin_machine_outage(
 ) -> Tuple[JobState, MachineState]:
     """
     Start a machine outage (e.g., maintenance or breakdown).
-    
+
     This function transitions a machine from WORKING to OUTAGE state:
     1. Sets the machine state to OUTAGE
     2. Updates the machine's outage records
     3. Sets the machine's occupied_till time based on the outage duration
     4. Updates the job's operation end time to match the outage end time
-    
+
     Args:
         instance: The instance configuration
         job_state: The state of the job currently on the machine
@@ -330,16 +345,16 @@ def begin_machine_outage(
         time: The current simulation time
         occupied_for: The duration of the outage in time units
         outages: Sequence of outage states for the machine
-        
+
     Returns:
         Tuple containing updated job_state and machine_state
-        
+
     Raises:
         NotImplementedError: If time is not a Time instance
     """
     if time == NoTime():
         raise NotImplementedError()
-        
+
     # Update machine state with outage information
     machine = replace(
         machine_state,
@@ -352,7 +367,7 @@ def begin_machine_outage(
     current_operation = job_type_utils.get_processing_operation(job_state)
     current_operation = replace(current_operation, end_time=Time(time.time + occupied_for))
     job_state = possible_transition_utils.replace_job_operation_state(job_state, current_operation)
-    
+
     return job_state, machine
 
 
@@ -364,7 +379,7 @@ def begin_machine_setup(
 ) -> Tuple[JobState, MachineState]:
     """
     Start setting up a machine for a new operation.
-    
+
     This function handles the transition from IDLE to SETUP by:
     1. Moving the job from the machine's prebuffer to its buffer
     2. Setting the machine state to SETUP
@@ -372,13 +387,13 @@ def begin_machine_setup(
     4. Setting the machine's occupied_till time based on the setup duration
     5. Updating the machine's mounted tool
     6. Setting the operation state to PROCESSING (during setup)
-    
+
     Args:
         instance: The instance configuration containing setup time information
         job_state: The state of the job to process
         machine_state: The machine state to update
         time: The current simulation time
-        
+
     Returns:
         Tuple containing updated job_state and machine_state
     """
