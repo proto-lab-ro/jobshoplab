@@ -1,11 +1,17 @@
 from jobshoplab.types import State
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.state_types import (JobState, MachineState,
-                                          MachineStateState, OperationState,
-                                          OperationStateState,
-                                          TransportLocation, TransportState,
-                                          TransportStateState)
-from jobshoplab.utils.state_machine_utils import job_type_utils
+from jobshoplab.types.state_types import (
+    JobState,
+    MachineState,
+    MachineStateState,
+    OperationState,
+    OperationStateState,
+    TransportLocation,
+    TransportState,
+    TransportStateState,
+)
+from jobshoplab.types.instance_config_types import InstanceConfig
+from jobshoplab.utils.state_machine_utils import job_type_utils, buffer_type_utils
 
 
 def print_state(state: State):
@@ -35,7 +41,7 @@ def print_state(state: State):
             print(f"{operation.id} \t {operation.machine_id} \t{operation.operation_state_state}")
 
 
-def is_done(state: State) -> bool:
+def is_done(state: State, instance: InstanceConfig) -> bool:
     """
     Check if the state machine is done.
     Args:
@@ -43,10 +49,10 @@ def is_done(state: State) -> bool:
     Returns:
         bool: A boolean indicating if the state machine is done.
     """
+    output_buffer = [b.id for b in buffer_type_utils.get_output_buffers(instance)]
     for job in state.jobs:
-        for op in job.operations:
-            if op.operation_state_state != OperationStateState.DONE:
-                return False
+        if not job.location in output_buffer:
+            return False
     return True
 
 

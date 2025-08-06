@@ -1,11 +1,15 @@
 from jobshoplab.types.state_types import State, Time, TransportLocation
 from jobshoplab.utils.state_machine_utils.core_utils import (
-    create_transport_location_from_job, is_done,
+    create_transport_location_from_job,
+    is_done,
     is_transport_transition_from_idle_to_working,
     is_transport_transition_from_pickup_to_transit,
     is_transport_transition_from_pickup_to_waitingpickup,
     is_transport_transition_from_waitingpickup_to_transit,
-    no_processing_operations, sorted_by_transport, sorted_done_operations)
+    no_processing_operations,
+    sorted_by_transport,
+    sorted_done_operations,
+)
 
 
 def test_is_done(job_state_done):
@@ -16,7 +20,7 @@ def test_is_done(job_state_done):
         transports=(),
         buffers=(),
     )
-    assert is_done(state) == True
+    assert is_done(state, instance) == True
 
 
 def test_no_processing_operations(job_state_processing):

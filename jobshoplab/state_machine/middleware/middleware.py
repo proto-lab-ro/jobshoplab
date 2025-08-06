@@ -336,6 +336,7 @@ class EventBasedBinaryActionMiddleware(Middleware):
 
                 # If there are still no possible transitions, the state machine is stuck
                 if len(state.possible_transitions) == 0:
+                    state = self.state_machine_step(state=state.state, action=action)
                     raise UnsuccessfulStateMachineResult()
 
                 # Check for truncation (too many no-ops)

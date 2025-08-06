@@ -71,6 +71,7 @@ def complete_transport_task(
     Raises:
         NotImplementedError: If time is not a Time instance
     """
+
     if isinstance(time, Time):
         buffer_to_fill = (
             target_component_state.prebuffer
@@ -103,6 +104,8 @@ def complete_transport_task(
         # Update machine's prebuffer
         if isinstance(target_component_state, MachineState):
             target_component_state = replace(target_component_state, prebuffer=filled_buffer)
+        if isinstance(target_component_state, BufferState):
+            target_component_state = filled_buffer
 
         return job_state, transport, target_component_state
     else:

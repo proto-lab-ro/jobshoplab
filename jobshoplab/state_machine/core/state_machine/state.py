@@ -41,7 +41,7 @@ from jobshoplab.utils.state_machine_utils import (
 )
 
 
-def is_done(state: StateMachineResult) -> bool:
+def is_done(state: StateMachineResult, instance: InstanceConfig) -> bool:
     """
     Check if the state machine has completed all jobs.
 
@@ -54,7 +54,7 @@ def is_done(state: StateMachineResult) -> bool:
     Returns:
         bool: True if all operations are done, False otherwise
     """
-    return core_utils.is_done(state.state)
+    return core_utils.is_done(state.state, instance)
 
 
 def apply_transition(
@@ -260,7 +260,7 @@ def step(
         timed_transitions = handler.create_timed_transitions(loglevel, state, instance)
 
     # Check if all jobs are complete
-    if core_utils.is_done(state):
+    if core_utils.is_done(state, instance):
         logger.info("State machine is done")
         running_ops = core_utils.sorted_done_operations(state.jobs)
         if running_ops:
@@ -363,7 +363,6 @@ def _get_travel_time_for_transport(
         NotImplementedError: If the duration type is not supported
     """
     job_state: JobState = job_type_utils.get_job_state_by_id(jobs, job_id)
-    next_op: OperationState = job_type_utils.get_next_idle_operation(job_state)
 
     # Get machine or buffer location
     all_buffer_configs = buffer_type_utils.get_all_buffer_configs(instance)
@@ -378,7 +377,12 @@ def _get_travel_time_for_transport(
         current_location = job_state.location
 
     # Get the destination location from the next operation
-    next_location = next_op.machine_id
+    match job_type_utils.no_operation_idle(job_state):
+        case True:
+            next_location = next(iter(buffer_type_utils.get_output_buffers(instance))).id
+        case False:
+            next_op: OperationState = job_type_utils.get_next_idle_operation(job_state)
+            next_location = next_op.machine_id
 
     # If current and next locations are the same, no travel time needed
     if current_location == next_location:
@@ -389,10 +393,8 @@ def _get_travel_time_for_transport(
 
     # Handle different types of duration configurations
     match duration:
-        case DeterministicTimeConfig():  # Simple deterministic time
+        case DeterministicTimeConfig() | StochasticTimeConfig():  # Simple deterministic time
             return duration.time
-        case StochasticTimeConfig():  # For stochastic times, return the base time
-            return duration.base_time
         case _:
             # This can happen if a new time configuration type is added but not handled
             raise NotImplementedError()

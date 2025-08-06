@@ -160,6 +160,30 @@ def sort_by_id(
     return tuple(sorted(components, key=lambda x: get_id_int(x.id)))
 
 
+def is_transportable(job_state: JobState, state: State, instance: InstanceConfig) -> bool:
+    """Check if a job can be transported.
+
+    Returns:
+        bool: True if job needs transport, False otherwise
+    """
+    if job_type_utils.is_done(
+        job_state, instance
+    ):  # now more transport needed because operations are done and job is at output buffer
+        return False
+    if job_type_utils.all_operations_done(
+        job_state
+    ):  # all ops are done but the job is not at the output buffer
+        return True
+    next_op = job_type_utils.get_next_idle_operation(job_state)
+    if next_op is None:  # no more operations left
+        raise InvalidValue(job_state, "job has no more operations. all operations are done.")
+    if is_job_at_machine(
+        job_state, machine_type_utils.get_machine_state_by_id(state.machines, next_op.machine_id)
+    ):
+        return False
+    return True
+
+
 def get_possible_transport_transition(state: State, instance) -> tuple[ComponentTransition, ...]:
     """
     Get all available transports and mach each transport with each possible job
@@ -167,47 +191,34 @@ def get_possible_transport_transition(state: State, instance) -> tuple[Component
         - Job is in state working -> when finised it need to be transported to next op
         - Job is in state idle and next op is not the current location
         - Jobs that are not getting are already assigned to an agv
+        - Jobs where all operations are done but not at the output buffer
 
     Returns:
     The tuple of possible ComponentTransitions
     """
     possible_transports = tuple(get_possible_transports(state.transports, instance.transports))
 
+    # getting all jobs that need to be transported now or later
+    jobs_to_transport = tuple()
+    running_jobs = tuple(filter(lambda x: job_type_utils.is_job_running(x), state.jobs))
+    running_jobs = tuple(
+        filter(lambda x: job_type_utils.is_job_running(x), state.jobs)
+    )  # job is running means a transport is needed in any scenario
+    jobs_to_transport += running_jobs
+
+    idle_jobs = filter(lambda x: not job_type_utils.is_job_running(x), state.jobs)
+    jobs_to_transport += tuple(filter(lambda x: is_transportable(x, state, instance), idle_jobs))
+
+    # Remove jobs that are already assigned to a transport
     jobs_already_assigned_to_transport = tuple(
         transport.transport_job for transport in state.transports if transport.transport_job
     )
-
-    jobs_to_transport = tuple()
-
-    running_jobs = tuple(filter(lambda x: job_type_utils.is_job_running(x), state.jobs))
-    running_jobs = tuple(
-        filter(
-            lambda x: job_type_utils.is_job_running(x)
-            and not job_type_utils.is_last_operation_running(x),
-            state.jobs,
-        )
-    )
-    jobs_to_transport += running_jobs
-
-    idle_jobs = tuple(filter(lambda x: not job_type_utils.is_job_running(x), state.jobs))
-
-    for job_state in idle_jobs:
-        if job_type_utils.is_done(job_state):
-            continue
-        next_op = job_type_utils.get_next_idle_operation(job_state)
-
-        if is_job_at_machine(
-            job_state,
-            machine_type_utils.get_machine_state_by_id(state.machines, next_op.machine_id),
-        ):
-            continue
-        jobs_to_transport += (job_state,)
-
-    # Remove jobs that are already assigned to a transport
     lonely_jobs_to_transport = tuple(
         filter(lambda x: x.id not in jobs_already_assigned_to_transport, jobs_to_transport)
     )
 
+    # building permutations between transports and jobs
+    # -> each transport can transport each job
     transport_jobs = tuple()
     for transport in possible_transports:
         for job_state in lonely_jobs_to_transport:

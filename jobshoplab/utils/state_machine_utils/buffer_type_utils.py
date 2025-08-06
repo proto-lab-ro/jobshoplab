@@ -2,7 +2,7 @@ from dataclasses import replace
 from typing import Optional
 
 from jobshoplab.types import InstanceConfig, State
-from jobshoplab.types.instance_config_types import BufferConfig, BufferTypeConfig
+from jobshoplab.types.instance_config_types import BufferConfig, BufferTypeConfig, BufferRoleConfig
 from jobshoplab.types.state_types import BufferState, BufferStateState, JobState
 from jobshoplab.utils.exceptions import BufferFullError, InvalidValue, JobNotInBufferError
 
@@ -19,6 +19,20 @@ def get_buffer_state_by_id(buffers: tuple[BufferState, ...], buffer_id: str) -> 
     if buffer is None:
         raise InvalidValue(buffer_id, buffers, "desired buffer not found")
     return buffer
+
+
+def get_output_buffers(instance: InstanceConfig) -> tuple[BufferConfig, ...]:
+    """
+    Get the output buffer configuration for a job based on its operations.
+
+    Args:
+        instance (InstanceConfig): The instance configuration.
+        job_state (JobState): The state of the job.
+
+    Returns:
+        BufferConfig: The output buffer configuration for the job, or None if not found.
+    """
+    return tuple(b for b in instance.buffers if b.role == BufferRoleConfig.OUTPUT)
 
 
 def get_buffer_config_by_id(buffers: tuple[BufferConfig, ...], buffer_id: str) -> BufferConfig:

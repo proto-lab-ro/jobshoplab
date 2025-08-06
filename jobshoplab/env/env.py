@@ -405,7 +405,7 @@ class JobShopLabEnv(gym.Env):
             terminated (bool): True if the episode is terminated, False otherwise.
             truncated (bool): True if the episode is truncated, False otherwise.
         """
-        return is_done(self.state)
+        return is_done(self.state, self.instance)
 
     def _is_truncated(self):
         trunc = self.state_simulator.is_truncated()
@@ -597,12 +597,15 @@ if __name__ == "__main__":
 
     config = load_config(config_path="data/config/config_scaliro.yaml")
     env = JobShopLabEnv(config)
+    counter = 0
     while True:
+        counter += 1
+        print(f"Resetting environment {counter}")
         obs, info = env.reset()
         done = False
         while not done:
-            action = 1
-            obs, reward, termianted, truncated, inf = env.step(action)
-            done = termianted or truncated
+            action = random.randint(0, 1)
+            obs, reward, terminated, truncated, inf = env.step(action)
+            done = terminated or truncated
 
         # env.render()

@@ -1,7 +1,8 @@
 from typing import Iterable, Optional
 
-from jobshoplab.types import JobConfig, JobState, OperationConfig, OperationState
+from jobshoplab.types import JobConfig, JobState, OperationConfig, OperationState, InstanceConfig
 from jobshoplab.types.state_types import MachineState, OperationStateState
+from jobshoplab.types.instance_config_types import BufferRoleConfig
 from jobshoplab.utils.exceptions import InvalidValue
 
 
@@ -153,7 +154,7 @@ def get_next_not_done_operation(job: JobState) -> OperationState:
     return next_operation
 
 
-def get_next_idle_operation(job: JobState) -> OperationState:
+def get_next_idle_operation(job: JobState) -> Optional[OperationState]:
     """
     Get the next operation from a job.
 
@@ -170,8 +171,6 @@ def get_next_idle_operation(job: JobState) -> OperationState:
     next_operation = next(
         filter(lambda op: op.operation_state_state == OperationStateState.IDLE, operations), None
     )
-    if next_operation is None:
-        raise InvalidValue(job, "job has no more operations. all operations are done.")
     return next_operation
 
 
@@ -244,7 +243,7 @@ def group_operations_by_state(
     return grouped_operations
 
 
-def is_done(job: JobState) -> bool:
+def is_done(job: JobState, instance: InstanceConfig) -> bool:
     """
     Check if a job is done.
 
@@ -254,6 +253,35 @@ def is_done(job: JobState) -> bool:
     Returns:
         bool: True if the job is done, False otherwise.
     """
+    output_buffer_ids = [b.id for b in instance.buffers if b.role == BufferRoleConfig.OUTPUT]
+    return all_operations_done(job) and job.location in output_buffer_ids
+
+
+def all_operations_done(job: JobState) -> bool:
+    """
+    Check if all operations in a list of jobs are done.
+
+    Args:
+        jobs (Iterable[JobState]): An iterable of JobState objects.
+
+    Returns:
+        bool: True if all operations in all jobs are done, False otherwise.
+    """
     return all(
         operation.operation_state_state == OperationStateState.DONE for operation in job.operations
+    )
+
+
+def no_operation_idle(job: JobState) -> bool:
+    """
+    Check if all operations in a job are idle.
+
+    Args:
+        job (JobState): The job to check.
+
+    Returns:
+        bool: True if all operations in the job are idle, False otherwise.
+    """
+    return all(
+        operation.operation_state_state != OperationStateState.IDLE for operation in job.operations
     )

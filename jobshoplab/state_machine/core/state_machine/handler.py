@@ -257,6 +257,38 @@ def create_agv_drop_to_idle_transition(
     )
 
 
+def _time_dependency_is_resolved(
+    transport: TransportState, state: State, instance: InstanceConfig
+) -> bool:
+    """
+    Checks if the time dependency for a transport is resolved.
+
+    Args:
+        transport: The transport state to check
+        state: The current state of the system
+        instance: The instance configuration
+
+    Returns:
+        bool: True if the time dependency is resolved, False otherwise
+    """
+    buffer_state = buffer_type_utils.get_buffer_state_by_id(
+        tuple(m.postbuffer for m in state.machines), transport.occupied_till.buffer_id
+    )
+    buffer_instance = buffer_type_utils.get_buffer_config_by_id(
+        tuple(m.postbuffer for m in instance.machines), buffer_state.id
+    )
+    job_id = transport.transport_job
+    blocking_job = transport.occupied_till.job_id
+    # check if the job is allready next in the buffer
+    if job_id == buffer_type_utils.get_next_job_from_buffer(buffer_state, buffer_instance):
+        # If the transport's job is the next job in the buffer, we can resolve the time dependency
+        return True
+    for transport_state in state.transports:
+        if transport_state.transport_job == blocking_job:
+            return True  # If another transport is already handling the blocking job, we can resolve the dependency
+    return False
+
+
 def create_timed_transport_transitions(
     loglevel: Union[int, str], state: State, instance: InstanceConfig
 ) -> Tuple[ComponentTransition, ...]:
@@ -284,7 +316,9 @@ def create_timed_transport_transitions(
 
     # Check each transport to see if it's time to change its state
     for transport in state.transports:
-        if isinstance(transport.occupied_till, TimeDependency):
+        if isinstance(transport.occupied_till, TimeDependency) and _time_dependency_is_resolved(
+            transport, state, instance
+        ):
             transitions.append(transport.occupied_till.transition)
         if isinstance(transport.occupied_till, Time) and isinstance(state.time, Time):
             if transport.occupied_till.time <= state.time.time:
@@ -544,7 +578,7 @@ def _get_waiting_time(state, transition, instance):
                 next_job_state_in_queue = job_type_utils.get_job_state_by_id(
                     state.jobs, next_job_in_queue
                 )
-                if job_type_utils.is_done(next_job_state_in_queue):
+                if job_type_utils.is_done(next_job_state_in_queue, instance):
                     # if the next job is done and the end pos is the machines buffer (wre cheating)
                     return (
                         state.time
@@ -552,7 +586,7 @@ def _get_waiting_time(state, transition, instance):
                 if transport_state is None:
                     # means no transport is assigned to this job. (Wre having a situation where the next job locks the queue)
                     # this could potentially happen.
-                    # setting time to now.. hence pick up gets performed in this time step
+                    # returning a time dependency to the next job in queue
                     return TimeDependency(
                         job_id=next_job_in_queue, buffer_id=job_location_id, transition=transition
                     )
@@ -659,7 +693,6 @@ def handle_agv_transport_pickup_to_transit_transition(
 
     # Get job and determine source and destination locations
     job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
-    next_job_operation = job_type_utils.get_next_not_done_operation(job_state)
     transport_source = job_state.location
 
     # Get the actual machine ID from the buffer if applicable
@@ -669,7 +702,11 @@ def handle_agv_transport_pickup_to_transit_transition(
     if not transport_source:
         transport_source = job_state.location
 
-    transport_destination = next_job_operation.machine_id
+    match job_type_utils.no_operation_idle(job_state):
+        case True:  # Job is in output buffer, needs transport to output
+            transport_destination = next(iter(buffer_type_utils.get_output_buffers(instance))).id
+        case False:  # Job has next operation, needs transport to next operation
+            transport_destination = job_type_utils.get_next_not_done_operation(job_state).machine_id
     travel_time = _get_travel_time_from_spec(instance, transport_source, transport_destination)
 
     # Handle job transfer from different source types
@@ -767,7 +804,18 @@ def handle_agv_transport_idle_to_working_transition(
 
     # Get job and destination information
     job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
-    next_op_state = job_type_utils.get_next_idle_operation(job_state)
+    match job_type_utils.no_operation_idle(job_state):
+        case True:  # needs transport to the output buffer
+            target_location = next(iter(buffer_type_utils.get_output_buffers(instance))).id
+        case False:  # needs transport to the next operation
+            next_op_state = job_type_utils.get_next_idle_operation(job_state)
+            if next_op_state is None:
+                raise InvalidValue(
+                    "next_op_state",
+                    next_op_state,
+                    "No next operation state found for job",
+                )
+            target_location = next_op_state.machine_id
 
     # Get source location information
     all_buffer_configs = buffer_type_utils.get_all_buffer_configs(instance)
@@ -797,7 +845,7 @@ def handle_agv_transport_idle_to_working_transition(
 
     # Create location information for transport route
     new_transport_location = core_utils.create_transport_location_from_job(
-        transport_state.location.location, source_buffer_config.id, next_op_state.machine_id
+        transport_state.location.location, source_buffer_config.id, target_location
     )
 
     # Update transport state for movement to pickup
