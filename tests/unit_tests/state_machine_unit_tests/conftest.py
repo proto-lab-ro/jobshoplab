@@ -6,6 +6,7 @@ from jobshoplab.types import NoTime, State, Time
 from jobshoplab.types.action_types import ComponentTransition
 from jobshoplab.types.instance_config_types import (
     BufferConfig,
+    BufferRoleConfig,
     BufferTypeConfig,
     DeterministicTimeConfig,
     JobConfig,
@@ -82,7 +83,7 @@ def operation_idle():
 
 @pytest.fixture
 def job_state_done(operation_done):
-    return JobState(id="j-1", operations=(operation_done,), location="m-1")
+    return JobState(id="j-1", operations=(operation_done,), location="b-13")
 
 
 @pytest.fixture
@@ -427,7 +428,7 @@ def default_state_transport_pickup(transport_state_pickup, default_machines, def
             resources=(),
         )
         machine_states += (machine_state,)
-    
+
     default_buffer_states = (
         BufferState(
             id=default_buffer[0].id,
@@ -436,7 +437,7 @@ def default_state_transport_pickup(transport_state_pickup, default_machines, def
         ),
         BufferState(id=default_buffer[1].id, state=BufferStateState.EMPTY, store=()),
     )
-    
+
     state = State(
         time=Time(10),
         machines=machine_states,
@@ -743,9 +744,30 @@ def simple_machine_config():
 
     return MachineConfig(
         id="m-1",
-        buffer=BufferConfig(id="b-22", resources=(), capacity=1, type=BufferTypeConfig.FIFO),
-        prebuffer=BufferConfig(id="b-23", resources=(), capacity=1, type=BufferTypeConfig.FIFO),
-        postbuffer=BufferConfig(id="b-24", resources=(), capacity=1, type=BufferTypeConfig.FIFO),
+        buffer=BufferConfig(
+            id="b-22",
+            resources=(),
+            capacity=1,
+            type=BufferTypeConfig.FIFO,
+            parent="m-1",
+            role=BufferRoleConfig.COMPONENT,
+        ),
+        prebuffer=BufferConfig(
+            id="b-23",
+            resources=(),
+            capacity=1,
+            type=BufferTypeConfig.FIFO,
+            parent="m-1",
+            role=BufferRoleConfig.COMPONENT,
+        ),
+        postbuffer=BufferConfig(
+            id="b-24",
+            resources=(),
+            capacity=1,
+            type=BufferTypeConfig.FIFO,
+            parent="m-1",
+            role=BufferRoleConfig.COMPONENT,
+        ),
         outages=(),
         resources=(),
         setup_times=(),
@@ -808,6 +830,7 @@ def machine_with_deterministic_setup_times(deterministic_setup_times):
             capacity=_inf,
             resources=(),
             parent="m-setup",
+            role=BufferRoleConfig.COMPONENT,
         ),
         postbuffer=BufferConfig(
             id="b-setup-2",
@@ -815,6 +838,7 @@ def machine_with_deterministic_setup_times(deterministic_setup_times):
             capacity=_inf,
             resources=(),
             parent="m-setup",
+            role=BufferRoleConfig.COMPONENT,
         ),
         batches=1,
         resources=(),
@@ -824,6 +848,7 @@ def machine_with_deterministic_setup_times(deterministic_setup_times):
             capacity=1,
             resources=(),
             parent="m-setup",
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
 
@@ -844,6 +869,7 @@ def machine_with_stochastic_setup_times(stochastic_setup_times):
             capacity=_inf,
             resources=(),
             parent="m-stoch-setup",
+            role=BufferRoleConfig.COMPONENT,
         ),
         postbuffer=BufferConfig(
             id="b-stoch-2",
@@ -851,6 +877,7 @@ def machine_with_stochastic_setup_times(stochastic_setup_times):
             capacity=_inf,
             resources=(),
             parent="m-stoch-setup",
+            role=BufferRoleConfig.COMPONENT,
         ),
         batches=1,
         resources=(),
@@ -860,6 +887,7 @@ def machine_with_stochastic_setup_times(stochastic_setup_times):
             capacity=1,
             resources=(),
             parent="m-stoch-setup",
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
 
@@ -1139,6 +1167,7 @@ def machine_config_with_deterministic_outages(
             capacity=_inf,
             resources=(),
             parent="m-outage",
+            role=BufferRoleConfig.COMPONENT,
         ),
         postbuffer=BufferConfig(
             id="b-outage-2",
@@ -1146,6 +1175,7 @@ def machine_config_with_deterministic_outages(
             capacity=_inf,
             resources=(),
             parent="m-outage",
+            role=BufferRoleConfig.COMPONENT,
         ),
         batches=1,
         resources=(),
@@ -1155,6 +1185,7 @@ def machine_config_with_deterministic_outages(
             capacity=1,
             resources=(),
             parent="m-outage",
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
 
@@ -1206,6 +1237,7 @@ def machine_with_stochastic_outages(
             capacity=_inf,
             resources=(),
             parent="m-stoch-outage",
+            role=BufferRoleConfig.COMPONENT,
         ),
         postbuffer=BufferConfig(
             id="b-stoch-outage-2",
@@ -1213,6 +1245,7 @@ def machine_with_stochastic_outages(
             capacity=_inf,
             resources=(),
             parent="m-stoch-outage",
+            role=BufferRoleConfig.COMPONENT,
         ),
         batches=1,
         resources=(),
@@ -1222,6 +1255,7 @@ def machine_with_stochastic_outages(
             capacity=1,
             resources=(),
             parent="m-stoch-outage",
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
 
@@ -1239,7 +1273,11 @@ def transport_with_deterministic_outages(
         outages=(deterministic_outage_config_fail, deterministic_outage_config_recharge),
         resources=(),
         buffer=BufferConfig(
-            id="b-t-outage", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=()
+            id="b-t-outage",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
 
@@ -1257,7 +1295,11 @@ def transport_with_stochastic_outages(
         outages=(stochastic_outage_config_fail, stochastic_outage_config_recharge),
         resources=(),
         buffer=BufferConfig(
-            id="b-t-stoch-outage", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=()
+            id="b-t-stoch-outage",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
 

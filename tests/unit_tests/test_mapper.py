@@ -112,54 +112,54 @@ def test_buffer_role_mapping(config):
                 """
             },
             "buffer": [
-                {
-                    "name": "b-input",
-                    "type": "fifo",
-                    "capacity": 10,
-                    "role": "input"
-                },
-                {
-                    "name": "b-output", 
-                    "type": "flex_buffer",
-                    "capacity": 5,
-                    "role": "output"
-                },
+                {"name": "b-input", "type": "fifo", "capacity": 10, "role": "input"},
+                {"name": "b-output", "type": "flex_buffer", "capacity": 5, "role": "output"},
                 {
                     "name": "b-compensation",
-                    "type": "flex_buffer", 
+                    "type": "flex_buffer",
                     "capacity": 3,
-                    "role": "compensation"
-                }
-            ]
+                    "role": "compensation",
+                },
+            ],
         }
     }
-    
+
     mapper = DictToInstanceMapper(0, config=config)
     mapped_instance = mapper.map(instance_dict)
-    
+
     # Find buffers by name and verify their roles
     buffer_roles = {buf.id: buf.role for buf in mapped_instance.buffers}
-    
-    
+
     # Check that explicit buffer roles are correctly mapped
     input_buffer = next((buf for buf in mapped_instance.buffers if "b-input" in buf.id), None)
     output_buffer = next((buf for buf in mapped_instance.buffers if "b-output" in buf.id), None)
-    compensation_buffer = next((buf for buf in mapped_instance.buffers if "b-compensation" in buf.id), None)
-    
+    compensation_buffer = next(
+        (buf for buf in mapped_instance.buffers if "b-compensation" in buf.id), None
+    )
+
     # Alternative: find by original name in description or try different approach
     if not input_buffer:
-        input_buffer = next((buf for buf in mapped_instance.buffers if buf.role == BufferRoleConfig.INPUT), None)
+        input_buffer = next(
+            (buf for buf in mapped_instance.buffers if buf.role == BufferRoleConfig.INPUT), None
+        )
     if not output_buffer:
-        output_buffer = next((buf for buf in mapped_instance.buffers if buf.role == BufferRoleConfig.OUTPUT), None)
+        output_buffer = next(
+            (buf for buf in mapped_instance.buffers if buf.role == BufferRoleConfig.OUTPUT), None
+        )
     if not compensation_buffer:
-        compensation_buffer = next((buf for buf in mapped_instance.buffers if buf.role == BufferRoleConfig.COMPENSATION), None)
-    
+        compensation_buffer = next(
+            (buf for buf in mapped_instance.buffers if buf.role == BufferRoleConfig.COMPENSATION),
+            None,
+        )
+
     assert input_buffer.role == BufferRoleConfig.INPUT
     assert output_buffer.role == BufferRoleConfig.OUTPUT
     assert compensation_buffer.role == BufferRoleConfig.COMPENSATION
-    
+
     # Check that machine buffers get COMPONENT role by default
-    machine_buffers = [buf for buf in mapped_instance.buffers if buf.parent and buf.parent.startswith('m-')]
+    machine_buffers = [
+        buf for buf in mapped_instance.buffers if buf.parent and buf.parent.startswith("m-")
+    ]
     for buf in machine_buffers:
         assert buf.role == BufferRoleConfig.COMPONENT
 
@@ -177,31 +177,16 @@ def test_buffer_role_case_insensitive(config):
                 """
             },
             "buffer": [
-                {
-                    "name": "b-input",
-                    "type": "fifo",
-                    "capacity": 10,
-                    "role": "input"
-                },
-                {
-                    "name": "b-output",
-                    "type": "flex_buffer",
-                    "capacity": 10,
-                    "role": "output"
-                },
-                {
-                    "name": "b-test",
-                    "type": "fifo",
-                    "capacity": 5,
-                    "role": "input"  # lowercase
-                }
-            ]
+                {"name": "b-input", "type": "fifo", "capacity": 10, "role": "input"},
+                {"name": "b-output", "type": "flex_buffer", "capacity": 10, "role": "output"},
+                {"name": "b-test", "type": "fifo", "capacity": 5, "role": "input"},  # lowercase
+            ],
         }
     }
-    
+
     mapper = DictToInstanceMapper(0, config=config)
     mapped_instance = mapper.map(instance_dict)
-    
+
     test_buffer = next(buf for buf in mapped_instance.buffers if "b-test" in buf.id)
     assert test_buffer.role == BufferRoleConfig.INPUT
 
@@ -210,7 +195,7 @@ def test_buffer_description_mapping(config):
     """Test that buffer descriptions are correctly mapped."""
     instance_dict = {
         "instance_config": {
-            "description": "test instance for buffer descriptions", 
+            "description": "test instance for buffer descriptions",
             "instance": {
                 "specification": """
                     (m0,t)
@@ -219,32 +204,22 @@ def test_buffer_description_mapping(config):
                 """
             },
             "buffer": [
-                {
-                    "name": "b-input",
-                    "type": "fifo",
-                    "capacity": 10,
-                    "role": "input"
-                },
-                {
-                    "name": "b-output",
-                    "type": "flex_buffer",
-                    "capacity": 10,
-                    "role": "output"
-                },
+                {"name": "b-input", "type": "fifo", "capacity": 10, "role": "input"},
+                {"name": "b-output", "type": "flex_buffer", "capacity": 10, "role": "output"},
                 {
                     "name": "b-test",
-                    "type": "fifo", 
+                    "type": "fifo",
                     "capacity": 5,
                     "role": "input",
-                    "description": "Test input buffer"
-                }
-            ]
+                    "description": "Test input buffer",
+                },
+            ],
         }
     }
-    
+
     mapper = DictToInstanceMapper(0, config=config)
     mapped_instance = mapper.map(instance_dict)
-    
+
     test_buffer = next(buf for buf in mapped_instance.buffers if "b-test" in buf.id)
     assert test_buffer.description == "Test input buffer"
 
@@ -252,8 +227,9 @@ def test_buffer_description_mapping(config):
 def test_invalid_buffer_role_error(config):
     """Test that invalid buffer roles raise appropriate errors."""
     import pytest
+
     from jobshoplab.utils.exceptions import InvalidType
-    
+
     instance_dict = {
         "instance_config": {
             "description": "test instance for invalid role",
@@ -265,33 +241,23 @@ def test_invalid_buffer_role_error(config):
                 """
             },
             "buffer": [
-                {
-                    "name": "b-input",
-                    "type": "fifo",
-                    "capacity": 10,
-                    "role": "input"
-                },
-                {
-                    "name": "b-output",
-                    "type": "flex_buffer",
-                    "capacity": 10,
-                    "role": "output"
-                },
+                {"name": "b-input", "type": "fifo", "capacity": 10, "role": "input"},
+                {"name": "b-output", "type": "flex_buffer", "capacity": 10, "role": "output"},
                 {
                     "name": "b-test",
                     "type": "fifo",
                     "capacity": 5,
-                    "role": "invalid_role"  # Invalid role
-                }
-            ]
+                    "role": "invalid_role",  # Invalid role
+                },
+            ],
         }
     }
-    
+
     mapper = DictToInstanceMapper(0, config=config)
-    
+
     with pytest.raises(InvalidType) as exc_info:
         mapper.map(instance_dict)
-    
+
     assert "BufferRoleConfig" in str(exc_info.value)
 
 
@@ -316,17 +282,19 @@ def test_agv_buffer_component_role(config):
                     m-1|5 0 0 0
                     in-buf|0 0 0 0
                     out-buf|0 0 0 0
-                """
-            }
+                """,
+            },
         }
     }
-    
+
     mapper = DictToInstanceMapper(0, config=config)
     mapped_instance = mapper.map(instance_dict)
-    
+
     # Find AGV buffers (transport buffers)
-    agv_buffers = [buf for buf in mapped_instance.buffers if buf.parent and buf.parent.startswith('t-')]
-    
+    agv_buffers = [
+        buf for buf in mapped_instance.buffers if buf.parent and buf.parent.startswith("t-")
+    ]
+
     # All AGV buffers should have COMPONENT role
     for buf in agv_buffers:
         assert buf.role == BufferRoleConfig.COMPONENT

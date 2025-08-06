@@ -319,10 +319,10 @@ class ConfigurationError(JobShopException):
             self.message = f"Invalid {config_name} configuration: {value}"
         else:
             self.message = f"Missing or invalid {config_name} configuration"
-        
+
         if details:
             self.message += f" - {details}"
-        
+
         super().__init__(self.message)
 
 

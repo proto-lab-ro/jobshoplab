@@ -1,9 +1,7 @@
 from jobshoplab.state_machine.core.state_machine.state import step
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
-                                           ComponentTransition)
-from jobshoplab.types.state_types import (OperationStateState, State,
-                                          TransportStateState)
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
+from jobshoplab.types.state_types import OperationStateState, State, TransportStateState
 
 
 def get_next_action(state: State):

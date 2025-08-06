@@ -211,10 +211,7 @@ def test_init_state_transport_validation(minimal_instance_dict, test_config):
     assert "Machine ID (m-*) or buffer ID (b-*)" in str(excinfo.value)
 
     # Invalid transport job reference
-    test_dict["init_state"]["t-0"] = {
-        "location": "m-1",
-        "transport_job": "invalid-job"
-    }
+    test_dict["init_state"]["t-0"] = {"location": "m-1", "transport_job": "invalid-job"}
     with pytest.raises(InvalidFieldValueError) as excinfo:
         validator.validate(test_dict)
     assert "Job ID (j-*)" in str(excinfo.value)
@@ -291,9 +288,7 @@ def test_init_state_invalid_component_id(minimal_instance_dict, test_config):
 
     # Invalid component ID format
     test_dict = minimal_instance_dict.copy()
-    test_dict["init_state"] = {
-        "invalid-id": {"location": "m-1"}
-    }
+    test_dict["init_state"] = {"invalid-id": {"location": "m-1"}}
 
     with pytest.raises(InstanceSchemaError) as excinfo:
         validator.validate(test_dict)
@@ -305,9 +300,7 @@ def test_init_state_special_fields(minimal_instance_dict, test_config):
 
     # Valid start_time
     test_dict = minimal_instance_dict.copy()
-    test_dict["init_state"] = {
-        "start_time": 10
-    }
+    test_dict["init_state"] = {"start_time": 10}
     validator.validate(test_dict)
 
     # Invalid start_time type

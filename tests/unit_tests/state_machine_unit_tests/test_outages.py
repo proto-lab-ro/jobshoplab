@@ -129,7 +129,9 @@ class TestDeterministicMachineOutages:
         # Assert - no transitions should be created during active outage
         assert len(transitions) == 0
 
-    def test_timed_machine_transitions_after_outage(self, default_state_machine_with_active_outage, default_instance):
+    def test_timed_machine_transitions_after_outage(
+        self, default_state_machine_with_active_outage, default_instance
+    ):
         """
         Test that timed transitions are created for a machine after an outage ends.
         """
@@ -142,7 +144,9 @@ class TestDeterministicMachineOutages:
         )
 
         # Act
-        transitions = create_timed_machine_transitions("debug", state_after_outage, default_instance)
+        transitions = create_timed_machine_transitions(
+            "debug", state_after_outage, default_instance
+        )
 
         # Assert - transition to idle should be created
         assert len(transitions) == 1
@@ -392,7 +396,9 @@ class TestDeterministicTransportOutages:
             == current_time.time + deterministic_outage_config_fail.duration.time
         )
 
-    def test_transport_outage_to_idle_transition(self, default_state_transport_with_active_outage, default_instance):
+    def test_transport_outage_to_idle_transition(
+        self, default_state_transport_with_active_outage, default_instance
+    ):
         """
         Test that timed transitions create a transition from outage to idle.
         """
@@ -405,7 +411,9 @@ class TestDeterministicTransportOutages:
         )
 
         # Act - Get timed transitions
-        transitions = create_timed_transport_transitions("debug", state_after_outage, default_instance)
+        transitions = create_timed_transport_transitions(
+            "debug", state_after_outage, default_instance
+        )
 
         # Assert - Should have transition to idle
         assert len(transitions) == 1
@@ -487,7 +495,9 @@ class TestDeterministicTransportOutages:
         )
 
         # Act
-        transitions = create_timed_transport_transitions("debug", state_after_outage, default_instance)
+        transitions = create_timed_transport_transitions(
+            "debug", state_after_outage, default_instance
+        )
 
         # Assert - transition to idle should be created
         assert len(transitions) == 1

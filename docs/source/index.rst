@@ -23,6 +23,8 @@ Features
 - **Reinforcement Learning Ready**: Seamless integration with RL algorithms via the standard Gym Interface.
 - **Real-World Constraints**: Incorporates transport logistics, buffer management, machine breakdowns, setup times, and stochastic processing conditions.
 - **Multi-Objective Optimization**: Supports scheduling based on multiple objectives, such as makespan, energy efficiency, machine utilization, and lead time.
+- **Output Buffer Completion Model**: New realistic job completion model requiring delivery to output buffers.
+- **Enhanced Transport Logic**: Intelligent routing decisions with time dependency resolution for complex scenarios.
 - **Pip Installable**: Easy installation from the repository, ensuring quick setup and integration into existing projects.
 
 Installation
@@ -176,6 +178,9 @@ Contents
    concepts/state_machine
    concepts/middleware
    concepts/the_dsl
+   concepts/output_buffer_completion
+   concepts/enhanced_transport_logic
+   concepts/time_dependency_resolution
 
 .. toctree::
    :maxdepth: 3
@@ -188,7 +193,9 @@ Contents
    :maxdepth: 1
    :caption: Additional Resources
 
+   additional_resources/release_notes
    additional_resources/contributing
+   additional_resources/migration_guide
    additional_resources/next_steps
    additional_resources/authors
    additional_resources/dsl_reference

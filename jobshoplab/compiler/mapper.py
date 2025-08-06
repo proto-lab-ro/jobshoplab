@@ -4,16 +4,16 @@ from abc import ABC, abstractmethod
 from dataclasses import replace
 from functools import partial
 from logging import Logger
-from typing import Dict, Generator, Iterator, List, Union, Optional, Callable
+from typing import Callable, Dict, Generator, Iterator, List, Optional, Union
 
 from jobshoplab.types import Config, InstanceConfig, State
 from jobshoplab.types.instance_config_types import *
 from jobshoplab.types.state_types import *
 from jobshoplab.types.stochasticy_models import (
-    UniformFunction,
     GammaFunction,
     GaussianFunction,
     PoissonFunction,
+    UniformFunction,
 )
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import (
@@ -22,15 +22,15 @@ from jobshoplab.utils.exceptions import (
     InvalidDurationError,
     InvalidOutageTypeError,
     InvalidSetupTimesError,
-    TransportConfigError,
     InvalidTimeBehaviorError,
     InvalidToolUsageError,
     InvalidTransportConfig,
+    InvalidType,
     MissingSpecificationError,
     NotImplementedError,
+    TransportConfigError,
     UnknownDistributionTypeError,
     UnknownLocationNameError,
-    InvalidType,
 )
 from jobshoplab.utils.utils import get_id_int
 

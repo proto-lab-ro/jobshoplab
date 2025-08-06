@@ -10,26 +10,39 @@ import pytest
 from heracless import load_config
 
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
-                                           ComponentTransition)
-from jobshoplab.types.instance_config_types import (BufferConfig,
-                                                    BufferTypeConfig,
-                                                    DeterministicTimeConfig,
-                                                    InstanceConfig, JobConfig,
-                                                    LogisticsConfig,
-                                                    MachineConfig,
-                                                    OperationConfig,
-                                                    ProblemInstanceConfig,
-                                                    ProblemInstanceTypeConfig,
-                                                    Product, TransportConfig,
-                                                    TransportTypeConfig)
-from jobshoplab.types.state_types import (BufferState, BufferStateState,
-                                          JobState, MachineState,
-                                          MachineStateState, NoTime,
-                                          OperationState, OperationStateState,
-                                          State, StateMachineResult, Time,
-                                          TransportLocation, TransportState,
-                                          TransportStateState)
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
+from jobshoplab.types.instance_config_types import (
+    BufferConfig,
+    BufferRoleConfig,
+    BufferTypeConfig,
+    DeterministicTimeConfig,
+    InstanceConfig,
+    JobConfig,
+    LogisticsConfig,
+    MachineConfig,
+    OperationConfig,
+    ProblemInstanceConfig,
+    ProblemInstanceTypeConfig,
+    Product,
+    TransportConfig,
+    TransportTypeConfig,
+)
+from jobshoplab.types.state_types import (
+    BufferState,
+    BufferStateState,
+    JobState,
+    MachineState,
+    MachineStateState,
+    NoTime,
+    OperationState,
+    OperationStateState,
+    State,
+    StateMachineResult,
+    Time,
+    TransportLocation,
+    TransportState,
+    TransportStateState,
+)
 
 
 @pytest.fixture
@@ -177,15 +190,30 @@ def default_machines(default_setup_times) -> tuple[MachineConfig, MachineConfig,
         outages=(),
         setup_times=default_setup_times,  # Using setup_times here
         prebuffer=BufferConfig(
-            id="b-0", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-0"
+            id="b-0",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-0",
+            role=BufferRoleConfig.COMPONENT,
         ),
         postbuffer=BufferConfig(
-            id="b-1", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-0"
+            id="b-1",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-0",
+            role=BufferRoleConfig.COMPONENT,
         ),
         batches=1,
         resources=(),
         buffer=BufferConfig(
-            id="b-2", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-0"
+            id="b-2",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            parent="m-0",
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
     machine1 = MachineConfig(
@@ -193,15 +221,30 @@ def default_machines(default_setup_times) -> tuple[MachineConfig, MachineConfig,
         outages=(),
         setup_times=default_setup_times,  # Using setup_times here
         prebuffer=BufferConfig(
-            id="b-3", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-1"
+            id="b-3",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-1",
+            role=BufferRoleConfig.COMPONENT,
         ),
         postbuffer=BufferConfig(
-            id="b-4", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-1"
+            id="b-4",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-1",
+            role=BufferRoleConfig.COMPONENT,
         ),
         batches=1,
         resources=(),
         buffer=BufferConfig(
-            id="b-5", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-1"
+            id="b-5",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            parent="m-1",
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
     machine2 = MachineConfig(
@@ -209,15 +252,30 @@ def default_machines(default_setup_times) -> tuple[MachineConfig, MachineConfig,
         outages=(),
         setup_times=default_setup_times,  # Using setup_times here
         prebuffer=BufferConfig(
-            id="b-6", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-2"
+            id="b-6",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-2",
+            role=BufferRoleConfig.COMPONENT,
         ),
         postbuffer=BufferConfig(
-            id="b-7", type=BufferTypeConfig.FLEX_BUFFER, capacity=_inf, resources=(), parent="m-2"
+            id="b-7",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=_inf,
+            resources=(),
+            parent="m-2",
+            role=BufferRoleConfig.COMPONENT,
         ),
         batches=1,
         resources=(),
         buffer=BufferConfig(
-            id="b-8", type=BufferTypeConfig.FLEX_BUFFER, capacity=1, resources=(), parent="m-2"
+            id="b-8",
+            type=BufferTypeConfig.FLEX_BUFFER,
+            capacity=1,
+            resources=(),
+            parent="m-2",
+            role=BufferRoleConfig.COMPONENT,
         ),
     )
     return machine0, machine1, machine2
@@ -233,6 +291,7 @@ def default_buffer() -> tuple[BufferConfig, BufferConfig]:
             resources=(),
             parent=None,
             description="input buffer",
+            role=BufferRoleConfig.INPUT,
         ),
         BufferConfig(
             id="b-13",
@@ -241,6 +300,7 @@ def default_buffer() -> tuple[BufferConfig, BufferConfig]:
             resources=(),
             parent=None,
             description="output buffer",
+            role=BufferRoleConfig.OUTPUT,
         ),
     )
 
@@ -304,6 +364,7 @@ def default_transports() -> tuple[TransportConfig, ...]:
                 resources=(),
                 parent=f"t-{i}",
                 description="AGV buffer",
+                role=BufferRoleConfig.COMPONENT,
             ),
         )
         for i in range(3)
@@ -766,6 +827,7 @@ def default_agvs() -> tuple[TransportConfig, ...]:
                 resources=(),
                 parent=f"t-{i}",
                 description="AGV buffer",
+                role=BufferRoleConfig.COMPONENT,
             ),
         )
         for i in range(3)
@@ -857,12 +919,16 @@ def default_instance_with_intralogistics_and_buffer(default_instance_with_intral
                 type=BufferTypeConfig.FLEX_BUFFER,
                 capacity=sys.maxsize,
                 resources=tuple(),
+                parent=machine.prebuffer.parent,
+                role=BufferRoleConfig.COMPONENT,
             ),
             postbuffer=BufferConfig(
                 id=machine.postbuffer.id,
                 type=BufferTypeConfig.FLEX_BUFFER,
                 capacity=sys.maxsize,
                 resources=tuple(),
+                parent=machine.postbuffer.parent,
+                role=BufferRoleConfig.COMPONENT,
             ),
         )
 

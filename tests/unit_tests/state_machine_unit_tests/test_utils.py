@@ -12,7 +12,7 @@ from jobshoplab.utils.state_machine_utils.core_utils import (
 )
 
 
-def test_is_done(job_state_done):
+def test_is_done(job_state_done, default_instance):
     state = State(
         jobs=(job_state_done,),
         time=Time(0),
@@ -20,7 +20,7 @@ def test_is_done(job_state_done):
         transports=(),
         buffers=(),
     )
-    assert is_done(state, instance) == True
+    assert is_done(state, default_instance) == True
 
 
 def test_no_processing_operations(job_state_processing):

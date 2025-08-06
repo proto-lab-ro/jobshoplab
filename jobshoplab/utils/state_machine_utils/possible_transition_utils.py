@@ -161,26 +161,51 @@ def sort_by_id(
 
 
 def is_transportable(job_state: JobState, state: State, instance: InstanceConfig) -> bool:
-    """Check if a job can be transported.
+    """
+    Determine if a job needs transportation in the job shop system.
+
+    This function implements the core logic for deciding when jobs require transport:
+    1. Jobs already at output buffers don't need transport (fully complete)
+    2. Jobs with all operations done but not at output need transport to finish
+    3. Jobs with remaining operations need transport if they're not at the correct machine
+    4. Jobs already at their next operation's machine don't need transport
+
+    Args:
+        job_state (JobState): The job to evaluate for transport needs.
+        state (State): Current system state containing all component states.
+        instance (InstanceConfig): Configuration with buffer and machine definitions.
 
     Returns:
-        bool: True if job needs transport, False otherwise
+        bool: True if the job needs transport (either to next operation or output buffer),
+            False if the job is already at the correct location or fully complete.
+
+    Raises:
+        InvalidValue: If job state is inconsistent (no operations but not at output).
     """
-    if job_type_utils.is_done(
-        job_state, instance
-    ):  # now more transport needed because operations are done and job is at output buffer
+    # Case 1: Job is fully complete (operations done AND at output buffer)
+    if job_type_utils.is_done(job_state, instance):
+        # No more transport needed - job has reached its final destination
         return False
-    if job_type_utils.all_operations_done(
-        job_state
-    ):  # all ops are done but the job is not at the output buffer
+
+    # Case 2: All operations are done but job is not at output buffer
+    if job_type_utils.all_operations_done(job_state):
+        # Job needs transport to output buffer to complete the workflow
         return True
+
+    # Case 3: Job has remaining operations - check if transport is needed
     next_op = job_type_utils.get_next_idle_operation(job_state)
-    if next_op is None:  # no more operations left
+    if next_op is None:
+        # Inconsistent state: no idle operations but not all operations done
         raise InvalidValue(job_state, "job has no more operations. all operations are done.")
+
+    # Case 4: Check if job is already at the machine for its next operation
     if is_job_at_machine(
         job_state, machine_type_utils.get_machine_state_by_id(state.machines, next_op.machine_id)
     ):
+        # Job is already at correct machine - no transport needed
         return False
+
+    # Default: Job needs transport to reach its next operation's machine
     return True
 
 

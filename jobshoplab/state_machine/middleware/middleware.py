@@ -23,6 +23,7 @@ from jobshoplab.types import Config, InstanceConfig, State, StateMachineResult
 from jobshoplab.types.action_types import Action, ActionFactoryInfo
 from jobshoplab.utils import get_logger
 from jobshoplab.utils.exceptions import InvalidValue, UnsuccessfulStateMachineResult
+from jobshoplab.utils.state_machine_utils import core_utils
 
 
 class StableBaselines3ActionProtocol(Protocol):
@@ -333,10 +334,13 @@ class EventBasedBinaryActionMiddleware(Middleware):
                 # Use force_jump_to_event time machine
                 action = replace(action, time_machine=force_jump_to_event)
                 state = self.state_machine_step(state=state.state, action=action)
-
                 # If there are still no possible transitions, the state machine is stuck
                 if len(state.possible_transitions) == 0:
-                    state = self.state_machine_step(state=state.state, action=action)
+                    # Try one final step to resolve any remaining time dependencies before giving up
+                    if core_utils.is_done(
+                        state.state, self.instance
+                    ):  # edge case where the state machine is done
+                        return state
                     raise UnsuccessfulStateMachineResult()
 
                 # Check for truncation (too many no-ops)

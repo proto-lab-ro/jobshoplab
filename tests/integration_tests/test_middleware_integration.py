@@ -1,9 +1,7 @@
 from jobshoplab.env.factories.actions import BinaryJobActionFactory
-from jobshoplab.env.factories.observations import \
-    BinaryActionObservationFactory
+from jobshoplab.env.factories.observations import BinaryActionObservationFactory
 from jobshoplab.state_machine.core.state_machine import step
-from jobshoplab.state_machine.middleware.middleware import \
-    EventBasedBinaryActionMiddleware
+from jobshoplab.state_machine.middleware.middleware import EventBasedBinaryActionMiddleware
 from jobshoplab.types.state_types import BufferStateState
 
 
@@ -132,4 +130,4 @@ def test_simple_event_based_middle_ware_active_actions(
     assert len(state.possible_transitions) == 0
     # The comment shows this is a TODO item that hasn't been implemented yet
     # Update test to match actual implementation
-    assert len(state.state.buffers[1].store) == 0  # Empty instead of 3 as noted in the TODO
+    assert len(state.state.buffers[1].store) == 3  # All 3 jobs should now be in the output buffer

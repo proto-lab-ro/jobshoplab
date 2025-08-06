@@ -7,8 +7,7 @@ from heracless import load_config
 from jobshoplab import JobShopLabEnv
 from jobshoplab.compiler import Compiler
 from jobshoplab.compiler.repos import DslRepository
-from jobshoplab.utils.state_machine_utils import \
-    dispatch_rules_uitls as dispatch_utils
+from jobshoplab.utils.state_machine_utils import dispatch_rules_uitls as dispatch_utils
 
 # Load Config
 temp_file = tempfile.NamedTemporaryFile(delete=False).name

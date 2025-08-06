@@ -3,11 +3,14 @@ from unittest.mock import Mock
 import pytest
 
 from jobshoplab.state_machine.core.state_machine.state import (
-    apply_transition, is_done, process_state_transitions, step)
+    apply_transition,
+    is_done,
+    process_state_transitions,
+    step,
+)
 from jobshoplab.state_machine.time_machines import jump_to_event
 from jobshoplab.types import State, Time
-from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
-                                           ComponentTransition)
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
 from jobshoplab.types.state_types import MachineStateState, TransportStateState
 from jobshoplab.utils.exceptions import InvalidValue
 

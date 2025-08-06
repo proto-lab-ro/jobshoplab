@@ -4,13 +4,19 @@ from dataclasses import replace
 import pytest
 
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
-                                           ComponentTransition,
-                                           TransportStateState)
-from jobshoplab.types.instance_config_types import (BufferConfig,
-                                                    BufferTypeConfig,
-                                                    DeterministicTimeConfig,
-                                                    InstanceConfig)
+from jobshoplab.types.action_types import (
+    Action,
+    ActionFactoryInfo,
+    ComponentTransition,
+    TransportStateState,
+)
+from jobshoplab.types.instance_config_types import (
+    BufferConfig,
+    BufferRoleConfig,
+    BufferTypeConfig,
+    DeterministicTimeConfig,
+    InstanceConfig,
+)
 from jobshoplab.types.state_types import BufferState, BufferStateState, State
 
 
@@ -34,6 +40,7 @@ def agv_and_buffer_instance(default_instance_with_intralogistics_and_buffer: Ins
                 capacity=sys.maxsize,
                 resources=(),
                 description="start buffer",
+                role=BufferRoleConfig.INPUT,
             ),
             # end buffer
             BufferConfig(
@@ -42,6 +49,7 @@ def agv_and_buffer_instance(default_instance_with_intralogistics_and_buffer: Ins
                 capacity=sys.maxsize,
                 resources=(),
                 description="end buffer",
+                role=BufferRoleConfig.OUTPUT,
             ),
         ),
     )

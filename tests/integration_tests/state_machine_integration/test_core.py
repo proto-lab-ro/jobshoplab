@@ -1,7 +1,6 @@
 from jobshoplab.state_machine.core.state_machine import step
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
-                                           ComponentTransition)
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
 from jobshoplab.types.state_types import Time, TransportStateState
 
 

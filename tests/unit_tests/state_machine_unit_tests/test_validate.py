@@ -3,8 +3,10 @@ from dataclasses import replace
 import pytest
 
 from jobshoplab.state_machine.core.state_machine.validate import (
-    is_machine_transition_valid, is_transition_valid,
-    is_transport_transition_valid)
+    is_machine_transition_valid,
+    is_transition_valid,
+    is_transport_transition_valid,
+)
 from jobshoplab.utils.exceptions import InvalidValue
 
 

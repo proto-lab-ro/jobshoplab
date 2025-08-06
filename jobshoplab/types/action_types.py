@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Optional
 
-from jobshoplab.types.state_types import (BufferStateState, MachineStateState,
-                                          TransportStateState)
+from jobshoplab.types.state_types import BufferStateState, MachineStateState, TransportStateState
 
 ComponentState = TransportStateState | MachineStateState | BufferStateState
 

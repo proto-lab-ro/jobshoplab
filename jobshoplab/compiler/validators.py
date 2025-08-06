@@ -539,7 +539,7 @@ class SimpleDSLValidator(AbstractValidator):
                     raise InvalidFieldValueError(
                         f"init_state.{component_id}",
                         str(component_spec),
-                        "Integer or float representing time"
+                        "Integer or float representing time",
                     )
                 continue
 
@@ -547,7 +547,7 @@ class SimpleDSLValidator(AbstractValidator):
             if not isinstance(component_spec, dict):
                 raise InstanceSchemaError(
                     f"Component specification for '{component_id}' must be a dictionary",
-                    f"init_state.{component_id}"
+                    f"init_state.{component_id}",
                 )
 
             # Validate component based on its ID prefix
@@ -564,7 +564,7 @@ class SimpleDSLValidator(AbstractValidator):
                 raise InstanceSchemaError(
                     f"Unknown component ID format: '{component_id}'. "
                     f"Expected format: t-*, j-*, b-*, m-*, or special fields like 'start_time'",
-                    f"init_state.{component_id}"
+                    f"init_state.{component_id}",
                 )
 
     def _validate_transport_init_state(self, transport_id: str, transport_spec: dict) -> None:
@@ -589,14 +589,14 @@ class SimpleDSLValidator(AbstractValidator):
             raise InvalidFieldValueError(
                 f"init_state.{transport_id}.location",
                 str(location),
-                "String representing machine or buffer ID"
+                "String representing machine or buffer ID",
             )
 
         if not (location.startswith("m-") or location.startswith("b-")):
             raise InvalidFieldValueError(
                 f"init_state.{transport_id}.location",
                 location,
-                "Machine ID (m-*) or buffer ID (b-*)"
+                "Machine ID (m-*) or buffer ID (b-*)",
             )
 
         # Validate optional fields
@@ -605,16 +605,14 @@ class SimpleDSLValidator(AbstractValidator):
                 raise InvalidFieldValueError(
                     f"init_state.{transport_id}.occupied_till",
                     str(transport_spec["occupied_till"]),
-                    "Integer or float representing time"
+                    "Integer or float representing time",
                 )
 
         if "transport_job" in transport_spec:
             job_id = transport_spec["transport_job"]
             if job_id is not None and not (isinstance(job_id, str) and job_id.startswith("j-")):
                 raise InvalidFieldValueError(
-                    f"init_state.{transport_id}.transport_job",
-                    str(job_id),
-                    "Job ID (j-*) or null"
+                    f"init_state.{transport_id}.transport_job", str(job_id), "Job ID (j-*) or null"
                 )
 
         if "buffer" in transport_spec:
@@ -622,7 +620,7 @@ class SimpleDSLValidator(AbstractValidator):
                 raise InvalidFieldValueError(
                     f"init_state.{transport_id}.buffer",
                     str(transport_spec["buffer"]),
-                    "List of job IDs"
+                    "List of job IDs",
                 )
 
     def _validate_job_init_state(self, job_id: str, job_spec: dict) -> None:
@@ -643,14 +641,16 @@ class SimpleDSLValidator(AbstractValidator):
                 raise InvalidFieldValueError(
                     f"init_state.{job_id}.location",
                     str(location),
-                    "String representing machine or buffer ID"
+                    "String representing machine or buffer ID",
                 )
 
-            if not (location.startswith("m-") or location.startswith("b-") or location.startswith("t-")):
+            if not (
+                location.startswith("m-") or location.startswith("b-") or location.startswith("t-")
+            ):
                 raise InvalidFieldValueError(
                     f"init_state.{job_id}.location",
                     location,
-                    "Machine ID (m-*), buffer ID (b-*), or transport ID (t-*)"
+                    "Machine ID (m-*), buffer ID (b-*), or transport ID (t-*)",
                 )
 
     def _validate_buffer_init_state(self, buffer_id: str, buffer_spec: dict) -> None:
@@ -669,18 +669,14 @@ class SimpleDSLValidator(AbstractValidator):
             store = buffer_spec["store"]
             if not isinstance(store, list):
                 raise InvalidFieldValueError(
-                    f"init_state.{buffer_id}.store",
-                    str(store),
-                    "List of job IDs"
+                    f"init_state.{buffer_id}.store", str(store), "List of job IDs"
                 )
 
             # Validate each job ID in the store
             for i, job_id in enumerate(store):
                 if not (isinstance(job_id, str) and job_id.startswith("j-")):
                     raise InvalidFieldValueError(
-                        f"init_state.{buffer_id}.store[{i}]",
-                        str(job_id),
-                        "Job ID (j-*)"
+                        f"init_state.{buffer_id}.store[{i}]", str(job_id), "Job ID (j-*)"
                     )
 
     def _validate_machine_init_state(self, machine_id: str, machine_spec: dict) -> None:
@@ -700,7 +696,7 @@ class SimpleDSLValidator(AbstractValidator):
                 raise InvalidFieldValueError(
                     f"init_state.{machine_id}.occupied_till",
                     str(machine_spec["occupied_till"]),
-                    "Integer or float representing time"
+                    "Integer or float representing time",
                 )
 
         # Validate mounted_tool if present
@@ -710,7 +706,7 @@ class SimpleDSLValidator(AbstractValidator):
                 raise InvalidFieldValueError(
                     f"init_state.{machine_id}.mounted_tool",
                     str(tool),
-                    "String representing tool ID"
+                    "String representing tool ID",
                 )
 
     def __repr__(self) -> str:

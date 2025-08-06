@@ -12,9 +12,9 @@ from typing import Any, Optional, Tuple, Union
 
 import jobshoplab.state_machine.core.state_machine.manipulate as manipulate
 import jobshoplab.utils.state_machine_utils.core_utils as core_utils
+from jobshoplab.state_machine.time_machines import force_jump_to_event
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.state_machine.time_machines import force_jump_to_event
 from jobshoplab.types.instance_config_types import (
     BufferConfig,
     StochasticTimeConfig,
@@ -33,11 +33,11 @@ from jobshoplab.types.state_types import (
 )
 from jobshoplab.utils.exceptions import (
     InvalidValue,
-    NotImplementedError,
     MissingJobIdError,
-    TransportJobError,
     MissingProcessingOperationError,
+    NotImplementedError,
     TransportConfigError,
+    TransportJobError,
     TravelTimeError,
 )
 from jobshoplab.utils.state_machine_utils import (
@@ -48,8 +48,8 @@ from jobshoplab.utils.state_machine_utils import (
     possible_transition_utils,
     transport_type_utils,
 )
-from jobshoplab.utils.state_machine_utils.time_utils import _get_travel_time_from_spec
 from jobshoplab.utils.state_machine_utils.component_type_utils import get_comp_by_id
+from jobshoplab.utils.state_machine_utils.time_utils import _get_travel_time_from_spec
 
 
 def create_timed_machine_transitions(
@@ -261,31 +261,50 @@ def _time_dependency_is_resolved(
     transport: TransportState, state: State, instance: InstanceConfig
 ) -> bool:
     """
-    Checks if the time dependency for a transport is resolved.
+    Checks if a transport's time dependency can be resolved for pickup.
+
+    Time dependencies occur when a transport wants to pick up a job from a buffer,
+    but the job is not yet at the correct position according to the buffer's type
+    (FIFO, LIFO, etc.). This function determines if conditions have changed to
+    allow the transport to proceed with pickup.
+
+    Two conditions can resolve the dependency:
+    1. The job is now at the correct position in the buffer (e.g., front of FIFO)
+    2. Another transport is handling the blocking job, clearing the path
 
     Args:
-        transport: The transport state to check
-        state: The current state of the system
-        instance: The instance configuration
+        transport (TransportState): The transport waiting for dependency resolution.
+        state (State): Current system state with all component states.
+        instance (InstanceConfig): Configuration defining buffer types and behaviors.
 
     Returns:
-        bool: True if the time dependency is resolved, False otherwise
+        bool: True if the time dependency is resolved and transport can proceed,
+            False if the transport must continue waiting. This prevents deadlocks
+            while respecting buffer ordering constraints.
     """
+    # Get the buffer where the job is located
     buffer_state = buffer_type_utils.get_buffer_state_by_id(
         tuple(m.postbuffer for m in state.machines), transport.occupied_till.buffer_id
     )
     buffer_instance = buffer_type_utils.get_buffer_config_by_id(
         tuple(m.postbuffer for m in instance.machines), buffer_state.id
     )
+
     job_id = transport.transport_job
     blocking_job = transport.occupied_till.job_id
-    # check if the job is allready next in the buffer
+
+    # Check if the job is now next in line according to buffer type (FIFO/LIFO rules)
     if job_id == buffer_type_utils.get_next_job_from_buffer(buffer_state, buffer_instance):
-        # If the transport's job is the next job in the buffer, we can resolve the time dependency
+        # Transport's job has moved to correct position - can proceed with pickup
         return True
+
+    # Check if another transport is handling the blocking job (clearing the dependency)
     for transport_state in state.transports:
         if transport_state.transport_job == blocking_job:
-            return True  # If another transport is already handling the blocking job, we can resolve the dependency
+            # Blocking job is being handled by another transport - dependency resolved
+            return True
+
+    # Dependency not yet resolved - transport must continue waiting
     return False
 
 
@@ -702,10 +721,11 @@ def handle_agv_transport_pickup_to_transit_transition(
     if not transport_source:
         transport_source = job_state.location
 
+    # Determine transport destination based on job's operation state
     match job_type_utils.no_operation_idle(job_state):
-        case True:  # Job is in output buffer, needs transport to output
+        case True:  # All operations complete - transport to output buffer for final delivery
             transport_destination = next(iter(buffer_type_utils.get_output_buffers(instance))).id
-        case False:  # Job has next operation, needs transport to next operation
+        case False:  # Operations remain - transport to next operation's machine
             transport_destination = job_type_utils.get_next_not_done_operation(job_state).machine_id
     travel_time = _get_travel_time_from_spec(instance, transport_source, transport_destination)
 
@@ -804,10 +824,11 @@ def handle_agv_transport_idle_to_working_transition(
 
     # Get job and destination information
     job_state = job_type_utils.get_job_state_by_id(jobs=state.jobs, job_id=transition.job_id)
+    # Determine target location based on job's operation completion status
     match job_type_utils.no_operation_idle(job_state):
-        case True:  # needs transport to the output buffer
+        case True:  # All operations complete - transport to output buffer for workflow completion
             target_location = next(iter(buffer_type_utils.get_output_buffers(instance))).id
-        case False:  # needs transport to the next operation
+        case False:  # Operations remain - transport to next idle operation's machine
             next_op_state = job_type_utils.get_next_idle_operation(job_state)
             if next_op_state is None:
                 raise InvalidValue(

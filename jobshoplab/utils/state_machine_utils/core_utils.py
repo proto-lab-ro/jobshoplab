@@ -1,5 +1,6 @@
 from jobshoplab.types import State
 from jobshoplab.types.action_types import ComponentTransition
+from jobshoplab.types.instance_config_types import InstanceConfig
 from jobshoplab.types.state_types import (
     JobState,
     MachineState,
@@ -10,8 +11,7 @@ from jobshoplab.types.state_types import (
     TransportState,
     TransportStateState,
 )
-from jobshoplab.types.instance_config_types import InstanceConfig
-from jobshoplab.utils.state_machine_utils import job_type_utils, buffer_type_utils
+from jobshoplab.utils.state_machine_utils import buffer_type_utils, job_type_utils
 
 
 def print_state(state: State):
@@ -43,13 +43,25 @@ def print_state(state: State):
 
 def is_done(state: State, instance: InstanceConfig) -> bool:
     """
-    Check if the state machine is done.
+    Check if the state machine is done by verifying all jobs are in output buffers.
+
+    This function determines completion based on job locations rather than operation
+    states. A job shop system is considered complete when all jobs have been
+    transported to their final destination (output buffers), not just when their
+    operations are finished. This ensures proper material flow and system closure.
+
     Args:
-        state (State): The current state of the state machine.
+        state (State): The current state of the state machine containing all jobs.
+        instance (InstanceConfig): The instance configuration containing buffer definitions.
+
     Returns:
-        bool: A boolean indicating if the state machine is done.
+        bool: True if all jobs are located in output buffers, False otherwise.
+            This indicates whether the entire job shop scheduling process is complete.
     """
+    # Get all output buffer IDs - these are the final destinations for completed jobs
     output_buffer = [b.id for b in buffer_type_utils.get_output_buffers(instance)]
+
+    # Check that every job has reached an output buffer
     for job in state.jobs:
         if not job.location in output_buffer:
             return False

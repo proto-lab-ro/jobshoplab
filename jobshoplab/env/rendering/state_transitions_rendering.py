@@ -3,9 +3,11 @@ from functools import partial
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from jobshoplab.state_machine.core.transitions import (BufferTransition,
-                                                       MachineTransition,
-                                                       TransportTransition)
+from jobshoplab.state_machine.core.transitions import (
+    BufferTransition,
+    MachineTransition,
+    TransportTransition,
+)
 
 
 def render_state_transitions(config, loglevel, backend):

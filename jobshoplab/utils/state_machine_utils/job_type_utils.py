@@ -1,8 +1,8 @@
 from typing import Iterable, Optional
 
-from jobshoplab.types import JobConfig, JobState, OperationConfig, OperationState, InstanceConfig
-from jobshoplab.types.state_types import MachineState, OperationStateState
+from jobshoplab.types import InstanceConfig, JobConfig, JobState, OperationConfig, OperationState
 from jobshoplab.types.instance_config_types import BufferRoleConfig
+from jobshoplab.types.state_types import MachineState, OperationStateState
 from jobshoplab.utils.exceptions import InvalidValue
 
 
@@ -156,18 +156,23 @@ def get_next_not_done_operation(job: JobState) -> OperationState:
 
 def get_next_idle_operation(job: JobState) -> Optional[OperationState]:
     """
-    Get the next operation from a job.
+    Get the next idle operation from a job that needs to be executed.
+
+    This function searches for the first operation in the job that is in IDLE state,
+    meaning it's ready to be processed. Unlike get_next_not_done_operation, this
+    function returns None if no idle operations exist, allowing graceful handling
+    of jobs where all operations are complete or in progress.
 
     Args:
-        job (JobState): The job to get the next operation from.
+        job (JobState): The job to get the next idle operation from.
 
     Returns:
-        OperationState: The next operation from the job.
-
-    Raises:
-        InvalidValue: If the job has no more operations.
+        Optional[OperationState]: The next idle operation from the job, or None
+            if no idle operations remain. This allows proper handling of completed
+            jobs without raising exceptions.
     """
     operations = job.operations
+    # Find the first operation that is ready to be executed (IDLE state)
     next_operation = next(
         filter(lambda op: op.operation_state_state == OperationStateState.IDLE, operations), None
     )
@@ -245,28 +250,46 @@ def group_operations_by_state(
 
 def is_done(job: JobState, instance: InstanceConfig) -> bool:
     """
-    Check if a job is done.
+    Check if a job is completely done in the job shop system.
+
+    A job is considered done when two conditions are met:
+    1. All operations are completed (DONE state)
+    2. The job has been transported to an output buffer
+
+    This dual-condition approach ensures that job completion includes both
+    processing completion and proper material flow to the final destination.
 
     Args:
-        job (JobState): The job to check.
+        job (JobState): The job to check for completion.
+        instance (InstanceConfig): The instance configuration containing buffer definitions.
 
     Returns:
-        bool: True if the job is done, False otherwise.
+        bool: True if the job is completely done (operations complete AND in output buffer),
+            False otherwise. This indicates full job shop process completion for the job.
     """
+    # Get all output buffer IDs - final destinations for completed jobs
     output_buffer_ids = [b.id for b in instance.buffers if b.role == BufferRoleConfig.OUTPUT]
+    # Job is done only if operations are complete AND it's in an output buffer
     return all_operations_done(job) and job.location in output_buffer_ids
 
 
 def all_operations_done(job: JobState) -> bool:
     """
-    Check if all operations in a list of jobs are done.
+    Check if all operations in a single job are in DONE state.
+
+    This function verifies that every operation within a job has been completed
+    by checking their state. It's used as a prerequisite for job completion
+    but doesn't guarantee the job is fully done (transportation to output buffer
+    is also required).
 
     Args:
-        jobs (Iterable[JobState]): An iterable of JobState objects.
+        job (JobState): The job to check for operation completion.
 
     Returns:
-        bool: True if all operations in all jobs are done, False otherwise.
+        bool: True if all operations in the job are in DONE state, False otherwise.
+            This indicates processing completion but not necessarily full job completion.
     """
+    # Check that every operation in this job has been completed
     return all(
         operation.operation_state_state == OperationStateState.DONE for operation in job.operations
     )
@@ -274,14 +297,22 @@ def all_operations_done(job: JobState) -> bool:
 
 def no_operation_idle(job: JobState) -> bool:
     """
-    Check if all operations in a job are idle.
+    Check if no operations in a job are in IDLE state.
+
+    This function determines if a job has any remaining operations that need to be
+    executed. When this returns True, it means all operations are either in progress
+    (PROCESSING) or completed (DONE), indicating the job may need transportation
+    to the output buffer rather than to another machine for processing.
 
     Args:
-        job (JobState): The job to check.
+        job (JobState): The job to check for idle operations.
 
     Returns:
-        bool: True if all operations in the job are idle, False otherwise.
+        bool: True if no operations are in IDLE state (all are PROCESSING or DONE),
+            False if at least one operation is still waiting to be processed.
+            Used to determine if job needs transport to output vs. next operation.
     """
+    # Check that no operation is waiting to be processed (all are beyond IDLE state)
     return all(
         operation.operation_state_state != OperationStateState.IDLE for operation in job.operations
     )

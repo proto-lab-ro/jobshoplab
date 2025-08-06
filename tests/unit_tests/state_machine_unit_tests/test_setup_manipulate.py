@@ -232,7 +232,9 @@ def test_machine_setup_to_working_transition_with_setup_time(
     before_completion_time = Time(current_time.time + expected_setup_duration - 0.1)
     before_completion_state = replace(setup_state, time=before_completion_time)
 
-    transitions_before = create_timed_machine_transitions("debug", before_completion_state, instance)
+    transitions_before = create_timed_machine_transitions(
+        "debug", before_completion_state, instance
+    )
     assert len(transitions_before) == 0  # No transitions should occur before setup is done
 
     # Check for transitions at exactly the setup completion time

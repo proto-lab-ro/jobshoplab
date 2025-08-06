@@ -13,13 +13,13 @@ from jobshoplab.types.instance_config_types import InstanceConfig
 from jobshoplab.types.state_types import (
     BufferState,
     FailTime,
-    TimeDependency,
     JobState,
     MachineState,
     NoTime,
     OperationStateState,
     State,
     Time,
+    TimeDependency,
     TransportState,
     TransportStateState,
 )

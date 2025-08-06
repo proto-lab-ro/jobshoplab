@@ -7,27 +7,27 @@ the WAITINGPICKUP -> PICKUP transition validation based on buffer type constrain
 
 import pytest
 
+from jobshoplab.state_machine.core.state_machine.validate import is_transport_transition_valid
+from jobshoplab.types import InstanceConfig
 from jobshoplab.types.action_types import ComponentTransition
-from jobshoplab.types.instance_config_types import BufferConfig, BufferTypeConfig
+from jobshoplab.types.instance_config_types import (
+    BufferConfig,
+    BufferRoleConfig,
+    BufferTypeConfig,
+    LogisticsConfig,
+    ProblemInstanceConfig,
+    ProblemInstanceTypeConfig,
+)
 from jobshoplab.types.state_types import (
     BufferState,
     BufferStateState,
-    State,
-    TransportState,
-    TransportStateState,
     MachineState,
     MachineStateState,
     NoTime,
+    State,
     TransportLocation,
-)
-from jobshoplab.state_machine.core.state_machine.validate import is_transport_transition_valid
-from jobshoplab.types import InstanceConfig
-from jobshoplab.types.instance_config_types import (
-    BufferConfig,
-    BufferTypeConfig,
-    ProblemInstanceConfig,
-    ProblemInstanceTypeConfig,
-    LogisticsConfig,
+    TransportState,
+    TransportStateState,
 )
 
 
@@ -36,7 +36,13 @@ def create_test_instance_with_buffer(
 ) -> InstanceConfig:
     """Helper function to create a test InstanceConfig with a specific buffer configuration."""
     buffer_config = BufferConfig(
-        id=buffer_id, type=buffer_type, capacity=10, resources=(), description=None, parent=parent
+        id=buffer_id,
+        type=buffer_type,
+        capacity=10,
+        resources=(),
+        description=None,
+        parent=parent,
+        role=BufferRoleConfig.COMPONENT,
     )
 
     problem_instance = ProblemInstanceConfig(

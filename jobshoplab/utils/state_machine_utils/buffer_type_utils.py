@@ -2,7 +2,7 @@ from dataclasses import replace
 from typing import Optional
 
 from jobshoplab.types import InstanceConfig, State
-from jobshoplab.types.instance_config_types import BufferConfig, BufferTypeConfig, BufferRoleConfig
+from jobshoplab.types.instance_config_types import BufferConfig, BufferRoleConfig, BufferTypeConfig
 from jobshoplab.types.state_types import BufferState, BufferStateState, JobState
 from jobshoplab.utils.exceptions import BufferFullError, InvalidValue, JobNotInBufferError
 
@@ -23,14 +23,19 @@ def get_buffer_state_by_id(buffers: tuple[BufferState, ...], buffer_id: str) -> 
 
 def get_output_buffers(instance: InstanceConfig) -> tuple[BufferConfig, ...]:
     """
-    Get the output buffer configuration for a job based on its operations.
+    Get all output buffer configurations from the instance.
+
+    This function filters all buffers in the instance to return only those
+    with the OUTPUT role, which are designated as final destinations for
+    completed jobs in the job shop scheduling system.
 
     Args:
-        instance (InstanceConfig): The instance configuration.
-        job_state (JobState): The state of the job.
+        instance (InstanceConfig): The instance configuration containing all buffers.
 
     Returns:
-        BufferConfig: The output buffer configuration for the job, or None if not found.
+        tuple[BufferConfig, ...]: A tuple of buffer configurations that have
+            the OUTPUT role. Used to determine where completed jobs should be
+            transported to mark them as finished.
     """
     return tuple(b for b in instance.buffers if b.role == BufferRoleConfig.OUTPUT)
 

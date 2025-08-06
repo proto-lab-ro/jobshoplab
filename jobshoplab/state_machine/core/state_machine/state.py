@@ -43,16 +43,22 @@ from jobshoplab.utils.state_machine_utils import (
 
 def is_done(state: StateMachineResult, instance: InstanceConfig) -> bool:
     """
-    Check if the state machine has completed all jobs.
+    Check if the state machine has completed all jobs by verifying output buffer status.
 
-    This function determines if all operations across all jobs have reached completion status.
-    The simulation is considered complete when all required tasks have been processed.
+    This function determines completion based on whether all jobs have reached their
+    final destination (output buffers), not just operation completion. The simulation
+    is considered complete when all jobs have been transported to output buffers,
+    ensuring proper material flow and system closure.
 
     Args:
-        state: The state machine result containing the simulation state to check
+        state (StateMachineResult): The state machine result containing the simulation
+            state with all job locations to check.
+        instance (InstanceConfig): The instance configuration containing buffer definitions
+            needed to identify output buffers.
 
     Returns:
-        bool: True if all operations are done, False otherwise
+        bool: True if all jobs are in output buffers (complete workflow),
+            False otherwise. This indicates full job shop system completion.
     """
     return core_utils.is_done(state.state, instance)
 
@@ -376,11 +382,13 @@ def _get_travel_time_for_transport(
     else:
         current_location = job_state.location
 
-    # Get the destination location from the next operation
+    # Determine destination based on job's operation completion status
     match job_type_utils.no_operation_idle(job_state):
         case True:
+            # All operations complete - transport to output buffer for final delivery
             next_location = next(iter(buffer_type_utils.get_output_buffers(instance))).id
         case False:
+            # Operations remain - transport to next operation's machine
             next_op: OperationState = job_type_utils.get_next_idle_operation(job_state)
             next_location = next_op.machine_id
 
@@ -393,7 +401,9 @@ def _get_travel_time_for_transport(
 
     # Handle different types of duration configurations
     match duration:
-        case DeterministicTimeConfig() | StochasticTimeConfig():  # Simple deterministic time
+        case (
+            DeterministicTimeConfig() | StochasticTimeConfig()
+        ):  # Both deterministic and stochastic use .time
             return duration.time
         case _:
             # This can happen if a new time configuration type is added but not handled

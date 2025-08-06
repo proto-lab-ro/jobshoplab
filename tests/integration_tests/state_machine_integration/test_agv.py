@@ -2,10 +2,8 @@ from dataclasses import replace
 
 from jobshoplab.state_machine.core.state_machine import step
 from jobshoplab.state_machine.time_machines import jump_to_event
-from jobshoplab.types.action_types import (Action, ActionFactoryInfo,
-                                           ComponentTransition)
-from jobshoplab.types.state_types import (MachineStateState, Time,
-                                          TransportStateState)
+from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
+from jobshoplab.types.state_types import MachineStateState, Time, TransportStateState
 
 
 def test_start_agv_job0_to_machine0(agv_instance, default_init_state, config, agv_transition):

@@ -1,4 +1,5 @@
 import pytest
+
 from jobshoplab.compiler.mapper import DictToInstanceMapper
 from jobshoplab.types.instance_config_types import BufferTypeConfig
 
@@ -18,13 +19,9 @@ def global_machine_buffer_config():
                 """
             },
             "machines": {
-                "prebuffer": [
-                    {"capacity": 5, "type": "fifo"}
-                ],
-                "postbuffer": [
-                    {"capacity": 5, "type": "fifo"}
-                ]
-            }
+                "prebuffer": [{"capacity": 5, "type": "fifo"}],
+                "postbuffer": [{"capacity": 5, "type": "fifo"}],
+            },
         }
     }
 
@@ -46,15 +43,11 @@ def specific_machine_buffer_config():
             "machines": [
                 {
                     "m-0": {
-                        "prebuffer": [
-                            {"capacity": 5, "type": "fifo"}
-                        ],
-                        "postbuffer": [
-                            {"capacity": 5, "type": "fifo"}
-                        ]
+                        "prebuffer": [{"capacity": 5, "type": "fifo"}],
+                        "postbuffer": [{"capacity": 5, "type": "fifo"}],
                     }
                 }
-            ]
+            ],
         }
     }
 
@@ -63,14 +56,14 @@ def test_global_machine_buffer_configuration(global_machine_buffer_config, confi
     """Test that global machine buffer configuration applies to all machines"""
     mapper = DictToInstanceMapper(0, config=config)
     instance = mapper.map(global_machine_buffer_config)
-    
+
     # Verify all machines have the configured buffer properties
     for machine in instance.machines:
         # Check prebuffer configuration
         assert machine.prebuffer.capacity == 5
         assert machine.prebuffer.type == BufferTypeConfig.FIFO
-        
-        # Check postbuffer configuration  
+
+        # Check postbuffer configuration
         assert machine.postbuffer.capacity == 5
         assert machine.postbuffer.type == BufferTypeConfig.FIFO
 
@@ -79,24 +72,24 @@ def test_specific_machine_buffer_configuration(specific_machine_buffer_config, c
     """Test that machine-specific buffer configuration only applies to specified machine"""
     mapper = DictToInstanceMapper(0, config=config)
     instance = mapper.map(specific_machine_buffer_config)
-    
+
     # Find machine m-0 and other machines
     machine_m0 = None
     other_machines = []
-    
+
     for machine in instance.machines:
         if machine.id == "m-0":
             machine_m0 = machine
         else:
             other_machines.append(machine)
-    
+
     # Verify machine m-0 has the configured buffer properties
     assert machine_m0 is not None
     assert machine_m0.prebuffer.capacity == 5
     assert machine_m0.prebuffer.type == BufferTypeConfig.FIFO
     assert machine_m0.postbuffer.capacity == 5
     assert machine_m0.postbuffer.type == BufferTypeConfig.FIFO
-    
+
     # Verify other machines have default buffer properties (not the specific config)
     for machine in other_machines:
         # Default buffer configuration should be different from the specific config
@@ -119,22 +112,18 @@ def test_machine_config_buffer_property_setting(config):
                 """
             },
             "machines": {
-                "prebuffer": [
-                    {"capacity": 10, "type": "lifo"}
-                ],
-                "postbuffer": [
-                    {"capacity": 8, "type": "fifo"}
-                ]
-            }
+                "prebuffer": [{"capacity": 10, "type": "lifo"}],
+                "postbuffer": [{"capacity": 8, "type": "fifo"}],
+            },
         }
     }
-    
+
     mapper = DictToInstanceMapper(0, config=config)
     instance = mapper.map(global_config)
-    
+
     # Should have two machines (m-0 and m-1)
     assert len(instance.machines) == 2
-    
+
     # Check that both machines have the same buffer configuration (global setting)
     for machine in instance.machines:
         # Verify buffer properties are correctly set

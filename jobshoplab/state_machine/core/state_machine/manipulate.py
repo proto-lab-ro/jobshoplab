@@ -8,7 +8,7 @@ and updating of component states.
 """
 
 from dataclasses import replace
-from typing import Tuple, Sequence
+from typing import Sequence, Tuple
 
 from jobshoplab.types import InstanceConfig
 from jobshoplab.types.instance_config_types import MachineConfig, OperationConfig
@@ -28,10 +28,10 @@ from jobshoplab.types.state_types import (
     TransportStateState,
 )
 from jobshoplab.utils.exceptions import (
+    InvalidSetupTimeTypeError,
+    InvalidTimeTypeError,
     InvalidValue,
     NotImplementedError,
-    InvalidTimeTypeError,
-    InvalidSetupTimeTypeError,
 )
 from jobshoplab.utils.state_machine_utils import (
     buffer_type_utils,
@@ -101,10 +101,12 @@ def complete_transport_task(
             transport_job=None,
         )
 
-        # Update machine's prebuffer
+        # Update target component with the filled buffer
         if isinstance(target_component_state, MachineState):
+            # For machines, update the prebuffer with the job
             target_component_state = replace(target_component_state, prebuffer=filled_buffer)
         if isinstance(target_component_state, BufferState):
+            # For standalone buffers (like output buffers), replace the entire buffer state
             target_component_state = filled_buffer
 
         return job_state, transport, target_component_state

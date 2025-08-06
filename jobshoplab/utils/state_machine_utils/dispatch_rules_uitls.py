@@ -2,8 +2,7 @@ import jobshoplab.utils.state_machine_utils.job_type_utils as job_type_utils
 import jobshoplab.utils.state_machine_utils.machine_type_utils as machine_type_utils
 from jobshoplab.types import InstanceConfig, State
 from jobshoplab.types.state_types import JobState, OperationStateState
-from jobshoplab.utils.exceptions import (InvalidDispatchRuleError,
-                                         OperationMachineMatchError)
+from jobshoplab.utils.exceptions import InvalidDispatchRuleError, OperationMachineMatchError
 
 # TODO: Validate and test the functions in this file
 

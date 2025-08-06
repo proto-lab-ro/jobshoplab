@@ -91,7 +91,7 @@ class TestGetTransportIdByJobId:
             buffer=BufferState(id="t-1-buffer", state=BufferStateState.EMPTY, store=()),
             transport_job="job-1",
         )
-        
+
         transport2 = TransportState(
             id="t-2",
             state=TransportStateState.WORKING,
@@ -101,7 +101,7 @@ class TestGetTransportIdByJobId:
             buffer=BufferState(id="t-2-buffer", state=BufferStateState.EMPTY, store=()),
             transport_job="job-2",
         )
-        
+
         state = State(
             jobs=(),
             machines=(),
@@ -109,11 +109,11 @@ class TestGetTransportIdByJobId:
             buffers=(),
             time=NoTime(),
         )
-        
+
         # Test finding first transport
         transport_id = get_transport_id_by_job_id(state, "job-1")
         assert transport_id == "t-1"
-        
+
         # Test finding second transport
         transport_id = get_transport_id_by_job_id(state, "job-2")
         assert transport_id == "t-2"
@@ -157,7 +157,7 @@ class TestGetTransportStateByJobId:
             buffer=BufferState(id="t-1-buffer", state=BufferStateState.EMPTY, store=()),
             transport_job="job-1",
         )
-        
+
         transport2 = TransportState(
             id="t-2",
             state=TransportStateState.WORKING,
@@ -167,7 +167,7 @@ class TestGetTransportStateByJobId:
             buffer=BufferState(id="t-2-buffer", state=BufferStateState.EMPTY, store=()),
             transport_job="job-2",
         )
-        
+
         state = State(
             jobs=(),
             machines=(),
@@ -175,14 +175,14 @@ class TestGetTransportStateByJobId:
             buffers=(),
             time=NoTime(),
         )
-        
+
         # Test finding first transport state
         transport_state = get_transport_state_by_job_id(state, "job-1")
         assert transport_state is not None
         assert transport_state.id == "t-1"
         assert transport_state.transport_job == "job-1"
         assert transport_state.state == TransportStateState.WORKING
-        
+
         # Test finding second transport state
         transport_state = get_transport_state_by_job_id(state, "job-2")
         assert transport_state is not None
