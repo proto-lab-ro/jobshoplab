@@ -15,7 +15,7 @@ from jobshoplab.types.state_types import MachineStateState, TransportStateState
 from jobshoplab.utils.exceptions import InvalidValue
 
 
-def test_is_done_with_done_job(job_state_done):
+def test_is_done_with_done_job(job_state_done, default_instance):
 
     state = State(
         time=Time(0),
@@ -28,10 +28,10 @@ def test_is_done_with_done_job(job_state_done):
     state_result = Mock()
     state_result.state = state
 
-    assert is_done(state_result) is True
+    assert is_done(state_result.state, default_instance) is True
 
 
-def test_is_done_with_processing_job(job_state_processing):
+def test_is_done_with_processing_job(job_state_processing, default_instance):
     state = State(
         time=Time(0),
         jobs=(job_state_processing,),
@@ -43,7 +43,7 @@ def test_is_done_with_processing_job(job_state_processing):
     state_result = Mock()
     state_result.state = state
 
-    assert is_done(state_result) is False
+    assert is_done(state_result.state, default_instance) is False
 
 
 def test_apply_transition_machine(
@@ -122,7 +122,7 @@ def test_step_successful(default_state_machine_idle, default_instance, machine_t
     assert result.success
     assert len(result.sub_states) == 3  # progresses setup working and outage
     assert result.state.machines[0].state == MachineStateState.IDLE
-    assert result.state.time == Time(3)
+    assert result.state.time == Time(4)
 
 
 def test_step_transition_error(

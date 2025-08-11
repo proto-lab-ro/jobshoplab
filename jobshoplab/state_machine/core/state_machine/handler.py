@@ -53,7 +53,7 @@ from jobshoplab.utils.state_machine_utils.time_utils import _get_travel_time_fro
 
 
 def create_timed_machine_transitions(
-    loglevel: int | str, state: State, instance: InstanceConfig
+    loglevel: Union[int, str], state: State, instance: InstanceConfig
 ) -> tuple[ComponentTransition, ...]:
     """
     Create timed machine transitions based on the given state.
@@ -114,7 +114,7 @@ def create_timed_machine_transitions(
     return tuple(transitions)
 
 
-def create_machine_setup_transition(all_buffer_configs, machine):
+def create_machine_setup_transition(all_buffer_configs: tuple[BufferConfig, ...], machine: MachineState) -> Optional[ComponentTransition]:
     transition = None
     if len(machine.prebuffer.store) > 0:
         prebuffer_config = buffer_type_utils.get_buffer_config_by_id(
@@ -556,7 +556,7 @@ def handle_machine_outage_to_idle_transition(
     return state
 
 
-def _get_waiting_time(state, transition, instance):
+def _get_waiting_time(state: State, transition: ComponentTransition, instance: InstanceConfig) -> Union[Time, NoTime, TimeDependency]:
     job_state = job_type_utils.get_job_state_by_id(state.jobs, transition.job_id)
     job_location_id = job_state.location
     _all_buffer_configs = buffer_type_utils.get_all_buffer_configs(instance)

@@ -41,7 +41,7 @@ from jobshoplab.utils.state_machine_utils import (
 )
 
 
-def is_done(state: StateMachineResult, instance: InstanceConfig) -> bool:
+def is_done(state: State, instance: InstanceConfig) -> bool:
     """
     Check if the state machine has completed all jobs by verifying output buffer status.
 
@@ -51,8 +51,7 @@ def is_done(state: StateMachineResult, instance: InstanceConfig) -> bool:
     ensuring proper material flow and system closure.
 
     Args:
-        state (StateMachineResult): The state machine result containing the simulation
-            state with all job locations to check.
+        state (State): The state containing the simulation state with all job locations to check.
         instance (InstanceConfig): The instance configuration containing buffer definitions
             needed to identify output buffers.
 
@@ -60,7 +59,7 @@ def is_done(state: StateMachineResult, instance: InstanceConfig) -> bool:
         bool: True if all jobs are in output buffers (complete workflow),
             False otherwise. This indicates full job shop system completion.
     """
-    return core_utils.is_done(state.state, instance)
+    return core_utils.is_done(state, instance)
 
 
 def apply_transition(

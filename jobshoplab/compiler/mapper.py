@@ -36,7 +36,7 @@ from jobshoplab.utils.utils import get_id_int
 
 
 class ID_Counter:
-    def __init__(self):
+    def __init__(self) -> None:
         self.buffer_ids = tuple()
         self.machine_ids = tuple()
         self.transport_ids = tuple()
@@ -60,27 +60,27 @@ class ID_Counter:
             counter += 1
         return _id
 
-    def get_machine_id(self):
+    def get_machine_id(self) -> str:
         _machine_id = self._get_new_id(self.machine_ids, "m-")
         self.add_machine_id(_machine_id)
         return _machine_id
 
-    def get_buffer_id(self):
+    def get_buffer_id(self) -> str:
         _buffer_id = self._get_new_id(self.buffer_ids, "b-")
         self.add_buffer_id(_buffer_id)
         return _buffer_id
 
-    def get_transport_id(self):
+    def get_transport_id(self) -> str:
         _transport_id = self._get_new_id(self.transport_ids, "t-")
         self.add_transport_id(_transport_id)
         return _transport_id
 
-    def get_outage_id(self):
+    def get_outage_id(self) -> str:
         _outage_id = self._get_new_id(self.outage_ids, "out-")
         self.add_outage_id(_outage_id)
         return _outage_id
 
-    def add_buffer_id(self, buffer_id: str):
+    def add_buffer_id(self, buffer_id: str) -> None:
         """
         Add a buffer ID to the counter.
 
@@ -91,7 +91,7 @@ class ID_Counter:
             raise InvalidType(key="buffer_id", value=buffer_id, expected_type=["b-*"])
         self.buffer_ids += (buffer_id,)
 
-    def add_machine_id(self, machine_id: str):
+    def add_machine_id(self, machine_id: str) -> None:
         """
         Add a machine ID to the counter.
 
@@ -102,7 +102,7 @@ class ID_Counter:
             raise InvalidType(key="machine_id", value=machine_id, expected_type=["m-*"])
         self.machine_ids += (machine_id,)
 
-    def add_transport_id(self, transport_id: str):
+    def add_transport_id(self, transport_id: str) -> None:
         """
         Add a transport ID to the counter.
 
@@ -113,7 +113,7 @@ class ID_Counter:
             raise InvalidType(key="transport_id", value=transport_id, expected_type=["t-*"])
         self.transport_ids += (transport_id,)
 
-    def add_outage_id(self, outage_id: str):
+    def add_outage_id(self, outage_id: str) -> None:
         """
         Add a outage ID to the counter.
 
@@ -149,7 +149,7 @@ class DefaultInstanceLookUpFactory:
         self.job_priority: float = 0.5
         self.instance_type: str = "job_shop"
 
-    def get_default_tool(self):
+    def get_default_tool(self) -> str:
         return "tl-0"
 
     def _get_setup_times(
@@ -360,7 +360,7 @@ class DefaultStateLookUpFactory:
                 operation_state_state=OperationStateState.IDLE,
             )
 
-    def _get_outage_state(self, component: MachineConfig | TransportConfig):
+    def _get_outage_state(self, component: Union[MachineConfig, TransportConfig]) -> tuple[OutageState, ...]:
         return tuple(
             OutageState(id=o.id, active=OutageInactive(last_time_active=NoTime()))
             for o in component.outages
@@ -388,7 +388,7 @@ class DefaultStateLookUpFactory:
             mounted_tool=self.get_default_tool(),
         )
 
-    def get_default_tool(self):
+    def get_default_tool(self) -> str:
         return "tl-0"
 
     def get_default_transport(
@@ -509,7 +509,7 @@ class DictToInstanceMapper(AbstractDictMapper):
         config (Config): The configuration object.
     """
 
-    def __init__(self, loglevel: Union[int, str], config: Config, *args, **kwargs):
+    def __init__(self, loglevel: Union[int, str], config: Config, *args, **kwargs) -> None:
         """
         Initialize the DictToInstanceMapper.
 
@@ -984,7 +984,7 @@ class DictToInstanceMapper(AbstractDictMapper):
             case _:
                 raise InvalidOutageTypeError(type)
 
-    def _map_spec_dict_to_outage(self, spec_dict, component_list, outages):
+    def _map_spec_dict_to_outage(self, spec_dict: Dict, component_list: List[str], outages: List[OutageConfig]) -> List[OutageConfig]:
         if not self.has_key(("instance_config", "outages"), spec_dict):
             return outages
         for maintance_spec in spec_dict["instance_config"]["outages"]:
@@ -1163,8 +1163,8 @@ class DictToInstanceMapper(AbstractDictMapper):
             input_buffer_id = self.counter.get_buffer_id()
             output_buffer_id = self.counter.get_buffer_id()
             buffer = (
-                self.defaults.get_default_buffer(input_buffer_id, None, BufferRoleConfig.INPUT),
-                self.defaults.get_default_buffer(output_buffer_id, None, BufferRoleConfig.OUTPUT),
+                self.defaults.get_default_buffer(input_buffer_id, None, BufferRoleConfig.INPUT, "input buffer"),
+                self.defaults.get_default_buffer(output_buffer_id, None, BufferRoleConfig.OUTPUT, "output buffer"),
             )
 
         self.logger.debug("Successfully mapped components")
@@ -1241,7 +1241,7 @@ class DictToInstanceMapper(AbstractDictMapper):
 class DictToInitStateMapper(AbstractDictMapper):
     """Dictionary to State mapper"""
 
-    def __init__(self, loglevel: int | str, config: Config):
+    def __init__(self, loglevel: Union[int, str], config: Config) -> None:
         """
         Initialize the DictToInitStateMapper.
 
@@ -1318,7 +1318,7 @@ class DictToInitStateMapper(AbstractDictMapper):
             store=jobs_in_buffer,
         )
 
-    def _apply_transport_init_state(self, transport, transport_spec, transport_state):
+    def _apply_transport_init_state(self, transport: TransportConfig, transport_spec: Dict, transport_state: TransportState) -> TransportState:
         for key in transport_spec.keys():
             match key:
                 case "location":

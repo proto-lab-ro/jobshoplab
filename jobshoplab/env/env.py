@@ -2,7 +2,8 @@ import logging
 import random
 from dataclasses import asdict
 from functools import partial
-from typing import Callable
+from typing import Any, Callable, Dict, List, Union, Optional, Type
+from types import ModuleType
 
 import gymnasium as gym
 import numpy as np
@@ -88,16 +89,18 @@ class DependencyBuilder:
             Generic factory builder method
     """
 
-    def __init__(self, config: Config | None, loglevel: int | str | None = None) -> None:
+    def __init__(
+        self, config: Optional[Config], loglevel: Optional[Union[int, str]] = None
+    ) -> None:
         self._config: Config = self.config(config)
         self._logger = get_logger(self.__str__(), "warning")
 
-    def config(self, _config: Config | None) -> Config:
+    def config(self, _config: Optional[Config]) -> Config:
         if _config is None:
             _config: Config = load_config()
         return _config
 
-    def loglevel(self, loglevel: int | str | None) -> int | str:
+    def loglevel(self, loglevel: Optional[Union[int, str]]) -> Union[int, str]:
         # getting loglevel from config or setting it to default
         _loglevel = (
             self._config.env.loglevel
@@ -108,10 +111,10 @@ class DependencyBuilder:
         l_level = _loglevel if loglevel is None else loglevel
         return l_level
 
-    def logger(self, loglevel: int | str) -> logging.Logger:
+    def logger(self, loglevel: Union[int, str]) -> logging.Logger:
         return get_logger("JobShopLabEnv(gym.Env)", loglevel)
 
-    def seed(self, seed: int | None) -> int | None:
+    def seed(self, seed: Optional[int]) -> Optional[int]:
         if hasattr(self._config.env, "seed"):
             config_seed: int = self._config.env.seed
         else:
@@ -124,11 +127,11 @@ class DependencyBuilder:
             torch.manual_seed(seed)
         return seed
 
-    def compiler(self, compiler: Compiler | None) -> Compiler:
+    def compiler(self, compiler: Optional[Compiler]) -> Compiler:
         complier_loglevel = (
             self._config.compiler.loglevel
             if hasattr(self._config.compiler, "loglevel")
-            else config.default_loglevel
+            else self._config.default_loglevel
         )
 
         if compiler is None:
@@ -150,7 +153,7 @@ class DependencyBuilder:
     def _to_lowercase(self, string: str) -> str:
         return as_lowercase(string)
 
-    def _config_args_getter(self, kwd_list: list[str]) -> dict:
+    def _config_args_getter(self, kwd_list: List[str]) -> Dict[str, Any]:
         conf_obj = self._config
         for kwd in kwd_list:
             _kwd = self._to_lowercase(kwd)
@@ -163,11 +166,11 @@ class DependencyBuilder:
 
     def _get_args(
         self,
-        log_level: str | int | None,
+        log_level: Union[str, int, None],
         instance: InstanceConfig,
-        additional_args_kwd: list[str],
-        additional_args: dict,
-    ) -> dict:
+        additional_args_kwd: List[str],
+        additional_args: Dict[str, Any],
+    ) -> Dict[str, Any]:
         args = self._config_args_getter(additional_args_kwd)
         additional_args.update(
             {"loglevel": log_level, "instance": instance, "config": self._config}
@@ -182,13 +185,13 @@ class DependencyBuilder:
 
     def _build_factory(
         self,
-        module: any,
-        env_arg: any,
+        module: ModuleType,
+        env_arg: Union[Type, Callable, None],
         config_name: str,
-        additional_args: dict,
-        log_level: int | str,
+        additional_args: Dict[str, Any],
+        log_level: Union[int, str],
         instance: InstanceConfig,
-    ) -> any:
+    ) -> Union[Callable, Any]:
         # building args
         _factory_name = self._get_instance_from_config(config_name)
         additional_args_kwd = [config_name, _factory_name]
@@ -209,8 +212,11 @@ class DependencyBuilder:
         return _obj(**args)
 
     def observation_factory(
-        self, observation_factory: any, log_level: int | str, instance: InstanceConfig
-    ) -> any:
+        self,
+        observation_factory: Union[Type, Callable, None],
+        log_level: Union[int, str],
+        instance: InstanceConfig,
+    ) -> Any:
         return self._build_factory(
             observations,
             observation_factory,
@@ -222,11 +228,11 @@ class DependencyBuilder:
 
     def reward_factory(
         self,
-        reward_factory: any,
-        log_level: int | str,
+        reward_factory: Union[Type, Callable, None],
+        log_level: Union[int, str],
         instance: InstanceConfig,
         max_allowed_time: int,
-    ) -> any:
+    ) -> Any:
         return self._build_factory(
             rewards,
             reward_factory,
@@ -237,8 +243,11 @@ class DependencyBuilder:
         )
 
     def render_backend(
-        self, render_backend: any, log_level: int | str, instance: InstanceConfig
-    ) -> any:
+        self,
+        render_backend: Union[Type, Callable, None],
+        log_level: Union[int, str],
+        instance: InstanceConfig,
+    ) -> Any:
         return self._build_factory(
             rendering,
             render_backend,
@@ -249,8 +258,11 @@ class DependencyBuilder:
         )
 
     def action_factory(
-        self, action_factory: any, log_level: int | str, instance: InstanceConfig
-    ) -> any:
+        self,
+        action_factory: Union[Type, Callable, None],
+        log_level: Union[int, str],
+        instance: InstanceConfig,
+    ) -> Any:
         return self._build_factory(
             actions,
             action_factory,
@@ -262,12 +274,12 @@ class DependencyBuilder:
 
     def state_simulator(
         self,
-        middleware: any,
-        log_level: int | str,
+        middleware: Union[Type, Callable, None],
+        log_level: Union[int, str],
         instance: InstanceConfig,
-        action_factory: any,
-        observation_factory: any,
-    ) -> any:
+        action_factory: Any,
+        observation_factory: Any,
+    ) -> Any:
         return self._build_factory(
             middleware_collection,
             middleware,
@@ -334,16 +346,16 @@ class JobShopLabEnv(gym.Env):
 
     def __init__(
         self,
-        config: Config | None = None,
-        seed: int | None = None,
-        compiler: Compiler | None = None,
-        observation_factory: observations.ObservationFactory | None = None,
-        reward_factory: rewards.RewardFactory | None = None,
-        middleware: middleware_collection.Middleware | None = None,
-        action_factory: actions.ActionFactory | None = None,
-        render_backend: Callable | None = None,
-        loglevel: int | str | None = None,
-    ):
+        config: Optional[Config] = None,
+        seed: Optional[int] = None,
+        compiler: Optional[Compiler] = None,
+        observation_factory: Optional[observations.ObservationFactory] = None,
+        reward_factory: Optional[rewards.RewardFactory] = None,
+        middleware: Optional[middleware_collection.Middleware] = None,
+        action_factory: Optional[actions.ActionFactory] = None,
+        render_backend: Optional[Callable] = None,
+        loglevel: Optional[Union[int, str]] = None,
+    ) -> None:
         """Initialize JobShopLabEnv environment.
 
         This class represents a Job Shop scheduling environment for reinforcement learning.
@@ -388,7 +400,7 @@ class JobShopLabEnv(gym.Env):
         }
         self.current_observation = self.reset(seed)
 
-    def _get_info(self):
+    def _get_info(self) -> Dict[str, Union[bool, int, None]]:
         return {
             "no_op": len(self.history[-1].action.transitions) == 0,
             "terminated": self.terminated,
@@ -405,7 +417,7 @@ class JobShopLabEnv(gym.Env):
             terminated (bool): True if the episode is terminated, False otherwise.
             truncated (bool): True if the episode is truncated, False otherwise.
         """
-        return is_done(self.state, self.instance)
+        return is_done(self.state.state, self.instance)
 
     def _is_truncated(self):
         trunc = self.state_simulator.is_truncated()
@@ -442,7 +454,7 @@ class JobShopLabEnv(gym.Env):
 
     def reset(
         self,
-        seed: int | None = None,
+        seed: Optional[int] = None,
     ) -> tuple[dict, dict]:
         """Reset the environment to its initial state.
 
