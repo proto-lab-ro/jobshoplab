@@ -122,10 +122,10 @@ class DependencyBuilder:
         _seed = config_seed if seed is None else seed
 
         if _seed is not None:
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
-        return seed
+            random.seed(_seed)
+            np.random.seed(_seed)
+            torch.manual_seed(_seed)
+        return _seed
 
     def compiler(self, compiler: Optional[Compiler]) -> Compiler:
         complier_loglevel = (
@@ -385,7 +385,7 @@ class JobShopLabEnv(gym.Env):
             init_args (dict): Dictionary storing initialization arguments
             current_observation (object): Latest observation from the environment
         """
-        super(JobShopLabEnv, self).__init__()
+        super().__init__()
 
         self.init_args = {
             "config": config,
@@ -398,6 +398,7 @@ class JobShopLabEnv(gym.Env):
             "render_backend": render_backend,
             "loglevel": loglevel,
         }
+        self.episode_counter = -1
         self.current_observation = self.reset(seed)
 
     def _get_info(self) -> Dict[str, Union[bool, int, None]]:
@@ -474,11 +475,19 @@ class JobShopLabEnv(gym.Env):
                 - Initial observation [dict space]
                 - Empty info dictionary
         """
+        self.episode_counter += 1
         builder = DependencyBuilder(self.init_args["config"], self.init_args["loglevel"])
         self.config: Config = builder.config(self.init_args["config"])
         self.loglevel: int | str = builder.loglevel(self.init_args["loglevel"])
         self.logger = builder.logger(self.loglevel)
-        self.seed: int | None = builder.seed(seed)
+
+        if hasattr(self, "seed") and seed is None:
+            seed = self.seed
+
+        self.seed: int | None = builder.seed(
+            seed + self.episode_counter if seed is not None else None
+        )
+
         compiler: Compiler = builder.compiler(self.init_args["compiler"])
 
         # getting instance config and init state for further initialization
@@ -528,7 +537,12 @@ class JobShopLabEnv(gym.Env):
         self.truncated: bool = False
         self.terminated: bool = False
         self.done = False
-        return current_observation, {}
+        return current_observation, {
+            "env_seed": self.seed,
+            "random_first_state": random.getstate()[1][0],
+            "torch_seed": torch.initial_seed(),
+            "torch_rng_state": torch.get_rng_state()[0].item(),
+        }
 
     def _gen_render_metadata(self) -> dict:
         """
