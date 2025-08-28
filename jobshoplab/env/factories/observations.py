@@ -695,3 +695,212 @@ class BinaryOperationArrayObservation(OperationArrayObservation):
             str: The string representation of the BinaryOperationArrayObservation.
         """
         return f"BinaryOperationArrayObservation with observation_space {self.observation_space}"
+
+
+
+
+
+
+class TasselJsspObservation(ObservationFactory):
+    def __init__(self, loglevel: int, config: Config, instance: InstanceConfig, *args, **kwargs):
+        super().__init__(loglevel, config, instance)
+
+        self.num_jobs: int = len(instance.instance.specification)
+        self.get_component_id: Callable[[str], int] = partial(
+            get_component_id_int, (instance.machines + instance.transports)
+        )
+        self.num_machines: int = len(instance.machines)
+        self.num_components: int = len(instance.machines + instance.transports)
+        self.max_allowed_time = get_max_allowed_time(instance)
+
+
+        self.spaces = OrderedDict(
+            {    "allocatable": gym.spaces.MultiBinary(
+                    self.num_jobs
+                    #A Boolean to represent if the job can be allocated
+                ),
+                "left_over_time": gym.spaces.Box(
+                    low=0, high=1, shape=(self.num_jobs,), dtype=np.int8
+                ),  # left-over time for the currently performed operation on the job
+                "percent_finished": gym.spaces.Box(
+                    low=0, high=1, shape=(self.num_jobs,), dtype=np.int8
+                ),  # percentage of operations finished for a job
+                "total_completion": gym.spaces.Box(
+                    low=0, high=1, shape=(self.num_jobs,), dtype=np.int8
+                ),  # left-over time until total completion of the job, scaled by the longest job total completion time
+                "time_until_next_machine_is_free": gym.spaces.Box(
+                    low=0, high=1, shape=(self.num_jobs,), dtype=np.int8
+                ),  # time until the machine needed to perform the next job’s operation is free, scaled by the longest job total completion time
+                "idle_since_last_op": gym.spaces.Box(
+                    low=0, high=1, shape=(self.num_jobs,), dtype=np.int8
+                ),  # IDLE time since last job’s performed operation, scaled by the sum of durations of all operations
+                "cum_idle_time": gym.spaces.Box(
+                    low=0, high=1, shape=(self.num_jobs,), dtype=np.int8
+                ),  # cumulative job’s IDLE time in the schedule
+            }
+        )
+        self.observation_space: gym.spaces.Dict = gym.spaces.Dict(self.spaces)
+
+
+
+
+    def make(self, state_result: StateMachineResult, done: bool) -> dict:
+        state = state_result
+        allocatable = self._calculate_allocatable(state)
+        left_over_times = self._calculate_left_over_times(state)
+        percent_finished = self._calculate_percent_finished(state)
+        time_until_next_machine_is_free = self._calculate_time_until_next_machine_is_free(state)
+        total_completion = self._calculate_total_completion(state)
+        idle_since_last_op = self._calculate_idle_since_last_op(state)
+        cum_idle_time = self._calculate_cum_idle_time(state)
+
+        observation_dict = {
+            "allocatable": allocatable,
+            "left_over_time": left_over_times,
+            "percent_finished": percent_finished,
+            "total_completion": total_completion,
+            "time_until_next_machine_is_free": time_until_next_machine_is_free,
+            "idle_since_last_op": idle_since_last_op,
+            "cum_idle_time": cum_idle_time,
+        }
+        self.logger.debug(f"Observation: {observation_dict}")
+        return observation_dict
+    
+
+    def _calculate_allocatable(self, state: State) -> list:
+        """Calculate if jobs can be allocated to machines."""
+        allocatable = []
+        for job in state.state.jobs:
+            # A job is allocatable if it has any IDLE operations and no PROCESSING operations
+            has_idle = any(op.operation_state_state == OperationStateState.IDLE for op in job.operations)
+            has_processing = any(op.operation_state_state == OperationStateState.PROCESSING for op in job.operations)
+            allocatable.append(1 if has_idle and not has_processing else 0)
+        return allocatable
+
+    def _calculate_left_over_times(self, state: State) -> list:
+        """Calculate remaining processing time for current operations."""
+        left_over_times = []
+        for job in state.state.jobs:
+            processing_ops = [op for op in job.operations 
+                            if op.operation_state_state == OperationStateState.PROCESSING]
+            if processing_ops:
+                # If operation is processing, calculate remaining time
+                op = processing_ops[0]
+                left_over_time = (op.end_time.time - state.state.time.time)
+            else:
+                left_over_time = 0
+            left_over_times.append(left_over_time)
+        return left_over_times
+
+    def _calculate_percent_finished(self, state: State) -> list:
+        """Calculate percentage of completed operations for each job."""
+        percent_finished = []
+        for job in state.state.jobs:
+            total_ops = len(job.operations)
+            completed_ops = sum(1 for op in job.operations 
+                            if op.operation_state_state == OperationStateState.DONE)
+            percent = completed_ops / total_ops if total_ops > 0 else 0
+            percent_finished.append(percent)
+        return percent_finished
+
+    def _calculate_time_until_next_machine_is_free(self, state: State) -> list:
+        """Calculate time until next required machine becomes available."""
+        wait_times = []
+        for job in state.state.jobs:
+            # Find next idle operation
+            next_idle_op = next((op for op in job.operations 
+                            if op.operation_state_state == OperationStateState.IDLE), None)
+            if next_idle_op:
+                # Find the machine needed for next operation
+                machine = next(m for m in state.state.machines if m.id == next_idle_op.machine_id)
+                if machine.state == MachineStateState.WORKING:
+                    wait_time = machine.occupied_till.time - state.state.time.time
+                    wait_times.append(wait_time)
+                else:
+                    wait_times.append(0)
+            else:
+                wait_times.append(0)
+        return wait_times
+
+    def _calculate_total_completion(self, state: State) -> list:
+        """Calculate estimated total completion time remaining for each job."""
+        total_completion = []
+        for job in state.state.jobs:
+            # Sum remaining processing times and idle operation durations
+            remaining_time = 0
+            
+            # Add remaining time of processing operations
+            processing_ops = [op for op in job.operations 
+                            if op.operation_state_state == OperationStateState.PROCESSING]
+            for op in processing_ops:
+                remaining_time += op.end_time.time - state.state.time.time
+                
+            # Add duration of idle operations
+            idle_ops = [op for op in job.operations 
+                    if op.operation_state_state == OperationStateState.IDLE]
+            for op in idle_ops:
+                op_config = next(o for o in self.instance.instance.specification[get_id_int(job.id)].operations 
+                            if o.id == op.id)
+                remaining_time += op_config.duration.time
+                
+            total_completion.append(remaining_time / self.max_allowed_time)
+        return total_completion
+
+    def _calculate_idle_since_last_op(self, state: State) -> list:
+        """Calculate idle time since last completed operation for each job."""
+        idle_times = []
+        for job in state.state.jobs:
+            # Find last completed operation
+            last_completed = next((op for op in reversed(job.operations)
+                                if op.operation_state_state == OperationStateState.DONE), None)
+            if last_completed and not any(op.operation_state_state == OperationStateState.PROCESSING 
+                                        for op in job.operations):
+                idle_time = (state.state.time.time - last_completed.end_time.time) / self.max_allowed_time
+                idle_times.append(idle_time)
+            else:
+                idle_times.append(0)
+        return idle_times
+
+    def _calculate_cum_idle_time(self, state: State) -> list:
+        """Calculate cumulative idle time for each job."""
+        cum_idle_times = []
+        for job in state.state.jobs:
+            total_idle_time = 0
+            
+            # Add initial waiting time before first operation
+            first_op = job.operations[0] if job.operations else None
+            if first_op is not None and first_op.start_time.time is not None:
+                total_idle_time += first_op.start_time.time
+                
+            # Add idle time between operations
+            for i in range(len(job.operations) - 1):
+                current_op = job.operations[i]
+                next_op = job.operations[i + 1]
+                
+                if (current_op.operation_state_state == OperationStateState.DONE and 
+                    next_op.operation_state_state != OperationStateState.IDLE and 
+                    next_op.start_time):
+                    total_idle_time += next_op.start_time.time - current_op.end_time.time
+                    
+            # Add final idle time if job is not complete or processing
+            last_op = job.operations[-1] if job.operations else None
+            if (last_op and 
+                last_op.operation_state_state == OperationStateState.DONE and
+                not any(op.operation_state_state == OperationStateState.PROCESSING 
+                    for op in job.operations)):
+                total_idle_time += state.state.time.time - last_op.end_time.time
+                
+            cum_idle_times.append(total_idle_time / self.max_allowed_time)
+        return cum_idle_times
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the OperationArrayObservation.
+
+        Returns:
+            str: The string representation of the OperationArrayObservation.
+        """
+        return f"OperationArrayObservation with observation_space {self.observation_space}"
+    
+
+
+
