@@ -219,13 +219,14 @@ def step(
         machine_states=state.machines,
         transport_states=state.transports,
         buffer_states=state.buffers,
+        config=config,
     )
 
     state = replace(state, time=new_time)
 
     # Process timed transitions that happen automatically
     timed_transitions = handler.create_timed_transitions(loglevel, state, instance)
-    _possible_transitions = get_possible_transitions(state, instance)
+    _possible_transitions = get_possible_transitions(state, instance, config)
     teleport_transitions = _filter_teleport_transitions(_possible_transitions, instance, state)
 
     timed_transitions += tuple(teleport_transitions)
@@ -259,6 +260,7 @@ def step(
             machine_states=state.machines,
             transport_states=state.transports,
             buffer_states=state.buffers,
+            config=config,
         )
         state = replace(state, time=new_time)
         sub_states += (state,)
@@ -282,10 +284,7 @@ def step(
 
     # Return the final state with possible transitions
     logger.debug(f"_all_transitions: {_all_transitions}")
-    possible_transitions = get_possible_transitions(state, instance)
-    if len(possible_transitions) == 0:
-        pass
-
+    possible_transitions = get_possible_transitions(state, instance, config)
     return StateMachineResult(
         state=state,
         sub_states=sub_states[:-1],
@@ -297,7 +296,7 @@ def step(
 
 
 def get_possible_transitions(
-    state: State, instance: InstanceConfig
+    state: State, instance: InstanceConfig, config
 ) -> tuple[ComponentTransition, ...]:
     """
     Get all possible transitions for a given state.
@@ -323,7 +322,7 @@ def get_possible_transitions(
 
     # Get possible transport transitions (jobs that can be moved)
     possible_transports = possible_transition_utils.get_possible_transport_transition(
-        state, instance
+        state, instance, config.state_machine.allow_early_transport
     )
 
     # Create transitions for each possible job and add transport transitions

@@ -1,0 +1,123 @@
+title: InstanceConfig
+
+# Example of a 6x6 Instance
+# with AGVs
+
+instance_config:
+  description: "protolab config for scalrio"
+  instance:
+    description: "6x6"
+    specification: |
+      (m0,t)|(m1,t)|(m2,t)|(m3,t)|(m4,t)|(m5,t)
+      j0|(2,60000) (0,180000) (1,360000) (3,420000) (5,180000) (4,360000)
+      j1|(1,480000) (2,300000) (4,600000) (5,600000) (0,600000) (3,240000)
+      j2|(2,300000) (3,240000) (5,480000) (0,540000) (1,60000) (4,420000)
+      j3|(1, 300000) (0,300000) (2,300000) (3,180000) (4,480000) (5,540000)
+      j4|(2,540000) (1,180000) (4,300000) (5,240000) (0,180000) (3,60000)
+      j5|(1,180000) (3,180000) (5,540000) (0,600000) (4,240000) (2,60000)
+
+
+    transport:
+      type: "agv"
+      amount: 6
+
+  logistics: 
+    specification: |
+      m-0|m-1|m-2|m-3|m-4|m-5|b-0|b-1|b-2|b-3|b-4|b-5|b-6
+      m-0| 0	53574	65952	108320	167664	103485 115650 101010 117710 126920 120330 143070 1
+      m-1| 150053	0	93090	75949	194802	136906 142940 128310 145010 154210 162360 170360 1
+      m-2| 82980	114713	0	231658	127729	146560	75570 60940 77640 86850 94990 103000 1
+      m-3| 101025	55515	44062	0	145774	87879	93620 78980 95690 104890 113040 121040 1
+      m-4| 150662	98868	93699	159748	0	74651	143230 128600 145300 154510 162650 170650 1
+      m-5| 191770	146259	134807	117666	236519	0 184340 169710 186410 195610 203760 211760 1
+      b-0| 30720	62570	81430	123410	103710	125480	0	1	1	1	1	1 1
+      b-1| 45600	77440	96310	138290	95350	117120	1	0	1	1	1	1 1
+      b-2| 56030	87880	106740	148720	87720	109490	1	1	0	1	1	1 1
+      b-3| 65230	95460	112540	154840	79190	100970	1	1	1	0	1	1 1
+      b-4| 73380	104670	99870	142170	66520	88300	1	1	1	1	1	0 1
+      b-5| 81380	113230	114140	156440	80800	102570	1	1	1	1	1	0 1
+      b-6| 1	1	1	1	1	1	1	1	1	1	1	1 0
+
+
+
+
+
+
+  machines:
+    prebuffer:
+      - capacity: 6
+        type: "fifo"
+    postbuffer:
+      - capacity: 6
+        type: "fifo"
+
+
+
+  buffer:
+   - name: "b-0"
+     type: "fifo"
+     capacity: 1
+     role: "input"
+   - name: "b-1"
+     type: "fifo"
+     capacity: 1
+     role: "input"
+   - name: "b-2"
+     type: "fifo"
+     capacity: 1
+     role: "input"
+   - name: "b-3"
+     type: "fifo"
+     capacity: 1
+     role: "input"
+   - name: "b-4"
+     type: "fifo"
+     capacity: 1
+     role: "input"
+   - name: "b-5"
+     type: "fifo"
+     capacity: 1
+     role: "input"
+   - name: "b-6"
+     type: "flex"
+     capacity: 6
+     role: "output"
+     description: "flexible buffer for output jobs"
+
+init_state:
+  b-0:
+    store: [j-0]
+  b-1:
+    store: [j-1]
+  b-2:
+    store: [j-2]
+  b-3:
+    store: [j-3]
+  b-4:
+    store: [j-4]
+  b-5:
+    store: [j-5]
+  j-0:
+    location: b-0
+  j-1:
+    location: b-1
+  j-2:
+    location: b-2
+  j-3:
+    location: b-3
+  j-4:
+    location: b-4
+  j-5:
+    location: b-5
+  t-0:
+    location: m-5
+  t-1:
+    location: m-2
+  t-2:  
+    location: m-3
+  t-3:
+    location: m-0
+  t-4:
+    location: m-4
+  t-5:
+    location: m-1

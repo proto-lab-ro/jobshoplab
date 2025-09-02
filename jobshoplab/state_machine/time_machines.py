@@ -66,6 +66,7 @@ def jump_to_event(
     machine_states: tuple[MachineState, ...],
     transport_states: tuple[TransportState, ...],
     buffer_states: tuple[BufferState, ...],
+    config,
     *args: Any,
     **kwargs: Any,
 ) -> Time | FailTime:
@@ -113,7 +114,7 @@ def jump_to_event(
         current_time = Time(time=0)
 
     # Check if any operations/events are possible at the current time
-    num_possible_events = get_num_possible_events(helper_state, instance_config)
+    num_possible_events = get_num_possible_events(helper_state, instance_config, config)
 
     if num_possible_events > 0:
         # If events are possible now, don't advance time

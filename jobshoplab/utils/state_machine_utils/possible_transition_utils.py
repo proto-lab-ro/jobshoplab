@@ -16,7 +16,11 @@ from jobshoplab.types.state_types import (
     TransportStateState,
 )
 from jobshoplab.utils.exceptions import InvalidKey, InvalidType, InvalidValue
-from jobshoplab.utils.state_machine_utils import job_type_utils, machine_type_utils
+from jobshoplab.utils.state_machine_utils import (
+    job_type_utils,
+    machine_type_utils,
+    buffer_type_utils,
+)
 from jobshoplab.utils.utils import get_id_int
 
 
@@ -135,7 +139,7 @@ def get_possible_transports(
             yield c
 
 
-def get_num_possible_events(state, instance) -> int:
+def get_num_possible_events(state, instance, config) -> int:
     """
     Get the number of possible events
 
@@ -146,7 +150,7 @@ def get_num_possible_events(state, instance) -> int:
     # possible_transports = tuple(get_possible_transports(state.transports, instance.transports))
 
     possible_transports_transitions = get_possible_transport_transition(
-        state, instance
+        state, instance, config.state_machine.allow_early_transport
     )  # ? INEFFICIENT
 
     # TODO: CHECK
@@ -209,7 +213,33 @@ def is_transportable(job_state: JobState, state: State, instance: InstanceConfig
     return True
 
 
-def get_possible_transport_transition(state: State, instance) -> tuple[ComponentTransition, ...]:
+def is_early_transport(job_state: JobState, state: State, instance: InstanceConfig) -> bool:
+    """
+    Determine if a job is eligible for early transport in the job shop system.
+
+    An early transport is triggered once the job (operation) has started its processing cycle on a machine.
+    Some systems allow scheduling a transport "early" meaning the AGV is "called" early to avoid waiting times.
+    This can lead to deadlock situations in AGV traffic management. Hence some systems disallow early transport.
+
+    In this function we are checking if a job is early meaning not in the correct buffer location.
+
+    Args:
+        job_state (JobState): The job state to evaluate.
+        state (State): The current state of the system.
+        instance (InstanceConfig): The instance configuration.
+
+    Returns:
+        bool: True if the job is eligible for early transport, False otherwise.
+    """
+    ready_for_pickup = buffer_type_utils.is_job_ready_for_pickup_from_postbuffer(
+        job_state=job_state, state=state, instance_config=instance
+    )
+    return not ready_for_pickup  # Job is not ready for pickup meaning its a early transport
+
+
+def get_possible_transport_transition(
+    state: State, instance, allow_early_transport: bool
+) -> tuple[ComponentTransition, ...]:
     """
     Get all available transports and mach each transport with each possible job
     Jobs are possible when:
@@ -241,6 +271,10 @@ def get_possible_transport_transition(state: State, instance) -> tuple[Component
     lonely_jobs_to_transport = tuple(
         filter(lambda x: x.id not in jobs_already_assigned_to_transport, jobs_to_transport)
     )
+    if not allow_early_transport:
+        lonely_jobs_to_transport = tuple(
+            filter(lambda x: not is_early_transport(x, state, instance), lonely_jobs_to_transport)
+        )
 
     # building permutations between transports and jobs
     # -> each transport can transport each job

@@ -575,7 +575,6 @@ class OperationArrayObservation(ObservationFactory):
                 "operation_state": gym.spaces.Box(
                     low=0, high=1, shape=(1, num_operations), dtype=np.float32
                 ),
-                "current_time": gym.spaces.Box(low=0, high=1.0, shape=(1,), dtype=np.float32),
                 "job_locations": gym.spaces.Box(
                     low=0, high=1.0, shape=(1, num_jobs), dtype=np.float32
                 ),
@@ -616,9 +615,6 @@ class OperationArrayObservation(ObservationFactory):
         job_ints = [np.float32(int(j.split("-")[1]) / self.max_buffer_id) for j in job_locations]
         return {
             "operation_state": np.array([operation_state]).astype(np.float32),
-            "current_time": np.array(
-                [np.float32(state_result.state.time.time / self.max_allowed_time)]
-            ),
             "job_locations": np.array([job_ints], dtype=np.float32),
         }
 

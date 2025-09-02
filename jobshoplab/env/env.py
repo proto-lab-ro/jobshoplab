@@ -623,15 +623,10 @@ if __name__ == "__main__":
 
     config = load_config(config_path="data/config/config_scaliro.yaml")
     env = JobShopLabEnv(config)
-    counter = 0
-    while True:
-        counter += 1
-        print(f"Resetting environment {counter}")
-        obs, info = env.reset()
-        done = False
-        while not done:
-            action = random.randint(0, 1)
-            obs, reward, terminated, truncated, inf = env.step(action)
-            done = terminated or truncated
-
-        # env.render()
+    obs, info = env.reset()
+    done = False
+    while not done:
+        action = 1
+        obs, reward, terminated, truncated, inf = env.step(action)
+        done = terminated or truncated
+    env.render()

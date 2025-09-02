@@ -13,7 +13,7 @@ compiler:
 
   dsl_repository:
 
-    dir: "data/config/scaliro_protolab_instance.yaml"
+    dir: "data/config/scaliro_protolab_instance_ft06.yaml"
 
   spec_repository:
 
@@ -31,6 +31,7 @@ env:
 
 state_machine:
   loglevel: *default_loglevel
+  allow_early_transport: false # allow transport of jobs before machine processing is finished
 
 middleware:
   event_based_binary_action_middleware:
@@ -57,7 +58,7 @@ reward_factory:
 render_backend:
   render_in_dashboard:
     loglevel: *default_loglevel
-    port: 8050
+    port: 8051
     debug: false
 
   simulation:
