@@ -9,7 +9,7 @@ class StochasticTimeConfig(ABC):
     def __init__(self, base_time: int, start_seed: int | None = None):
         self.base_time = base_time
         if start_seed is None:
-            start_seed = np.random.randint(0, 2**32 - 1)
+            start_seed = np.random.randint(0, 2**5 - 1)#0, 2**32 - 1)
         self._current_seed = start_seed
         self._random_generator = np.random.default_rng(seed=start_seed)
         self.time = max((0, self._get_time()))
