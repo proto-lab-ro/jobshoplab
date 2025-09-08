@@ -4,21 +4,25 @@ title : Dev Environment
 default_loglevel: &default_loglevel "warning" # global loglevel add loglevel to each module to overwrite for spec module
 compiler:
   loglevel: *default_loglevel
-  repo: "SpecRepository"
+  repo: "DslRepository"
   validator: "SimpleDSLValidator"
   manipulators:
 
     - "DummyManipulator"
 
+  dsl_repository:
+
+    dir: "tests/data/jssp_instances/full_feature_3x3_instance.yaml"
+
   spec_repository:
 
-    dir: "data/jssp_instances/dmu35"
+    dir: "data/jssp_instances/spec_files/ft10"
 
 env:
   loglevel: *default_loglevel
   observation_factory: "BinaryActionObservationFactory"
   reward_factory: "BinaryActionJsspReward"
-  action_factory: "MultiDiscreteActionSpaceFactory"
+  action_factory: "BinaryJobActionFactory"
   render_backend: "render_in_dashboard"
   middleware: "EventBasedBinaryActionMiddleware"
   max_time_fct: 2 # allowed fct for truncation max_time = lower_bound * max_time_fct where 2 is evaluated empirically
@@ -26,12 +30,7 @@ env:
 
 state_machine:
   loglevel: *default_loglevel
-  middleware: "MultiDiscreteActionSpaceMiddleware"
-  action_factory: "MultiDiscreteActionSpaceFactory"
-
-action_factory:
-  multi_discrete_action_space_action_factory:
-    loglevel: *default_loglevel
+  allow_early_transport: true
 
 middleware:
   event_based_binary_action_middleware:
@@ -39,7 +38,11 @@ middleware:
     truncation_joker: 5
     truncation_active: false
 
-observation_factories:
+action_factory:
+  binary_job_action_factory:
+    loglevel: *default_loglevel
+
+observation_factory:
   binary_action_observation_factory:
     loglevel: *default_loglevel
 
@@ -62,8 +65,5 @@ render_backend:
     port: 8051
     loglevel: *default_loglevel
     bind_all: false
-  
-  cli_table:
-    loglevel: *default_loglevel
 
 

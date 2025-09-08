@@ -4,7 +4,7 @@ from typing import TypeVar
 
 from heracless import load_config as _load_config
 
-CONFIG_YAML_PATH = Path("./data/config/config.yaml")
+CONFIG_YAML_PATH = Path("./data/config/default_config.yaml")
 DUMP_PATH = file_path = Path(__file__).resolve()
 Config = TypeVar("Config")
 

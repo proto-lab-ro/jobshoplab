@@ -4,7 +4,7 @@ title: InstanceConfig
 # with AGVs
 
 instance_config:
-  description: "protolab config by felix where traveltimes are measured from scaliros webapp"
+  description: "default instance"
   instance:
     description: "6x6"
     specification: |
@@ -15,9 +15,6 @@ instance_config:
       j3|(1,5) (0,5) (2,5) (3,3) (4,8) (5,9)
       j4|(2,9) (1,3) (4,5) (5,4) (0,3) (3,1)
       j5|(1,3) (3,3) (5,9) (0,10) (4,4) (2,1)
-
-
-
 
     transport:
       type: "agv"

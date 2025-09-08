@@ -64,49 +64,35 @@ instance_config:
   logistics: 
     capacity: 2
     specification: |
-      m0|m1|m2|b0|b1
-      m0|0 2 5 2 7
-      m1|2 0 8 3 5
-      m2|5 2 0 6 2
-      b0|2 3 6 0 9
-      b1|7 5 2 9 0
+      m-0|m-1|m-2|b-0|b-1
+      m-0|0 2 5 2 7
+      m-1|2 0 8 3 5
+      m-2|5 2 0 6 2
+      b-0|2 3 6 0 9
+      b-1|7 5 2 9 0
 
 init_state:
   start_time: 1
-  components:
-    machines:
-      0:
-        status: "outage"
-        type: "maintenance"
-        progress: 9
-        duration: 10
-        post_buffer:
-          content: ["j3"]
-      1:
-        status: "working"
-        progress: 2
-        duration: 5
-        job: "j0"
-      2:
-        status: "idle"
-    buffer:
-      0:
-        content: ["j2"]
-
-  transport:
-    0:
-      status: "working"
-      progress: 3
-      duration: 5
-      job: "j0"
-      components:
-        start: "m0"
-        end: "m1"
-    1: 
-      status: "outage"
-      type: "recharge"
-      progress: 2
-      duration: 5
+  m-0:
+    status: "outage"
+    type: "maintenance"
+    progress: 9
+    duration: 10
+    post_buffer:
+      content: ["j3"]
+  m-1:
+    status: "working"
+    progress: 2
+    duration: 5
+    job: "j0"
+  m-2:
+    status: "idle"
+  b-0:
+    content: ["j2"]
+  t-0:
+    location: "m-0"
+  t-1: 
+    location: "m-1"
     
     
 

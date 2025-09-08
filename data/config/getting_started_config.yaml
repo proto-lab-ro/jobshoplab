@@ -12,10 +12,10 @@ compiler:
     - "DummyManipulator"
 
   dsl_repository:
-    dir: "data/config/instance_proto_lab.yaml"
+    dir: "data/jssp_instances/dsl/default_instance.yaml"
 
   spec_repository:
-    dir: "data/jssp_instances/ft06"
+    dir: "data/jssp_instances/spec_files/ft06"
 
 env:
   loglevel: *default_loglevel
@@ -29,6 +29,7 @@ env:
 
 state_machine:
   loglevel: *default_loglevel
+  allow_early_transport: true
 
 middleware:
   event_based_binary_action_middleware:

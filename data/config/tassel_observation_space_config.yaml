@@ -4,20 +4,16 @@ title : Dev Environment
 default_loglevel: &default_loglevel "warning" # global loglevel add loglevel to each module to overwrite for spec module
 compiler:
   loglevel: *default_loglevel
-  # repo: "DslRepository" # change here to mod repo from spec to yaml or vice versa
   repo: "DslRepository"
   validator: "SimpleDSLValidator"
   manipulators:
-
     - "DummyManipulator"
 
   dsl_repository:
-
-    dir: "data/config/scaliro_protolab_instance.yaml"
+    dir: "data/jssp_instances/dsl/default_instance.yaml"
 
   spec_repository:
-
-    dir: "data/jssp_instances/ft06"
+    dir: "data/jssp_instances/spec_files/ft06"
 
 env:
   loglevel: *default_loglevel
@@ -31,6 +27,7 @@ env:
 
 state_machine:
   loglevel: *default_loglevel
+  allow_early_transport: true
 
 middleware:
   event_based_binary_action_middleware:
@@ -46,7 +43,7 @@ observation_factory:
   binary_action_observation_factory:
     loglevel: *default_loglevel
   tassel_jsp_observation:
-    loglevel: *de
+    loglevel: *default_loglevel
 
 reward_factory:
   binary_action_jssp_reward:
