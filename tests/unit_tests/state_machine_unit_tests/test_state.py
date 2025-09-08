@@ -109,7 +109,9 @@ def test_process_state_transitions_invalid(
     assert "Transition error" in result.errors[0]
 
 
-def test_step_successful(default_state_machine_idle, default_instance, machine_transition_setup, config):
+def test_step_successful(
+    default_state_machine_idle, default_instance, machine_transition_setup, config
+):
 
     action = Action(
         transitions=(machine_transition_setup,),

@@ -136,7 +136,9 @@ def config_full_feature_3x3():
     """Configuration for full feature 3x3 instance with stochastic elements"""
     temp_file = tempfile.NamedTemporaryFile(delete=False).name
     # Use the test_config_end_to_end.yaml with our special instance
-    config = load_config(Path("tests/data/config/test_config_end_to_end.yaml"), Path(temp_file), True)
+    config = load_config(
+        Path("tests/data/config/test_config_end_to_end.yaml"), Path(temp_file), True
+    )
 
     # Override the instance path
     from dataclasses import replace

@@ -1,6 +1,7 @@
 import json
-import pytest
 from tempfile import NamedTemporaryFile
+
+import pytest
 
 from scripts import make_test_json_dump
 

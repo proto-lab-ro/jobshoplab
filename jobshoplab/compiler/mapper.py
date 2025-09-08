@@ -360,7 +360,9 @@ class DefaultStateLookUpFactory:
                 operation_state_state=OperationStateState.IDLE,
             )
 
-    def _get_outage_state(self, component: Union[MachineConfig, TransportConfig]) -> tuple[OutageState, ...]:
+    def _get_outage_state(
+        self, component: Union[MachineConfig, TransportConfig]
+    ) -> tuple[OutageState, ...]:
         return tuple(
             OutageState(id=o.id, active=OutageInactive(last_time_active=NoTime()))
             for o in component.outages
@@ -984,7 +986,9 @@ class DictToInstanceMapper(AbstractDictMapper):
             case _:
                 raise InvalidOutageTypeError(type)
 
-    def _map_spec_dict_to_outage(self, spec_dict: Dict, component_list: List[str], outages: List[OutageConfig]) -> List[OutageConfig]:
+    def _map_spec_dict_to_outage(
+        self, spec_dict: Dict, component_list: List[str], outages: List[OutageConfig]
+    ) -> List[OutageConfig]:
         if not self.has_key(("instance_config", "outages"), spec_dict):
             return outages
         for maintance_spec in spec_dict["instance_config"]["outages"]:
@@ -1163,8 +1167,12 @@ class DictToInstanceMapper(AbstractDictMapper):
             input_buffer_id = self.counter.get_buffer_id()
             output_buffer_id = self.counter.get_buffer_id()
             buffer = (
-                self.defaults.get_default_buffer(input_buffer_id, None, BufferRoleConfig.INPUT, "input buffer"),
-                self.defaults.get_default_buffer(output_buffer_id, None, BufferRoleConfig.OUTPUT, "output buffer"),
+                self.defaults.get_default_buffer(
+                    input_buffer_id, None, BufferRoleConfig.INPUT, "input buffer"
+                ),
+                self.defaults.get_default_buffer(
+                    output_buffer_id, None, BufferRoleConfig.OUTPUT, "output buffer"
+                ),
             )
 
         self.logger.debug("Successfully mapped components")
@@ -1318,7 +1326,9 @@ class DictToInitStateMapper(AbstractDictMapper):
             store=jobs_in_buffer,
         )
 
-    def _apply_transport_init_state(self, transport: TransportConfig, transport_spec: Dict, transport_state: TransportState) -> TransportState:
+    def _apply_transport_init_state(
+        self, transport: TransportConfig, transport_spec: Dict, transport_state: TransportState
+    ) -> TransportState:
         for key in transport_spec.keys():
             match key:
                 case "location":

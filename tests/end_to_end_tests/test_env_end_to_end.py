@@ -1,6 +1,7 @@
 import os
-import pytest
 from pathlib import Path
+
+import pytest
 
 from jobshoplab import JobShopLabEnv
 from jobshoplab.compiler import Compiler
@@ -9,7 +10,6 @@ from jobshoplab.types.state_types import MachineStateState
 from jobshoplab.utils import solutions
 from jobshoplab.utils.load_config import Config
 from jobshoplab.utils.utils import get_id_int
-
 
 
 def test_env_end_to_end3x3_conf0_with_solution_sequence(config_simple_3x3):
@@ -37,8 +37,6 @@ def test_env_end_to_end3x3_conf0_with_solution_sequence(config_simple_3x3):
                 observation, reward, terminated, truncated, _ = env.step(0)
     assert env.state.state.time.time == makespann
     assert terminated
-
-
 
 
 def test_env_end_to_end3x3_conf0_random_action(config_simple_3x3):

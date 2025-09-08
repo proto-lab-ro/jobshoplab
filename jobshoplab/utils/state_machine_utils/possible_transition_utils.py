@@ -17,9 +17,9 @@ from jobshoplab.types.state_types import (
 )
 from jobshoplab.utils.exceptions import InvalidKey, InvalidType, InvalidValue
 from jobshoplab.utils.state_machine_utils import (
+    buffer_type_utils,
     job_type_utils,
     machine_type_utils,
-    buffer_type_utils,
 )
 from jobshoplab.utils.utils import get_id_int
 

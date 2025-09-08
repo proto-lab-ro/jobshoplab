@@ -86,27 +86,35 @@ def no_processing_operations(job: JobState) -> bool:
     return True
 
 
-def is_machine_transition_from_idle_to_setup(machine: MachineState, transition: ComponentTransition) -> bool:
+def is_machine_transition_from_idle_to_setup(
+    machine: MachineState, transition: ComponentTransition
+) -> bool:
     return (
         machine.state == MachineStateState.IDLE and transition.new_state == MachineStateState.SETUP
     )
 
 
-def is_machine_transition_from_setup_to_working(machine: MachineState, transition: ComponentTransition) -> bool:
+def is_machine_transition_from_setup_to_working(
+    machine: MachineState, transition: ComponentTransition
+) -> bool:
     return (
         machine.state == MachineStateState.SETUP
         and transition.new_state == MachineStateState.WORKING
     )
 
 
-def is_machine_transition_from_working_to_outage(machine: MachineState, transition: ComponentTransition) -> bool:
+def is_machine_transition_from_working_to_outage(
+    machine: MachineState, transition: ComponentTransition
+) -> bool:
     return (
         machine.state == MachineStateState.WORKING
         and transition.new_state == MachineStateState.OUTAGE
     )
 
 
-def is_machine_transition_from_outage_to_idle(machine: MachineState, transition: ComponentTransition) -> bool:
+def is_machine_transition_from_outage_to_idle(
+    machine: MachineState, transition: ComponentTransition
+) -> bool:
     return (
         machine.state == MachineStateState.OUTAGE and transition.new_state == MachineStateState.IDLE
     )
@@ -115,49 +123,63 @@ def is_machine_transition_from_outage_to_idle(machine: MachineState, transition:
 ## Transport transitions checker
 
 
-def is_transport_transition_from_idle_to_working(transport: TransportState, transition: ComponentTransition) -> bool:
+def is_transport_transition_from_idle_to_working(
+    transport: TransportState, transition: ComponentTransition
+) -> bool:
     return (
         transport.state == TransportStateState.IDLE
         and transition.new_state == TransportStateState.WORKING
     )
 
 
-def is_transport_transition_from_pickup_to_transit(transport: TransportState, transition: ComponentTransition) -> bool:
+def is_transport_transition_from_pickup_to_transit(
+    transport: TransportState, transition: ComponentTransition
+) -> bool:
     return (
         transport.state == TransportStateState.PICKUP
         and transition.new_state == TransportStateState.TRANSIT
     )
 
 
-def is_transport_transition_from_pickup_to_waitingpickup(transport: TransportState, transition: ComponentTransition) -> bool:
+def is_transport_transition_from_pickup_to_waitingpickup(
+    transport: TransportState, transition: ComponentTransition
+) -> bool:
     return (
         transport.state == TransportStateState.PICKUP
         and transition.new_state == TransportStateState.WAITINGPICKUP
     )
 
 
-def is_transport_transition_from_waitingpickup_to_transit(transport: TransportState, transition: ComponentTransition) -> bool:
+def is_transport_transition_from_waitingpickup_to_transit(
+    transport: TransportState, transition: ComponentTransition
+) -> bool:
     return (
         transport.state == TransportStateState.WAITINGPICKUP
         and transition.new_state == TransportStateState.TRANSIT
     )
 
 
-def is_transport_transition_from_working_to_outage(transport: TransportState, transition: ComponentTransition) -> bool:
+def is_transport_transition_from_working_to_outage(
+    transport: TransportState, transition: ComponentTransition
+) -> bool:
     return (
         transport.state == TransportStateState.WORKING
         and transition.new_state == TransportStateState.OUTAGE
     )
 
 
-def is_transport_transition_from_transit_to_outage(transport: TransportState, transition: ComponentTransition) -> bool:
+def is_transport_transition_from_transit_to_outage(
+    transport: TransportState, transition: ComponentTransition
+) -> bool:
     return (
         transport.state == TransportStateState.TRANSIT
         and transition.new_state == TransportStateState.OUTAGE
     )
 
 
-def is_transport_transition_from_outage_to_idle(transport: TransportState, transition: ComponentTransition) -> bool:
+def is_transport_transition_from_outage_to_idle(
+    transport: TransportState, transition: ComponentTransition
+) -> bool:
     return (
         transport.state == TransportStateState.OUTAGE
         and transition.new_state == TransportStateState.IDLE

@@ -2,8 +2,8 @@ import logging
 import random
 from dataclasses import asdict
 from functools import partial
-from typing import Any, Callable, Dict, List, Union, Optional, Type
 from types import ModuleType
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import gymnasium as gym
 import numpy as np

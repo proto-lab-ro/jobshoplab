@@ -1,7 +1,9 @@
-import pytest
 import os
-from jobshoplab.utils.load_config import load_config
+
+import pytest
+
 from jobshoplab.env.env import JobShopLabEnv
+from jobshoplab.utils.load_config import load_config
 
 
 def test_jsl_configs():
