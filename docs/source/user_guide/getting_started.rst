@@ -114,7 +114,7 @@ Below is an example configuration file for JobShopLab:
         loglevel: "warning"
         observation_factory: "BinaryActionObservationFactory"
         reward_factory: "BinaryActionJsspReward"
-        interpreter: "BinaryJobActionInterpreter"
+        action_factory: "BinaryJobActionFactory"
         render_backend: "render_in_dashboard"
         middleware: "EventBasedBinaryActionMiddleware"
         max_time_fct: 2
@@ -123,12 +123,12 @@ Below is an example configuration file for JobShopLab:
     # For every software component there is a designated field.
     compiler:
         loglevel: "warning"
-        repo: "SpecRepository"  # Set to "YamlRepository" to use custom problem instances.
+        repo: "SpecRepository"  # Set to "DslRepository" to use custom problem instances.
         validator: "SimpleDSLValidator"
         manipulators:
             - "DummyManipulator"
-        yaml_repository:
-            dir: "data/config/instance_proto_lab.yaml"
+        dsl_repository:
+            dir: "data/jssp_instances/dsl/default_instance.yaml"
         spec_repository:
             dir: "data/jssp_instances/ft06"
     state_machine:
@@ -140,10 +140,10 @@ Below is an example configuration file for JobShopLab:
             truncation_joker: 5
             truncation_active: False
 
-    interpreter:
-        binary_job_action_interpreter:
+    action_factory:
+        binary_job_action_factory:
             loglevel: "warning"
-        # Additional settings for new action interpreters can be added here.
+        # Additional settings for new action factories can be added here.
 
     observation_factory:
         binary_action_observation_factory:
@@ -235,7 +235,7 @@ Example using dependency injection with a dummy observation factory:
 Customizing
 ~~~~~~~~~~~
 
-Want to introduce a new reward system? The framework provides base classes for every factory, enabling easy customization. This applies to the observation factory and the action interpreter as well; abstract base classes define their interfaces.
+Want to introduce a new reward system? The framework provides base classes for every factory, enabling easy customization. This applies to the observation factory and the action factory as well; abstract base classes define their interfaces.
 
 .. hint::
    Customizing these components allows you to tailor JobShopLab to fit your specific scheduling and reinforcement learning needs.
@@ -318,8 +318,8 @@ Spec files are academic JSSP problem instances as found in the literature. Commo
       validator: "SimpleDSLValidator"
       manipulators:
         - "DummyManipulator"
-      yaml_repository:
-        dir: "data/config/dsl.yaml"
+      dsl_repository:
+        dir: "data/jssp_instances/dsl/default_instance.yaml"
       spec_repository:
         dir: "data/jssp_instances/ft06"
 
@@ -376,7 +376,7 @@ To set up a DSL repository, specify the DSL file path in the configuration file:
     manipulators:
         - "DummyManipulator"
     dsl_repository:
-        dir: "data/config/dsl.yaml" # <- set the filepath here
+        dir: "data/jssp_instances/dsl/default_instance.yaml" # <- set the filepath here
     spec_repository:
         dir: "data/jssp_instances/ft06"
 
@@ -459,7 +459,7 @@ An instance can also be defined inline as a string. This approach is useful when
     env = JobShopLabEnv(config=config, compiler=compiler)
 
 .. note::
-   A full example and explanation of the DSL can be found in ``/data/examples/full_instance.yaml``.
+   A full example and explanation of the DSL can be found in ``data/jssp_instances/dsl/real_world_instance.yaml``.
 
 Visualization
 -------------
@@ -493,7 +493,7 @@ The default render mode can be configured in the config.yaml. For example:
       loglevel: *default_loglevel
       observation_factory: "BinaryActionObservationFactory"
       reward_factory: "BinaryActionJsspReward"
-      interpreter: "BinaryJobActionInterpreter"
+      action_factory: "BinaryJobActionFactory"
       render_backend: "render_in_dashboard"
       middleware: "EventBasedBinaryActionMiddleware"
 

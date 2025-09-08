@@ -17,7 +17,7 @@ Configuration in JobShopLab is managed through YAML files. A typical configurati
     env:
       observation_factory: "BinaryActionObservationFactory"
       reward_factory: "BinaryActionJsspReward"
-      interpreter: "BinaryJobActionInterpreter"
+      action_factory: "BinaryJobActionFactory"
       render_backend: "render_in_dashboard"
       middleware: "EventBasedBinaryActionMiddleware"
       
@@ -96,17 +96,36 @@ Defines the reward function:
         dense_bias: 0.001    # Reward during episode
         truncation_bias: -1  # Penalty for truncation
 
-Action Interpreter
-^^^^^^^^^^^^^^^^
+Action Factory
+^^^^^^^^^^^^^^
 
 Translates agent actions into scheduling decisions:
 
 .. code-block:: yaml
 
-    interpreter:
-      binary_job_action_interpreter:
+    action_factory:
+      binary_job_action_factory:
         loglevel: "warning"
-        # Interpreter-specific settings
+        # Action factory-specific settings
+
+State Machine
+^^^^^^^^^^^^^
+
+Controls core state machine behavior:
+
+.. code-block:: yaml
+
+    state_machine:
+      loglevel: "warning"
+      allow_early_transport: true  # Enable early transport scheduling
+
+**allow_early_transport** (boolean, default: true)
+  Controls when transport operations can be scheduled in the job shop system:
+  
+  - **true** (Early Transport Enabled): AGVs can be scheduled as soon as a job starts processing on a machine, allowing for proactive transport scheduling to minimize waiting times.
+  - **false** (No Early Transport): AGVs are only scheduled when jobs are in a valid position in the output buffer, ensuring jobs are completely ready for pickup. This conservative approach prevents potential deadlock situations in AGV traffic management and is typically used in real-world scenarios.
+  
+  The parameter affects the `get_possible_transport_transition()` function, which filters out "early" transports when disabled. An early transport is defined as a transport request for a job that is not yet ready for pickup from a post-buffer location.
 
 Middleware
 ^^^^^^^^^^^

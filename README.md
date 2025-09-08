@@ -45,7 +45,7 @@ git clone git@github.com:proto-lab-ro/jobshoplab.git
 # or https
 git clone https://github.com/proto-lab-ro/jobshoplab.git
 
-# install python module in edible mode
+# install python module in editable mode
 pip install -e <repo_dir>
 ```
 

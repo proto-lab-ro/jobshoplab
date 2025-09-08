@@ -40,8 +40,8 @@ Middleware translates abstract gym actions into concrete state machine transitio
     # Agent provides an abstract action (e.g., integer)
     action = 5
     
-    # Middleware uses an action interpreter to translate
-    transition = action_interpreter.interpret(action, state)
+    # Middleware uses an action factory to translate
+    transition = action_factory.interpret(action, state)
     
     # State machine executes the concrete transition
     new_state = state_machine.execute(transition)
@@ -137,10 +137,10 @@ Create custom middleware by subclassing the base middleware:
     class CustomMiddleware(Middleware):
         def __init__(self, loglevel, config, instance, 
                      observation_factory, reward_factory, 
-                     action_interpreter, *args, **kwargs):
+                     action_factory, *args, **kwargs):
             super().__init__(loglevel, config, instance,
                              observation_factory, reward_factory,
-                             action_interpreter)
+                             action_factory)
         
         def reset(self):
             # Custom reset logic

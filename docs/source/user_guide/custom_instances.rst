@@ -260,7 +260,7 @@ The Scaliro protolab instance demonstrates a comprehensive real-world scheduling
 
 .. code-block:: yaml
 
-    # Reference: data/config/scaliro_protolab_instance.yaml
+    # Reference: data/jssp_instances/dsl/real_world_instance.yaml
     instance_config:
       description: "protolab config for scaliro"
       instance:
