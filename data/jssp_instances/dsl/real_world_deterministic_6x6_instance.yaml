@@ -37,11 +37,10 @@ instance_config:
       b-4| 73380	104670	99870	142170	66520	88300	1	1	1	1	1	0 1
       b-5| 81380	113230	114140	156440	80800	102570	1	1	1	1	1	0 1
       b-6| 1	1	1	1	1	1	1	1	1	1	1	1 0
-
-
-
-
-
+    
+    time_behavior:
+      type: "gaussian"
+      std: 5000
 
   machines:
     prebuffer:
