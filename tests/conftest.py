@@ -98,25 +98,27 @@ def minimal_instance_dict_with_intralogistics():
 
 @pytest.fixture
 def test_yaml_instance_dir():
-    return Path("tests/data/test_instance.yaml")
+    return Path("tests/data/jssp_instances/test_instance.yaml")
 
 
 @pytest.fixture
 def test_spec_instance_dir():
-    return Path("tests/data/3x3")
+    return Path("data/jssp_instances/spec_files/3x3")
 
 
 @pytest.fixture
 def config():
     temp_file = tempfile.NamedTemporaryFile(delete=False).name
-    config = load_config(Path("tests/data/test_config0.yaml"), Path(temp_file), False)
+    config = load_config(Path("tests/data/config/test_config0.yaml"), Path(temp_file), False)
     return config
 
 
 @pytest.fixture
 def config_simple_3x3():
     temp_file = tempfile.NamedTemporaryFile(delete=False).name
-    config = load_config(Path("tests/data/test_config_end_to_end.yaml"), Path(temp_file), True)
+    config = load_config(
+        Path("tests/data/config/test_config_end_to_end_3x3.yaml"), Path(temp_file), True
+    )
     return config
 
 
@@ -124,7 +126,7 @@ def config_simple_3x3():
 def config_3x3_transport():
     temp_file = tempfile.NamedTemporaryFile(delete=False).name
     config = load_config(
-        Path("tests/data/test_config_end_to_end_transport.yaml"), Path(temp_file), True
+        Path("tests/data/config/test_config_end_to_end_transport.yaml"), Path(temp_file), True
     )
     return config
 
@@ -134,7 +136,7 @@ def config_full_feature_3x3():
     """Configuration for full feature 3x3 instance with stochastic elements"""
     temp_file = tempfile.NamedTemporaryFile(delete=False).name
     # Use the test_config_end_to_end.yaml with our special instance
-    config = load_config(Path("tests/data/test_config_end_to_end.yaml"), Path(temp_file), True)
+    config = load_config(Path("tests/data/config/test_config_end_to_end.yaml"), Path(temp_file), True)
 
     # Override the instance path
     from dataclasses import replace
@@ -144,7 +146,8 @@ def config_full_feature_3x3():
         compiler=replace(
             config.compiler,
             dsl_repository=replace(
-                config.compiler.dsl_repository, dir="tests/data/full_feature_3x3_instance.yaml"
+                config.compiler.dsl_repository,
+                dir="tests/data/jssp_instances/full_feature_3x3_instance.yaml",
             ),
         ),
     )

@@ -8,7 +8,7 @@ from jobshoplab.utils.load_config import load_config
 
 
 def test_ft06_lb():
-    instance_dir = "data/jssp_instances/"
+    instance_dir = "data/jssp_instances/spec_files/"
     problem = "ft06"
     config = load_config()
     repo = SpecRepository(
@@ -21,7 +21,7 @@ def test_ft06_lb():
 
 
 def test_ft10_lb():
-    instance_dir = "data/jssp_instances/"
+    instance_dir = "data/jssp_instances/spec_files/"
     problem = "ft10"
     config = load_config()
     repo = SpecRepository(
@@ -34,7 +34,7 @@ def test_ft10_lb():
 
 
 def test_la01_lb():
-    instance_dir = "data/jssp_instances/"
+    instance_dir = "data/jssp_instances/spec_files/"
     problem = "la01"
     config = load_config()
     repo = SpecRepository(
@@ -47,7 +47,7 @@ def test_la01_lb():
 
 
 def test_la02_lb():
-    instance_dir = "data/jssp_instances/"
+    instance_dir = "data/jssp_instances/spec_files/"
     problem = "la02"
     config = load_config()
     repo = SpecRepository(
@@ -60,7 +60,7 @@ def test_la02_lb():
 
 
 def test_ta01_lb():
-    instance_dir = "data/jssp_instances/"
+    instance_dir = "data/jssp_instances/spec_files/"
     problem = "ta01"
     config = load_config()
     repo = SpecRepository(

@@ -7,7 +7,7 @@ def test_jump_by_one():
     assert jump_by_one(0, Time(0)) == Time(1)
 
 
-def test_jump_to_next_init(default_instance, default_init_state_result):
+def test_jump_to_next_init(default_instance, default_init_state_result, config):
     args = (
         default_init_state_result.state.jobs,
         default_init_state_result.state.machines,
@@ -19,9 +19,10 @@ def test_jump_to_next_init(default_instance, default_init_state_result):
         default_instance,
         Time(0),
         *args,
+        config,
     ) == Time(0)
-    assert jump_to_event(0, default_instance, Time(10), *args) == Time(10)
-    assert jump_to_event(0, default_instance, NoTime(), *args) == Time(0)
+    assert jump_to_event(0, default_instance, Time(10), *args, config) == Time(10)
+    assert jump_to_event(0, default_instance, NoTime(), *args, config) == Time(0)
 
 
 def test_force_jump_to_event(default_instance, default_init_state):

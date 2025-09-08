@@ -24,7 +24,9 @@ def test_default_compiler():
 def test_compiler_with_custom_repo():
     """Test compiler with custom repository"""
     config = load_config()
-    custom_repo = repos.DslRepository(Path("./data/config/instance_with_agvs.yaml"), "info", config)
+    custom_repo = repos.DslRepository(
+        Path("./tests/data/jssp_instances/instance_with_agvs.yaml"), "info", config
+    )
     compiler = Compiler(config, repo=custom_repo)
     instance_config, init_state = compiler.compile()
 
@@ -67,7 +69,9 @@ def test_compiler_invalid_dls(config):
 
     with pytest.raises(InstanceSchemaError):
         compiler = Compiler(
-            repo=repos.DslRepository(Path("tests/data/invalid_dsl.yaml"), "info", config),
+            repo=repos.DslRepository(
+                Path("tests/data/jssp_instances/invalid_dsl.yaml"), "info", config
+            ),
             config=config,
             loglevel="INFO",
         )
@@ -76,7 +80,7 @@ def test_compiler_invalid_dls(config):
 
 def test_compiler_with_spec_repo(config):
     """Test compiler input validation"""
-    _repo = repos.SpecRepository(Path("data/jssp_instances/abz5"), "info", config)
+    _repo = repos.SpecRepository(Path("data/jssp_instances/spec_files/abz5"), "info", config)
     compiler = Compiler(repo=_repo, config=config)
     instance_config, init_state = compiler.compile()
     assert isinstance(instance_config, InstanceConfig)

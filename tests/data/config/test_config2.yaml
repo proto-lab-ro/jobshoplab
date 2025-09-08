@@ -12,7 +12,7 @@ compiler:
 
   dsl_repository:
 
-    dir: "tests/data/config/instance_with_agvs.yaml"
+    dir: "tests/data/jssp_instances/instance_with_agvs.yaml"
 
   spec_repository:
 

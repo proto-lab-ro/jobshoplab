@@ -109,14 +109,13 @@ def test_process_state_transitions_invalid(
     assert "Transition error" in result.errors[0]
 
 
-def test_step_successful(default_state_machine_idle, default_instance, machine_transition_setup):
+def test_step_successful(default_state_machine_idle, default_instance, machine_transition_setup, config):
 
     action = Action(
         transitions=(machine_transition_setup,),
         action_factory_info=ActionFactoryInfo.Valid,
         time_machine=jump_to_event,
     )
-    config = None  # Add config if needed
 
     result = step("DEBUG", default_instance, config, default_state_machine_idle, action)
     assert result.success
@@ -144,7 +143,7 @@ def test_step_transition_error(
     assert "Transition errors" in result.message
 
 
-def test_step_completion(default_instance, job_state_done, machine_state_idle):
+def test_step_completion(default_instance, job_state_done, machine_state_idle, config):
     state = State(
         time=Time(0),
         jobs=(job_state_done,),
@@ -161,8 +160,6 @@ def test_step_completion(default_instance, job_state_done, machine_state_idle):
         action_factory_info=ActionFactoryInfo.Valid,
         time_machine=mock_time_machine,
     )
-    config = None
-
     result = step("DEBUG", default_instance, config, state, action)
     assert result.success
     assert result.message == "Done"
