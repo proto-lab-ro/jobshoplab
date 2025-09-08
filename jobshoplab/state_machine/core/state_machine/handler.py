@@ -117,6 +117,22 @@ def create_timed_machine_transitions(
 def create_machine_setup_transition(
     all_buffer_configs: tuple[BufferConfig, ...], machine: MachineState
 ) -> Optional[ComponentTransition]:
+    """
+    Create a machine setup transition if a job is available in the prebuffer.
+
+    This function determines whether a machine can transition from idle to setup
+    state based on job availability in its prebuffer. The transition is only
+    created for buffer types that support automatic scheduling (FIFO, LIFO, DUMMY)
+    but not for flexible (FLEX) buffers that require manual job selection.
+
+    Args:
+        all_buffer_configs: Configuration information for all buffers in the system
+        machine: The machine state to potentially create a setup transition for
+
+    Returns:
+        Optional[ComponentTransition]: A setup transition if conditions are met,
+            None otherwise
+    """
     transition = None
     if len(machine.prebuffer.store) > 0:
         prebuffer_config = buffer_type_utils.get_buffer_config_by_id(

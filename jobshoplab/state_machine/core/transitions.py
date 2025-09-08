@@ -7,7 +7,9 @@ a state machine pattern where each component type has its own set of allowed
 state transitions.
 """
 
-from jobshoplab.types.state_types import TransportStateState
+from typing import Dict, List, Tuple, Union
+
+from jobshoplab.types.state_types import MachineStateState, TransportStateState
 from jobshoplab.utils.exceptions import NotImplementedError
 
 
@@ -40,7 +42,7 @@ class Transition:
         transitions: Dictionary mapping from states to allowed target states
     """
 
-    def __init__(self, states, transitions):
+    def __init__(self, states: List[Union[MachineStateState, TransportStateState]], transitions: Dict[Union[MachineStateState, TransportStateState], Tuple[Union[MachineStateState, TransportStateState], ...]]) -> None:
         """
         Initialize a transition validator with states and valid transitions.
 
@@ -51,7 +53,7 @@ class Transition:
         self.states = states
         self.transitions = transitions
 
-    def _match_state(self, state):
+    def _match_state(self, state: Union[MachineStateState, TransportStateState]) -> str:
         """
         Map a component-specific state to a general state category.
 
@@ -77,7 +79,7 @@ class Transition:
             case _:
                 raise NotImplementedError()
 
-    def is_valid_transition(self, current_state, new_state):
+    def is_valid_transition(self, current_state: Union[MachineStateState, TransportStateState], new_state: Union[MachineStateState, TransportStateState]) -> bool:
         """
         Check if a transition from current_state to new_state is valid.
 

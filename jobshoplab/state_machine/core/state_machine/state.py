@@ -296,7 +296,7 @@ def step(
 
 
 def get_possible_transitions(
-    state: State, instance: InstanceConfig, config
+    state: State, instance: InstanceConfig, config: Config
 ) -> tuple[ComponentTransition, ...]:
     """
     Get all possible transitions for a given state.
