@@ -103,22 +103,76 @@ class GaussianFunction(StochasticTimeConfig):
             return False
         return self.base_time == other.base_time and self.std == other.std
 
-
 class GammaFunction(StochasticTimeConfig):
-    def __init__(self, base_time: int, scale: float, start_seed: int | None = None):
-        self.shape = self._compute_gamma_shape_from_mode(base_time, scale)
+    """
+    Travel time model:
+        T = base_time + D,    D ~ Gamma(shape, scale)
+
+    - base_time = minimum deterministic travel time (t_min)
+    - scale > 0
+    - shape > 0 (controls skewness / CV)
+
+    """
+    def __init__(self, base_time: int, shape: float, scale: float, start_seed: int | None = None):
+        if scale <= 0:
+            raise ValueError("Scale must be positive.")
+        if shape <= 0:
+            raise ValueError("Shape must be positive for the Gamma distribution.")
+        if base_time < 0:
+            raise ValueError("Base time must be non-negative.")
+
+        self.base_time = base_time
+        self.shape = shape
         self.scale = scale
         super().__init__(base_time, start_seed)
 
-    def _compute_gamma_shape_from_mode(self, mode: float, scale: float) -> float:
+    def _get_time(self) -> int:
+        # sample delay >= 0
+        delay = self._random_generator.gamma(self.shape, self.scale)
+        return int(round(self.base_time + delay))
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(base_time={self.base_time}, shape={self.shape}, scale={self.scale})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GammaFunction):
+            return False
+        return (
+            self.base_time == other.base_time
+            and self.shape == other.shape
+            and self.scale == other.scale
+        )
+
+class GammaFunction(StochasticTimeConfig):
+    """
+    Travel time model:
+        T = base_time + D,    D ~ Gamma(shape, scale)
+
+    - base_time = minimum deterministic travel time (t_min)
+    - scale > 0
+    - shape > 0 (controls skewness / CV)
+
+    """
+    def __init__(self, base_time: int, shape: float, scale: float, start_seed: int | None = None):
         if scale <= 0:
             raise ValueError("Scale must be positive.")
-        if mode < 0:
-            raise ValueError("Mode must be non-negative for the Gamma distribution.")
-        return (mode / scale) + 1
+        if shape <= 0:
+            raise ValueError("Shape must be positive for the Gamma distribution.")
+        if base_time < 0:
+            raise ValueError("Base time must be non-negative.")
+
+        self.base_time = base_time
+        self.shape = shape
+        self.scale = scale
+        super().__init__(base_time, start_seed)
 
     def _get_time(self) -> int:
-        return int(round(self.base_time + self._random_generator.gamma(self.base_time, self.scale)))
+        # sample delay >= 0
+        delay = self._random_generator.gamma(self.shape, self.scale)
+        return int(round(self.base_time + delay))
 
     def __str__(self):
         return f"{self.__class__.__name__}(base_time={self.base_time}, shape={self.shape}, scale={self.scale})"

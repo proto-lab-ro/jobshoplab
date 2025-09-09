@@ -39,8 +39,9 @@ instance_config:
       b-6| 1	1	1	1	1	1	1	1	1	1	1	1	0
     
     time_behavior:
-      type: "gaussian"
-      std: 5000
+      type: "gamma"
+      shape: 1.
+      scale: 10000.
 
   machines:
     prebuffer:
