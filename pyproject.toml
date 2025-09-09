@@ -18,11 +18,10 @@ requires-python = ">= 3.12"
 dependencies = [
     "gymnasium",
     "heracless",
-    "numpy>2",
-    "torch",
+    "numpy>2.3.0",
+    "torch --index-url https://download.pytorch.org/whl/cpu",
     "plotly",
     "matplotlib",
-    "networkx",
     "pandas",
     "kaleido",
     "dash_daq",
