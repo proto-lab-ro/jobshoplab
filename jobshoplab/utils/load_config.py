@@ -31,10 +31,6 @@ def load_config(
     # If a full path or a Path object is provided, extract its stem and its directory if needed
     if isinstance(config_path, Path) or (isinstance(config_path, str) and "/" in config_path):
         p = Path(config_path)
-        # If it's an absolute path or exists relative to the current CWD, 
-        # we might want to use its directory. 
-        # However, Hydra's initialize() 'config_path' is relative to the *module*.
-        # For simplicity and to fix the immediate error, we ensure config_name is a string (stem).
         config_name = p.stem
     else:
         config_name = str(config_path)
