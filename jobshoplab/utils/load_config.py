@@ -1,40 +1,48 @@
-import tempfile
 from pathlib import Path
-from typing import TypeVar
 
-from heracless import load_config as _load_config
+from hydra import compose, initialize
+from hydra.utils import instantiate
+from omegaconf import OmegaConf
 
-CONFIG_YAML_PATH = Path("./data/config/default_config.yaml")
-DUMP_PATH = file_path = Path(__file__).resolve()
-Config = TypeVar("Config")
+from jobshoplab.types.config_types import Config
+
+# Default paths relative to the project root
+CONFIG_DIR = "../../data/config"
+CONFIG_NAME = "default_config"
 
 
 def load_config(
-    frozen: bool = True,
-    stub_file_path: Path | None = DUMP_PATH,
-    config_path: Path = CONFIG_YAML_PATH,
+    config_path: str = CONFIG_NAME,
+    config_dir: str = CONFIG_DIR,
+    overrides: list[str] | None = None,
 ) -> Config:
     """
-    Load the configuration from the specified directory and return a Config object.
+    Load the configuration using Hydra.
 
     Args:
-        frozen (bool, optional): Whether the configuration should be frozen. Defaults to True.
+        config_path (str): The name of the config file (without .yaml).
+        config_dir (str): The directory containing the config files, relative to this script.
+        overrides (list[str], optional): A list of Hydra-style overrides (e.g., ["compiler.loglevel=debug"]).
 
     Returns:
-        Config: The loaded configuration object.
-
-    Raises:
-        FileNotFoundError: If the configuration file does not exist.
-        yaml.YAMLError: If there is an error parsing the YAML configuration file.
-
-    Note:
-        CONFIG_YAML_PATH is a global variable that sets the path of your YAML config file.
+        Config: The loaded and validated configuration object.
     """
+    with initialize(version_base=None, config_path=config_dir):
+        cfg = compose(config_name=config_path, overrides=overrides or [])
 
-    if stub_file_path is None:
-        stub_file_path: Path = Path(tempfile.NamedTemporaryFile(delete=False).name)
-    return _load_config(config_path, stub_file_path, frozen=frozen)
+        # Merge with structured config for type safety and validation
+        schema = OmegaConf.structured(Config)
+        merged_cfg = OmegaConf.merge(schema, cfg)
+
+        # Convert to a pure Python object (dataclass instance)
+        return cast_to_config(merged_cfg)
+
+
+def cast_to_config(cfg) -> Config:
+    """Helper to convert OmegaConf to the Config dataclass."""
+    return OmegaConf.to_object(cfg)
 
 
 if __name__ == "__main__":
-    load_config()
+    c = load_config()
+    print(c.title)

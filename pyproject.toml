@@ -17,7 +17,7 @@ requires-python = ">= 3.12"
 
 dependencies = [
     "gymnasium",
-    "heracless",
+    "hydra-core",
     "numpy>2.3.0",
     "torch",
     "plotly",

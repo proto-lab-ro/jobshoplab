@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 
@@ -12,8 +13,8 @@ def test_jsl_configs():
 
     for filename in os.listdir(config_dir):
         if filename.endswith(".yaml"):
-            config_path = os.path.join(config_dir, filename)
-            config = load_config(config_path=config_path)
+            config_name = Path(filename).stem
+            config = load_config(config_path=config_name)
             env = JobShopLabEnv(config)
             obs, info = env.reset()
             done = False
@@ -40,8 +41,8 @@ def test_jsl_test_configs():
             and "config" in filename
             and not filename.startswith("invalid")
         ):
-            config_path = os.path.join(test_config_dir, filename)
-            config = load_config(config_path=config_path)
+            config_name = Path(filename).stem
+            config = load_config(config_path=config_name, config_dir="../../tests/data/config")
             env = JobShopLabEnv(config)
             obs, info = env.reset()
             done = False

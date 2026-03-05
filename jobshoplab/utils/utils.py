@@ -5,7 +5,19 @@ from dataclasses import asdict
 from typing import Any, Hashable, Protocol
 
 import numpy as np
-from heracless.utils.cfg_tree import as_lowercase
+def as_lowercase(s: Any) -> Any:
+    """
+    Convert the given object to snake_case if it is a string.
+
+    Args:
+        s (Any): The object to convert.
+
+    Returns:
+        Any: The snake_case string if the input was a string, otherwise the original object.
+    """
+    if isinstance(s, str):
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', s).lower()
+    return s
 
 from jobshoplab.utils.exceptions import InvalidValue
 

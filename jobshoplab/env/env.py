@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 import gymnasium as gym
 import numpy as np
 import torch
-from heracless.utils.cfg_tree import as_lowercase
+from jobshoplab.utils import as_lowercase
 
 from jobshoplab.compiler import Compiler
 from jobshoplab.env import rendering

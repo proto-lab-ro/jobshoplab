@@ -2,7 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from heracless import load_config
+from jobshoplab.utils.load_config import load_config
 
 from jobshoplab import JobShopLabEnv
 from jobshoplab.compiler import Compiler
@@ -11,7 +11,7 @@ from jobshoplab.utils.state_machine_utils import dispatch_rules_uitls as dispatc
 
 # Load Config
 temp_file = tempfile.NamedTemporaryFile(delete=False).name
-config = load_config(Path("data/config/jonathan_conf.yaml"), Path(temp_file), True)
+config = load_config(config_path="jonathan_conf")
 
 
 def fifo(env):
@@ -68,7 +68,7 @@ def mwkr(env):
 
 
 if __name__ == "__main__":
-    dump_dir = Path("./tmp/tmp_heracless.py")
+    dump_dir = Path("./tmp/tmp_hydra.py")
     instance_dir = "data/jssp_instances/transport"
     instance_names = [
         "ft06",

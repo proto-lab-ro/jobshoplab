@@ -7,7 +7,7 @@ from pathlib import Path
 import gymnasium as gym
 import numpy as np
 import pytest
-from heracless import load_config
+from jobshoplab.utils.load_config import load_config
 
 from jobshoplab.state_machine.time_machines import jump_to_event
 from jobshoplab.types.action_types import Action, ActionFactoryInfo, ComponentTransition
@@ -108,25 +108,22 @@ def test_spec_instance_dir():
 
 @pytest.fixture
 def config():
-    temp_file = tempfile.NamedTemporaryFile(delete=False).name
-    config = load_config(Path("tests/data/config/test_config0.yaml"), Path(temp_file), False)
+    config = load_config(config_path="test_config0", config_dir="../../tests/data/config")
     return config
 
 
 @pytest.fixture
 def config_simple_3x3():
-    temp_file = tempfile.NamedTemporaryFile(delete=False).name
     config = load_config(
-        Path("tests/data/config/test_config_end_to_end_3x3.yaml"), Path(temp_file), True
+        config_path="test_config_end_to_end_3x3", config_dir="../../tests/data/config"
     )
     return config
 
 
 @pytest.fixture
 def config_3x3_transport():
-    temp_file = tempfile.NamedTemporaryFile(delete=False).name
     config = load_config(
-        Path("tests/data/config/test_config_end_to_end_transport.yaml"), Path(temp_file), True
+        config_path="test_config_end_to_end_transport", config_dir="../../tests/data/config"
     )
     return config
 
@@ -134,10 +131,9 @@ def config_3x3_transport():
 @pytest.fixture
 def config_full_feature_3x3():
     """Configuration for full feature 3x3 instance with stochastic elements"""
-    temp_file = tempfile.NamedTemporaryFile(delete=False).name
     # Use the test_config_end_to_end.yaml with our special instance
     config = load_config(
-        Path("tests/data/config/test_config_end_to_end.yaml"), Path(temp_file), True
+        config_path="test_config_end_to_end", config_dir="../../tests/data/config"
     )
 
     # Override the instance path
