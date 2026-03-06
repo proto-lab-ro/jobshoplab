@@ -70,6 +70,8 @@ def test_get_setup_duration_stochastic(
     """Test stochastic setup time calculation"""
     # The base time for tool0->tool1 is 1 with std 1
     # We mock update() to avoid randomness in tests
+    s_time = machine_with_stochastic_setup_times.setup_times[("tl-0", "tl-1")]
+    s_time.time = 5  # Set a known positive value
     with patch.object(GaussianFunction, "update") as mock_update:
         duration = _get_setup_duration(
             machine_state=machine_state_with_tool0,
@@ -77,9 +79,9 @@ def test_get_setup_duration_stochastic(
             operation_config=simple_op_config_with_tool1,
         )
 
-        # For tool0->tool1, our fixture returns a GaussianFunction with base_time=1
-        # The actual returned value may vary due to randomness, so we need to update our test
-        assert duration > 0  # We just check that a time value is returned
+        # Since we fixed _get_setup_duration to update FIRST, 
+        # and update is mocked, it will return the value that was there BEFORE update (which we set to 5)
+        assert duration == 5
         # Verify update was called
         mock_update.assert_called_once()
 

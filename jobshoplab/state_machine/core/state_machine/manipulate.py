@@ -310,9 +310,8 @@ def _get_setup_duration(
         case DeterministicTimeConfig():
             return s_time.time
         case StochasticTimeConfig():
-            setup_time = s_time.time
             s_time.update()
-            return setup_time
+            return s_time.time
         case _:
             if s_time is None:
                 raise InvalidValue(

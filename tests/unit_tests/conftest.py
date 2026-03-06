@@ -3,7 +3,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from heracless import load_config
+from jobshoplab.utils.load_config import load_config
 
 from jobshoplab.compiler import Compiler
 from jobshoplab.env.factories import observations, rewards
@@ -23,10 +23,7 @@ from jobshoplab.types.stochasticy_models import (
 
 @pytest.fixture
 def test_config():
-    with tempfile.NamedTemporaryFile(suffix=".pyi", delete=False) as tmp_file:
-        dump_dir = Path(tmp_file.name)
-        config_dir = Path("./tests/data/test_config3.yaml")
-        return load_config(config_dir, dump_dir, True)
+    return load_config(config_path="test_config3", config_dir="../../tests/data")
 
 
 @pytest.fixture
