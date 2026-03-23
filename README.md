@@ -178,7 +178,7 @@ We welcome contributions to JobShopLab! If you have ideas for improvements or bu
 
 ## Acknowledgment
 
-This work has been supported by the European Union’s Horizon Europe research and innovation programme under the following projects:
+This work has been supported by the European Union’s Horizon Europe research and innovation programme under the following Chips JU projects. 
 
 - **A-IQ Ready** (Grant Agreement No. 101096658) – HORIZON-KDT-JU-2021-2-RIA  
 - **Cynergy4MIE** (Grant Agreement No. 101140226) – HORIZON-KDT-JU-2023-2-RIA-Topic-1  
