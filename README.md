@@ -175,3 +175,12 @@ We welcome contributions to JobShopLab! If you have ideas for improvements or bu
 2. Create a new branch for your feature or fix.
 3. Implement your changes and ensure they are well-documented.
 4. Submit a pull request with a detailed explanation of your modifications.
+
+## Acknowledgment
+
+This work has been supported by the European Union’s Horizon Europe research and innovation programme under the following projects:
+
+- **A-IQ Ready** (Grant Agreement No. 101096658) – HORIZON-KDT-JU-2021-2-RIA  
+- **Cynergy4MIE** (Grant Agreement No. 101140226) – HORIZON-KDT-JU-2023-2-RIA-Topic-1  
+
+The views and opinions expressed are those of the authors and do not necessarily reflect those of the European Union or the granting authority. Neither the European Union nor the granting authority can be held responsible for them.
